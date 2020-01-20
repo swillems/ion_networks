@@ -5,7 +5,7 @@ Analysis of LC-IMS-MSMS data with ion-networks.
 This repository requires [conda](https://conda.io/projects/conda/en/latest/index.html). After installation of conda, run the following commands in a terminal to download this repository in the desired location:
 
 ```bash
-cd /location/where/to/install/ion_networks
+cd /location/where/to/install
 git clone https://github.com/swillems/ion_networks.git
 conda env create -f ion_networks/install/environment.yml
 ```
@@ -15,6 +15,7 @@ conda env create -f ion_networks/install/environment.yml
 In a terminal, run the following command:
 
 ```bash
+cd /location/where/to/install/ion_networks
 conda activate ion_networks
 python src/main.py
 ```
