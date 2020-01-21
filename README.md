@@ -36,3 +36,51 @@ Commands:
   gui       Graphical user interface for ion-networks.
   show      Show ion-networks.
 ```
+
+```bash
+Usage: main.py align [OPTIONS]
+
+  Align ion-networks.
+
+Options:
+  -i, --ion_network_file FILENAME
+                                  The ion-network file (.hdf) to align. This
+                                  flag can be set multiple times to align
+                                  multiple ion-networks pairwise.  [required]
+  -a, --alignment_file FILENAME   A new alignment file (.hdf) with all
+                                  pairwise alignments. If not set, an
+                                  'alignment.hdf' file will be created in
+                                  directory of the first [ion_network_file].
+                                  WARNING: This overrides already existing
+                                  files without confirmation.
+  -p, --parameters FILENAME       A parameters file (.json).
+  -h, --help                      Show this message and exit.
+```
+
+```bash
+Usage: main.py evidence [OPTIONS]
+
+  Evidence ion-networks.
+
+Options:
+  -i, --ion_network_file FILENAME
+                                  The ion-network file (.hdf) to evidence.This
+                                  flag can be set multiple times to evidence
+                                  multiple ion-networks.  [required]
+  -a, --alignment_file FILENAME   The alignment file (.hdf) from where to get
+                                  the evidence. If a single ion-network was
+                                  provided, evidence is drawn from all ion-
+                                  networks present in the alignment file. If
+                                  multiple ion-networks are provided that are
+                                  present in the alignment file, only those
+                                  will be used as evidence for eachother.
+                                  [required]
+  -e, --evidence_file FILENAME    A new evidence file (.hdf) for the ion-
+                                  network. If not set, an
+                                  '[ion_network_file].evidence.hdf' file will
+                                  be created per ion-network. WARNING: This
+                                  overrides already existing files without
+                                  confirmation.
+  -p, --parameters FILENAME       A parameters file (.json).
+  -h, --help                      Show this message and exit.
+```
