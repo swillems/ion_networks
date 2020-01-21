@@ -37,6 +37,28 @@ Commands:
   show      Show ion-networks.
 ```
 
+Command options are:
+```bash
+Usage: main.py create [OPTIONS]
+
+  Create ion-networks.
+
+Options:
+  -r, --raw_file FILENAME         The raw input file (.csv or .hdf) with
+                                  centroided ion peaks. This flag can be set
+                                  multiple times to create multiple ion-
+                                  networks.  [required]
+  -i, --ion_network_file FILENAME
+                                  A new ion-network file (.hdf). This flag can
+                                  be set multiple times to save multiple ion-
+                                  networks in the same order. If not set, a
+                                  new '[raw_file].hdf' file will be created
+                                  per raw file. WARNING: This overrides
+                                  already existing files without confirmation.
+  -p, --parameters FILENAME       A parameter file (.json).
+  -h, --help                      Show this message and exit.
+```
+
 ```bash
 Usage: main.py align [OPTIONS]
 
