@@ -19,3 +19,20 @@ cd /location/where/to/install/ion_networks/src
 conda activate ion_networks
 python main.py
 ```
+
+Options are:
+```bash
+Usage: main.py [OPTIONS] COMMAND [ARGS]...
+
+  Analysis of LC-IMS-MSMS data with ion-networks.
+
+Options:
+  -h, --help  Show this message and exit.
+
+Commands:
+  align     Align ion-networks.
+  create    Create ion-networks.
+  evidence  Evidence ion-networks.
+  gui       Graphical user interface for ion-networks.
+  show      Show ion-networks.
+```
