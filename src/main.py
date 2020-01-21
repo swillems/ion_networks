@@ -3,6 +3,7 @@
 import click
 
 import network
+import parameter_io
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -18,13 +19,14 @@ def cli():
 
 @click.command(
     "create",
-    help="Create ion-networks.",
-    # invoke_without_command=False
+    help="Create ion-networks."
 )
 @click.option(
-    "--raw_file",
-    "-r",
-    help="The raw input file (.csv or .hdf) with centroided ion peaks. "
+    "--centroided_file",
+    "-c",
+    help="The centroided input file (.csv) with centroided ion peaks. "
+        "The column INTENSITY needs to be present. All other columns are "
+        "automically interpreted as selection/separation dimensions for"
         "This flag can be set multiple times to create multiple ion-networks.",
     required=True,
     multiple=True,
@@ -41,28 +43,31 @@ def cli():
     type=click.File('w')
 )
 @click.option(
-    "--parameters",
+    "--parameter_file",
     "-p",
     help="A parameter file (.json).",
     type=click.File('r')
 )
 def create(
-    raw_file,
+    centroided_file,
     ion_network_file,
-    parameters
+    parameter_file
 ):
-    for index, raw_file_name in enumerate(raw_file):
+    parameters = parameter_io.read(
+        file_name=get_file_name(parameter_file),
+        default="create"
+    )
+    for index, centroided_csv_file in enumerate(centroided_file):
+        centroided_csv_file_name = get_file_name(centroided_csv_file)
         if len(ion_network_file) > index:
-            network.Network(
-                raw_file_name=raw_file_name,
-                network_file_name=ion_network_file[index],
-                parameters=parameters
-            )
+            ion_network_file_name = get_file_name(ion_network_file[index])
         else:
-            network.Network(
-                raw_file_name=raw_file_name,
-                parameters=parameters
-            )
+            ion_network_file_name = f"{centroided_csv_file_name}.hdf"
+        network.Network(
+            network_file_name=ion_network_file_name,
+            centroided_csv_file_name=centroided_csv_file_name,
+            parameters=parameters
+        )
 
 
 @click.command(
@@ -89,7 +94,7 @@ def create(
     type=click.File('w')
 )
 @click.option(
-    "--parameters",
+    "--parameter_file",
     "-p",
     help="A parameters file (.json).",
     type=click.File('r')
@@ -97,21 +102,24 @@ def create(
 def align(
     ion_network_file,
     alignment_file,
-    parameters
+    parameter_file
 ):
-    for index, first_ion_network_file in enumerate(ion_network_file[:-1]):
+    parameter_file_name = parameter_file
+    parameters = parameter_io.read(parameter_file_name)
+    alignment_file_name = alignment_file
+    for index, first_ion_network_file_name in enumerate(ion_network_file[:-1]):
         first_ion_network = network.Network(
-            network_file_name=first_ion_network_file,
+            network_file_name=first_ion_network_file_name,
             parameters=parameters
         )
-        for second_ion_network_file in ion_network_file[index + 1:]:
+        for second_ion_network_file_name in ion_network_file[index + 1:]:
             second_ion_network = network.Network(
-                network_file_name=second_ion_network_file,
+                network_file_name=second_ion_network_file_name,
                 parameters=parameters
             )
             first_ion_network.align(
                 second_ion_network,
-                alignment_file_name=alignment_file,
+                alignment_file_name=alignment_file_name,
                 parameters=parameters
             )
 
@@ -152,7 +160,7 @@ def align(
     type=click.File('w')
 )
 @click.option(
-    "--parameters",
+    "--parameter_file",
     "-p",
     help="A parameters file (.json).",
     type=click.File('r')
@@ -161,8 +169,10 @@ def evidence(
     ion_network_file,
     alignment_file,
     evidence_file,
-    parameters
+    parameter_file
 ):
+    parameter_file_name = parameter_file
+    parameters = parameter_io.read(parameter_file_name)
     for index, ion_network_file in enumerate(ion_network_file):
         ion_network = network.Network(
             network_file_name=ion_network_file,
@@ -188,8 +198,11 @@ def evidence(
 @click.option(
     "--ion_network_file",
     "-i",
-    help="The ion-network file (.hdf) to show.",
+    help="The ion-network file (.hdf) to show."
+        "This flag can be set multiple times to evidence multiple "
+        "ion-networks.",
     required=True,
+    multiple=True,
     type=click.File('r')
 )
 @click.option(
@@ -200,7 +213,7 @@ def evidence(
     type=click.File('r')
 )
 @click.option(
-    "--parameters",
+    "--parameter_file",
     "-p",
     help="A parameters file (.json).",
     type=click.File('r')
@@ -208,8 +221,10 @@ def evidence(
 def show(
     ion_network_file,
     evidence_file,
-    parameters
+    parameter_file
 ):
+    parameter_file_name = parameter_file
+    parameters = parameter_io.read(parameter_file_name)
     pass
 
 
@@ -219,6 +234,28 @@ def show(
 )
 def gui():
     pass
+
+
+def get_file_name(file):
+    """
+    Return the file name and closes the file.
+
+    Parameters
+    ----------
+    file : type
+        The (un)opened file.
+
+    Returns
+    -------
+    str
+        The file name. If no proper file was provided, None is returned
+    """
+    try:
+        file_name = file.name
+        file.close()
+    except AttributeError:
+        file_name = None
+    return file_name
 
 
 if __name__ == "__main__":
