@@ -15,7 +15,7 @@ conda env create -f ion_networks/install/environment.yml
 In a terminal, run the following command:
 
 ```bash
-cd /location/where/to/install/ion_networks
+cd /location/where/to/install/ion_networks/src
 conda activate ion_networks
-python src/main.py
+python main.py
 ```
