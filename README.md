@@ -10,14 +10,22 @@ git clone https://github.com/swillems/ion_networks.git
 conda env create -f ion_networks/install/environment.yml
 ```
 
+Then add the following to your $~/.bashrc$:
+
+```bash
+ion_networks(){
+        conda activate ion_networks
+        python /location/where/to/install/ion_networks/src/main.py $@
+        conda deactivate
+}
+```
+
 ## Usage
 
 In a terminal, run the following command:
 
 ```bash
-cd /location/where/to/install/ion_networks/src
-conda activate ion_networks
-python main.py
+ion_networks
 ```
 
 Commands are:
