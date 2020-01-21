@@ -20,7 +20,7 @@ conda activate ion_networks
 python main.py
 ```
 
-Options are:
+Commands are:
 ```bash
 Usage: main.py [OPTIONS] COMMAND [ARGS]...
 
