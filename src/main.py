@@ -1,6 +1,9 @@
 #!python
 
 import click
+import logging
+import sys
+import os
 
 import network
 import parameter_io
@@ -25,9 +28,10 @@ def cli():
     "--centroided_file",
     "-c",
     help="The centroided input file (.csv) with centroided ion peaks. "
-        "The column INTENSITY needs to be present. All other columns are "
-        "automically interpreted as selection/separation dimensions for"
-        "This flag can be set multiple times to create multiple ion-networks.",
+        "The column INTENSITY and MZ2 need to be present. All other columns "
+        "are automically interpreted as precursor selection/separation "
+        "dimensions. This flag can be set multiple times to create multiple "
+        "ion-networks.",
     required=True,
     multiple=True,
     type=click.File('r')
@@ -42,21 +46,42 @@ def cli():
     multiple=True,
     type=click.File('w')
 )
+# @click.option(
+#     "--input_directory",
+#     "-d",
+#     help="The centroided input file (.csv) with centroided ion peaks. "
+#         "The column INTENSITY needs to be present. All other columns are "
+#         "automically interpreted as selection/separation dimensions for"
+#         "This flag can be set multiple times to create multiple ion-networks.",
+#     required=True,
+#     is_eager=True,
+#     type=click.Path(exists=True)
+# )
+# https://stackoverflow.com/questions/55584012/python-click-dependent-options-on-another-option
+# Use defaults to avoid required?
 @click.option(
     "--parameter_file",
     "-p",
     help="A parameter file (.json).",
     type=click.File('r')
 )
+@click.option(
+    "--log_file",
+    "-l",
+    help="Save the log to a file (.txt).",
+    type=click.File('w')
+)
 def create(
     centroided_file,
     ion_network_file,
-    parameter_file
+    parameter_file,
+    log_file
 ):
     parameters = parameter_io.read(
         file_name=get_file_name(parameter_file),
         default="create"
     )
+    logger = set_logger(get_file_name(log_file))
     for index, centroided_csv_file in enumerate(centroided_file):
         centroided_csv_file_name = get_file_name(centroided_csv_file)
         if len(ion_network_file) > index:
@@ -66,7 +91,8 @@ def create(
         network.Network(
             network_file_name=ion_network_file_name,
             centroided_csv_file_name=centroided_csv_file_name,
-            parameters=parameters
+            parameters=parameters,
+            logger=logger
         )
 
 
@@ -99,28 +125,43 @@ def create(
     help="A parameters file (.json).",
     type=click.File('r')
 )
+@click.option(
+    "--log_file",
+    "-l",
+    help="Save the log to a file (.txt).",
+    type=click.File('w')
+)
 def align(
     ion_network_file,
     alignment_file,
-    parameter_file
+    parameter_file,
+    log_file
 ):
-    parameter_file_name = parameter_file
-    parameters = parameter_io.read(parameter_file_name)
-    alignment_file_name = alignment_file
-    for index, first_ion_network_file_name in enumerate(ion_network_file[:-1]):
+    parameters = parameter_io.read(
+        file_name=get_file_name(parameter_file),
+        default="create"
+    )
+    logger = set_logger(get_file_name(log_file))
+    alignment_file_name = get_file_name(alignment_file)
+    for index, first_ion_network_file in enumerate(ion_network_file[:-1]):
+        first_ion_network_file_name = get_file_name(first_ion_network_file)
         first_ion_network = network.Network(
             network_file_name=first_ion_network_file_name,
-            parameters=parameters
+            parameters=parameters,
+            logger=logger
         )
-        for second_ion_network_file_name in ion_network_file[index + 1:]:
+        for second_ion_network_file in ion_network_file[index + 1:]:
+            second_ion_network_file_name = get_file_name(second_ion_network_file)
             second_ion_network = network.Network(
                 network_file_name=second_ion_network_file_name,
-                parameters=parameters
+                parameters=parameters,
+                logger=logger
             )
             first_ion_network.align(
                 second_ion_network,
                 alignment_file_name=alignment_file_name,
-                parameters=parameters
+                parameters=parameters,
+                logger=logger
             )
 
 
@@ -165,28 +206,42 @@ def align(
     help="A parameters file (.json).",
     type=click.File('r')
 )
+@click.option(
+    "--log_file",
+    "-l",
+    help="Save the log to a file (.txt).",
+    type=click.File('w')
+)
 def evidence(
     ion_network_file,
     alignment_file,
     evidence_file,
-    parameter_file
+    parameter_file,
+    log_file
 ):
-    parameter_file_name = parameter_file
-    parameters = parameter_io.read(parameter_file_name)
-    for index, ion_network_file in enumerate(ion_network_file):
+    parameters = parameter_io.read(
+        file_name=get_file_name(parameter_file),
+        default="create"
+    )
+    logger = set_logger(get_file_name(log_file))
+    alignment_file_name = get_file_name(alignment_file)
+    for index, first_ion_network_file in enumerate(ion_network_file):
+        first_ion_network_file_name = get_file_name(first_ion_network_file)
         ion_network = network.Network(
-            network_file_name=ion_network_file,
-            parameters=parameters
+            network_file_name=first_ion_network_file_name,
+            parameters=parameters,
+            logger=logger
         )
         if len(evidence_file) > index:
+            evidence_file_name = get_file_name(evidence_file[index])
             ion_network.evidence(
-                alignment_file,
-                evidence_file_name=evidence_file[index],
+                alignment_file_name,
+                evidence_file_name=evidence_file_name,
                 parameters=parameters
             )
         else:
             ion_network.evidence(
-                alignment_file,
+                alignment_file_name,
                 parameters=parameters
             )
 
@@ -218,13 +273,24 @@ def evidence(
     help="A parameters file (.json).",
     type=click.File('r')
 )
+@click.option(
+    "--log_file",
+    "-l",
+    help="Save the log to a file (.txt).",
+    type=click.File('w')
+)
 def show(
     ion_network_file,
     evidence_file,
-    parameter_file
+    parameter_file,
+    log_file
 ):
-    parameter_file_name = parameter_file
-    parameters = parameter_io.read(parameter_file_name)
+    # TODO
+    parameters = parameter_io.read(
+        file_name=get_file_name(parameter_file),
+        default="create"
+    )
+    logger = set_logger(get_file_name(log_file))
     pass
 
 
@@ -233,6 +299,7 @@ def show(
     help="Graphical user interface for ion-networks."
 )
 def gui():
+    # TODO
     pass
 
 
@@ -256,6 +323,58 @@ def get_file_name(file):
     except AttributeError:
         file_name = None
     return file_name
+
+
+def set_logger(log_file_name, log_level=logging.DEBUG, overwrite=False):
+    """
+    Create a logger to track all progress.
+
+    Parameters
+    ----------
+    log_file_name : str
+        If a log_file_name is provided, the current log is appended to this
+        file.
+    log_level : int
+        The level at which log messages are returned. by default this is
+        logging.DEBUG.
+    overwrite : bool
+        If overwrite is True, the current log is not appended to the file name
+        but overwrites it instead.
+
+    Returns
+    -------
+    logging.logger
+        A logger object.
+    """
+    logger = logging.getLogger('network_log')
+    formatter = logging.Formatter(
+        '%(asctime)s > %(message)s'
+    )
+    logger.setLevel(log_level)
+    console_handler = logging.StreamHandler(stream=sys.stdout)
+    console_handler.setLevel(log_level)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    if log_file_name is not None:
+        directory = os.path.dirname(log_file_name)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        if overwrite:
+            mode = "w"
+        else:
+            mode = "a"
+        file_handler = logging.FileHandler(
+            log_file_name,
+            mode=mode
+        )
+        file_handler.setLevel(log_level)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+    logger.info("=" * 50)
+    logger.info("Command-line called:")
+    logger.info(" ".join(sys.argv))
+    logger.info("")
+    return logger
 
 
 if __name__ == "__main__":
