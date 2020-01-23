@@ -130,4 +130,4 @@ dmypy.json
 
 # Temp folder and sandbox
 .tmp
-src/sandbox.ipynb
+src/sandbox.*

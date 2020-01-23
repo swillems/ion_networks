@@ -7,7 +7,9 @@ import scipy
 import pandas as pd
 import numpy as np
 import multiprocessing as mp
+import logging
 
+import numba
 
 class Network(object):
 
@@ -15,8 +17,8 @@ class Network(object):
         self,
         network_file_name,
         centroided_csv_file_name=None,
-        parameters=None,
-        logger=None
+        parameters={},
+        logger=logging.getLogger('Log')
     ):
         """
         Loads an ion-network. Alternatively, an ion-network is created if a
@@ -34,7 +36,7 @@ class Network(object):
             A dictionary with optional parameters for the creation of an
             ion-network.
         logger : logging.logger
-            The logger that indicates all progress. This cannot be None.
+            The logger that indicates all progress
         """
         self.file_name = network_file_name
         if logger is None:
@@ -68,7 +70,9 @@ class Network(object):
         pd.Dataframe
             A pd.Dataframe with centroided ion peaks.
         """
-        self.logger.info(f"Reading centroided csv file {centroided_csv_file_name}.")
+        self.logger.info(
+            f"Reading centroided csv file {centroided_csv_file_name}."
+        )
         data = pd.read_csv(
             centroided_csv_file_name,
             engine="c",
@@ -123,7 +127,22 @@ class Network(object):
     def write_edges(self, edge_group, parameters):
         # TODO
         self.logger.info(f"Writing edges of ion-network {self.file_name}.")
-        pass
+        rts, dts = self.get_ion_coordinates(["RT", "DT"])
+        indptr, indices = get_sparse_edges(
+            rts,
+            dts,
+            parameters["max_dt_diff"],
+            parameters["max_rt_diff"],
+            symmetric=False
+        )
+        edge_group.create_dataset(
+            "indptr",
+            data=indptr
+        )
+        edge_group.create_dataset(
+            "indices",
+            data=indices
+        )
 
     def set_hash_id(self, parameters):
         # TODO
@@ -203,88 +222,37 @@ if __name__ == "__main__":
 
 
 
-
-
-
-
-
-
-
-def getWithinSampleCoelutingPairs(
-    self,
-    sample,
-    max_dt_diff=1,
-    max_rt_diff=.1,
-    batch_size=10**7,
-    return_symmetric=False,
-    parallel_processes=8
-):
-    sample = self.getSample(sample)
-    rt = self.getArray("RT/raw", sample)
-    rt_identifiers = self.getArray("RT/identifiers", sample)
-    dt = self.getArray("DT/raw", sample)
-    if not return_symmetric:
-        low_limits = np.arange(len(rt)) + 1
-    else:
-        low_limits = np.searchsorted(
-            rt,
-            rt - max_rt_diff,
-            "left"
-        )
-    high_limits = np.searchsorted(
-        rt,
-        rt + max_rt_diff,
-        "right"
-    )
-    batches = np.cumsum(high_limits - low_limits)
-    batch_size /= parallel_processes
-    batches = np.searchsorted(
-        batches,
-        np.arange(0, batches[-1] + 1 + batch_size, batch_size)
-    )
-    batch_iterations = zip(batches[:-1], batches[1:])
-    pairs = np.concatenate(
-        [
-            batch_pairs for batch_pairs in parallelizedGenerator(
-                parallel_processes,
-                batchedGetWithinSampleCoelutingPairs,
-                batch_iterations,
-                high_limits,
-                low_limits,
-                rt_identifiers,
-                dt,
-                max_dt_diff,
-            )
-        ]
-    )
-    return pairs
-
-
-def batchedGetWithinSampleCoelutingPairs(
-    batch_iteration,
-    high_limits,
-    low_limits,
-    rt_identifiers,
-    dt,
+def get_sparse_edges(
+    rts,
+    dts,
     max_dt_diff,
+    max_rt_diff,
+    symmetric
 ):
-    batch_low, batch_high = batch_iteration
-    ind1 = np.concatenate(
-        [
-            np.repeat(i, h) for i, h in zip(
-                rt_identifiers[batch_low: batch_high],
-                high_limits[batch_low: batch_high] - low_limits[batch_low: batch_high]
+    @numba.njit(fastmath=True)
+    def numba_wrapper():
+        if not symmetric:
+            low_limits = np.arange(len(rts)) + 1
+        else:
+            low_limits = np.searchsorted(
+                rts,
+                rts - max_rt_diff,
+                "left"
             )
-        ]
-    )
-    ind2 = np.concatenate(
-        [
-            rt_identifiers[l: h] for l, h in zip(
-                low_limits[batch_low: batch_high],
-                high_limits[batch_low: batch_high]
-            )
-        ]
-    )
-    good = np.abs(dt[ind1] - dt[ind2]) < max_dt_diff
-    batch_pairs = np.stack([ind1[good], ind2[good]]).T
-    return batch_pairs
+        high_limits = np.searchsorted(
+            rts,
+            rts + max_rt_diff,
+            "right"
+        )
+        neighbors = []
+        for dt, l, h in zip(dts, low_limits, high_limits):
+            small_dt_diffs = np.abs(dts[l: h] - dt) <= max_dt_diff
+            local_neighbors = l + np.flatnonzero(small_dt_diffs)
+            neighbors.append(local_neighbors)
+        return neighbors
+    neighbors = numba_wrapper()
+    indptr = np.empty(len(neighbors) + 1, dtype=np.int)
+    indptr[0] = 0
+    indptr[1:] = np.cumsum([len(n) for n in neighbors])
+    indices = np.concatenate(neighbors)
+    return indptr, indices

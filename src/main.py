@@ -14,7 +14,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.group(
     context_settings=CONTEXT_SETTINGS,
-    help="Analysis of LC-IMS-MSMS data with ion-networks."
+    help="Analysis of MSMS data with ion-networks."
 )
 def cli():
     pass
@@ -81,19 +81,19 @@ def create(
         file_name=get_file_name(parameter_file),
         default="create"
     )
-    logger = set_logger(get_file_name(log_file))
-    for index, centroided_csv_file in enumerate(centroided_file):
-        centroided_csv_file_name = get_file_name(centroided_csv_file)
-        if len(ion_network_file) > index:
-            ion_network_file_name = get_file_name(ion_network_file[index])
-        else:
-            ion_network_file_name = f"{centroided_csv_file_name}.hdf"
-        network.Network(
-            network_file_name=ion_network_file_name,
-            centroided_csv_file_name=centroided_csv_file_name,
-            parameters=parameters,
-            logger=logger
-        )
+    with open_logger(get_file_name(log_file)) as logger:
+        for index, centroided_csv_file in enumerate(centroided_file):
+            centroided_csv_file_name = get_file_name(centroided_csv_file)
+            if len(ion_network_file) > index:
+                ion_network_file_name = get_file_name(ion_network_file[index])
+            else:
+                ion_network_file_name = f"{centroided_csv_file_name}.hdf"
+            network.Network(
+                network_file_name=ion_network_file_name,
+                centroided_csv_file_name=centroided_csv_file_name,
+                parameters=parameters,
+                logger=logger
+            )
 
 
 @click.command(
@@ -141,28 +141,28 @@ def align(
         file_name=get_file_name(parameter_file),
         default="create"
     )
-    logger = set_logger(get_file_name(log_file))
-    alignment_file_name = get_file_name(alignment_file)
-    for index, first_ion_network_file in enumerate(ion_network_file[:-1]):
-        first_ion_network_file_name = get_file_name(first_ion_network_file)
-        first_ion_network = network.Network(
-            network_file_name=first_ion_network_file_name,
-            parameters=parameters,
-            logger=logger
-        )
-        for second_ion_network_file in ion_network_file[index + 1:]:
-            second_ion_network_file_name = get_file_name(second_ion_network_file)
-            second_ion_network = network.Network(
-                network_file_name=second_ion_network_file_name,
+    with open_logger(get_file_name(log_file)) as logger:
+        alignment_file_name = get_file_name(alignment_file)
+        for index, first_ion_network_file in enumerate(ion_network_file[:-1]):
+            first_ion_network_file_name = get_file_name(first_ion_network_file)
+            first_ion_network = network.Network(
+                network_file_name=first_ion_network_file_name,
                 parameters=parameters,
                 logger=logger
             )
-            first_ion_network.align(
-                second_ion_network,
-                alignment_file_name=alignment_file_name,
-                parameters=parameters,
-                logger=logger
-            )
+            for second_ion_network_file in ion_network_file[index + 1:]:
+                second_ion_network_file_name = get_file_name(second_ion_network_file)
+                second_ion_network = network.Network(
+                    network_file_name=second_ion_network_file_name,
+                    parameters=parameters,
+                    logger=logger
+                )
+                first_ion_network.align(
+                    second_ion_network,
+                    alignment_file_name=alignment_file_name,
+                    parameters=parameters,
+                    logger=logger
+                )
 
 
 @click.command(
@@ -223,27 +223,27 @@ def evidence(
         file_name=get_file_name(parameter_file),
         default="create"
     )
-    logger = set_logger(get_file_name(log_file))
-    alignment_file_name = get_file_name(alignment_file)
-    for index, first_ion_network_file in enumerate(ion_network_file):
-        first_ion_network_file_name = get_file_name(first_ion_network_file)
-        ion_network = network.Network(
-            network_file_name=first_ion_network_file_name,
-            parameters=parameters,
-            logger=logger
-        )
-        if len(evidence_file) > index:
-            evidence_file_name = get_file_name(evidence_file[index])
-            ion_network.evidence(
-                alignment_file_name,
-                evidence_file_name=evidence_file_name,
-                parameters=parameters
+    with open_logger(get_file_name(log_file)) as logger:
+        alignment_file_name = get_file_name(alignment_file)
+        for index, first_ion_network_file in enumerate(ion_network_file):
+            first_ion_network_file_name = get_file_name(first_ion_network_file)
+            ion_network = network.Network(
+                network_file_name=first_ion_network_file_name,
+                parameters=parameters,
+                logger=logger
             )
-        else:
-            ion_network.evidence(
-                alignment_file_name,
-                parameters=parameters
-            )
+            if len(evidence_file) > index:
+                evidence_file_name = get_file_name(evidence_file[index])
+                ion_network.evidence(
+                    alignment_file_name,
+                    evidence_file_name=evidence_file_name,
+                    parameters=parameters
+                )
+            else:
+                ion_network.evidence(
+                    alignment_file_name,
+                    parameters=parameters
+                )
 
 
 @click.command(
@@ -290,8 +290,8 @@ def show(
         file_name=get_file_name(parameter_file),
         default="create"
     )
-    logger = set_logger(get_file_name(log_file))
-    pass
+    with open_logger(get_file_name(log_file)) as logger:
+        pass
 
 
 @click.command(
@@ -325,56 +325,64 @@ def get_file_name(file):
     return file_name
 
 
-def set_logger(log_file_name, log_level=logging.DEBUG, overwrite=False):
-    """
-    Create a logger to track all progress.
+class open_logger(object):
 
-    Parameters
-    ----------
-    log_file_name : str
-        If a log_file_name is provided, the current log is appended to this
-        file.
-    log_level : int
-        The level at which log messages are returned. by default this is
-        logging.DEBUG.
-    overwrite : bool
-        If overwrite is True, the current log is not appended to the file name
-        but overwrites it instead.
+    def __init__(self, log_file_name, log_level=logging.DEBUG, overwrite=False):
+        """
+        Create a logger to track all progress.
 
-    Returns
-    -------
-    logging.logger
-        A logger object.
-    """
-    logger = logging.getLogger('network_log')
-    formatter = logging.Formatter(
-        '%(asctime)s > %(message)s'
-    )
-    logger.setLevel(log_level)
-    console_handler = logging.StreamHandler(stream=sys.stdout)
-    console_handler.setLevel(log_level)
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
-    if log_file_name is not None:
-        directory = os.path.dirname(log_file_name)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        if overwrite:
-            mode = "w"
-        else:
-            mode = "a"
-        file_handler = logging.FileHandler(
-            log_file_name,
-            mode=mode
+        Parameters
+        ----------
+        log_file_name : str
+            If a log_file_name is provided, the current log is appended to this
+            file.
+        log_level : int
+            The level at which log messages are returned. by default this is
+            logging.DEBUG.
+        overwrite : bool
+            If overwrite is True, the current log is not appended to the file name
+            but overwrites it instead.
+        """
+        logger = logging.getLogger('network_log')
+        formatter = logging.Formatter(
+            '%(asctime)s > %(message)s'
         )
-        file_handler.setLevel(log_level)
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-    logger.info("=" * 50)
-    logger.info("Command-line called:")
-    logger.info(" ".join(sys.argv))
-    logger.info("")
-    return logger
+        logger.setLevel(log_level)
+        console_handler = logging.StreamHandler(stream=sys.stdout)
+        console_handler.setLevel(log_level)
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+        if log_file_name is not None:
+            directory = os.path.dirname(log_file_name)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            if overwrite:
+                mode = "w"
+            else:
+                mode = "a"
+            file_handler = logging.FileHandler(
+                log_file_name,
+                mode=mode
+            )
+            file_handler.setLevel(log_level)
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+        logger.info("=" * 50)
+        logger.info("Executing from the command-line:")
+        logger.info(" ".join(sys.argv))
+        logger.info("")
+        self.logger = logger
+        self.log_file_name = log_file_name
+
+    def __enter__(self):
+        return self.logger
+
+    def __exit__(self, type, value, traceback):
+        if type is not None:
+            self.logger.exception("Errors occurred, execution incomplete!")
+            sys.exit()
+        else:
+            self.logger.info("Succesfully finished execution.")
 
 
 if __name__ == "__main__":
