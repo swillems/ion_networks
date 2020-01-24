@@ -81,7 +81,7 @@ def create(
         file_name=get_file_name(parameter_file),
         default="create"
     )
-    with open_logger(get_file_name(log_file)) as logger:
+    with open_logger(get_file_name(log_file), parameters=parameters) as logger:
         for index, centroided_csv_file in enumerate(centroided_file):
             centroided_csv_file_name = get_file_name(centroided_csv_file)
             if len(ion_network_file) > index:
@@ -141,7 +141,7 @@ def align(
         file_name=get_file_name(parameter_file),
         default="create"
     )
-    with open_logger(get_file_name(log_file)) as logger:
+    with open_logger(get_file_name(log_file), parameters=parameters) as logger:
         alignment_file_name = get_file_name(alignment_file)
         for index, first_ion_network_file in enumerate(ion_network_file[:-1]):
             first_ion_network_file_name = get_file_name(first_ion_network_file)
@@ -223,7 +223,7 @@ def evidence(
         file_name=get_file_name(parameter_file),
         default="create"
     )
-    with open_logger(get_file_name(log_file)) as logger:
+    with open_logger(get_file_name(log_file), parameters=parameters) as logger:
         alignment_file_name = get_file_name(alignment_file)
         for index, first_ion_network_file in enumerate(ion_network_file):
             first_ion_network_file_name = get_file_name(first_ion_network_file)
@@ -290,7 +290,7 @@ def show(
         file_name=get_file_name(parameter_file),
         default="create"
     )
-    with open_logger(get_file_name(log_file)) as logger:
+    with open_logger(get_file_name(log_file), parameters=parameters) as logger:
         pass
 
 
@@ -327,7 +327,13 @@ def get_file_name(file):
 
 class open_logger(object):
 
-    def __init__(self, log_file_name, log_level=logging.DEBUG, overwrite=False):
+    def __init__(
+        self,
+        log_file_name,
+        log_level=logging.DEBUG,
+        overwrite=False,
+        parameters={}
+    ):
         """
         Create a logger to track all progress.
 
@@ -352,6 +358,8 @@ class open_logger(object):
         console_handler.setLevel(log_level)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
+        if log_file_name is None:
+            log_file_name = parameters["log_file_name"]
         if log_file_name is not None:
             directory = os.path.dirname(log_file_name)
             if not os.path.exists(directory):
@@ -367,6 +375,9 @@ class open_logger(object):
             file_handler.setLevel(log_level)
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
+            parameters["log_file_name"] = log_file_name
+        else:
+            parameters["log_file_name"] = ""
         logger.info("=" * 50)
         logger.info("Executing from the command-line:")
         logger.info(" ".join(sys.argv))

@@ -8,8 +8,8 @@ import pandas as pd
 import numpy as np
 import multiprocessing as mp
 import logging
-
 import numba
+import time
 
 class Network(object):
 
@@ -97,20 +97,20 @@ class Network(object):
         if not os.path.exists(directory):
             os.makedirs(directory)
         with h5py.File(self.file_name, "w") as network_file:
-            node_group = network_file.create_group("nodes")
-            edge_group = network_file.create_group("edges")
-            self.write_nodes(node_group, data, parameters)
-            self.write_edges(edge_group, parameters)
-            self.set_hash_id(parameters)
+            self.write_nodes(network_file, data, parameters)
+            self.write_edges(network_file, parameters)
+            self.write_parameters(network_file, parameters)
 
-    def write_nodes(self, node_group, data, parameters):
+    def write_nodes(self, network_file, data, parameters):
         """
-        Saves all data as individual datasets in the node_group of an .hdf file.
+        Saves all data as individual arrays to an .hdf file. Each array
+        will be placed in a 'nodes' group and names according to its column
+        name.
 
         Parameters
         ----------
-        node_group : h5py.group
-            The location within an opened .hdf file where to save the data.
+        network_file : h5py.file
+            An opened and writeable .hdf file representing the ion-network.
         data : pd.Dataframe
             A pd.Dataframe with centroided ion peaks.
         parameters : dict
@@ -118,17 +118,31 @@ class Network(object):
             ion-network.
         """
         self.logger.info(f"Writing nodes of ion-network {self.file_name}.")
+        node_group = network_file.create_group("nodes")
         for column in data.columns:
             node_group.create_dataset(
                 column,
                 data=data[column]
             )
 
-    def write_edges(self, edge_group, parameters):
-        # TODO
+    def write_edges(self, network_file, parameters):
+        """
+        Creates and saves all edges of an ion-network. They are saved in an .hdf
+        file as indptr and indices of a scipy.sparse.csr matrix in en 'edge'
+        group.
+
+        Parameters
+        ----------
+        network_file : h5py.file
+            An opened and writeable .hdf file representing the ion-network.
+        parameters : dict
+            A dictionary with optional parameters for the creation of an
+            ion-network.
+        """
         self.logger.info(f"Writing edges of ion-network {self.file_name}.")
+        edge_group = network_file.create_group("edges")
         rts, dts = self.get_ion_coordinates(["RT", "DT"])
-        indptr, indices = get_sparse_edges(
+        indptr, indices = create_sparse_edges(
             rts,
             dts,
             parameters["max_dt_diff"],
@@ -144,10 +158,33 @@ class Network(object):
             data=indices
         )
 
-    def set_hash_id(self, parameters):
+    def get_edge_indptr_and_indices(self):
         # TODO
-        # print(f"{self.node_count}_{self.edge_count}")
-        pass
+        with h5py.File(self.file_name, "r") as network_file:
+            indices = network_file["edges"]["indices"][...]
+            indptr = network_file["edges"]["indptr"][...]
+        return indptr, indices
+
+    def write_parameters(self, network_file, parameters):
+        """
+        Saves all parameters of an ion-network. They are saved in an .hdf
+        file as attributes of 'parameters' group.
+
+        Parameters
+        ----------
+        network_file : h5py.file
+            An opened and writeable .hdf file representing the ion-network.
+        parameters : dict
+            A dictionary with optional parameters for the creation of an
+            ion-network.
+        """
+        self.logger.info(f"Writing edges of ion-network {self.file_name}.")
+        parameter_group = network_file.create_group("parameters")
+        self.creation_time = time.time()
+        parameter_group.attrs["creation_time"] = self.creation_time
+        for parameter_key, parameter_value in parameters.items():
+            print(parameter_key, parameter_value)
+            parameter_group.attrs[parameter_key] = parameter_value
 
     def get_ion_coordinates(self, dimensions, indices=...):
         """
@@ -222,7 +259,7 @@ if __name__ == "__main__":
 
 
 
-def get_sparse_edges(
+def create_sparse_edges(
     rts,
     dts,
     max_dt_diff,
