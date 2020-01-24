@@ -391,6 +391,10 @@ class open_logger(object):
     def __exit__(self, type, value, traceback):
         if type is not None:
             self.logger.exception("Errors occurred, execution incomplete!")
+            handlers = self.logger.handlers[:]
+            for handler in handlers:
+                handler.close()
+                self.logger.removeHandler(handler)
             sys.exit()
         else:
             self.logger.info("Succesfully finished execution.")

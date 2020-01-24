@@ -3,13 +3,12 @@
 import os
 
 import h5py
-import scipy
 import pandas as pd
 import numpy as np
-import multiprocessing as mp
 import logging
 import numba
 import time
+
 
 class Network(object):
 
@@ -183,7 +182,6 @@ class Network(object):
         self.creation_time = time.time()
         parameter_group.attrs["creation_time"] = self.creation_time
         for parameter_key, parameter_value in parameters.items():
-            print(parameter_key, parameter_value)
             parameter_group.attrs[parameter_key] = parameter_value
 
     def get_ion_coordinates(self, dimensions, indices=...):
