@@ -17,7 +17,7 @@ class Network(object):
         network_file_name,
         centroided_csv_file_name=None,
         parameters={},
-        logger=logging.getLogger('Log')
+        logger=logging.getLogger('ion_network_log')
     ):
         """
         Loads an ion-network. Alternatively, an ion-network is created if a
@@ -38,8 +38,6 @@ class Network(object):
             The logger that indicates all progress
         """
         self.file_name = network_file_name
-        if logger is None:
-            raise ValueError("No logger was provided")
         self.logger = logger
         if centroided_csv_file_name is not None:
             data = self.read_centroided_csv_file(
@@ -141,7 +139,7 @@ class Network(object):
         self.logger.info(f"Writing edges of ion-network {self.file_name}.")
         edge_group = network_file.create_group("edges")
         rts, dts = self.get_ion_coordinates(["RT", "DT"])
-        indptr, indices = create_sparse_edges(
+        indptr, indices = self.create_sparse_edges(
             rts,
             dts,
             parameters["max_dt_diff"],
@@ -157,13 +155,6 @@ class Network(object):
             data=indices
         )
 
-    def get_edge_indptr_and_indices(self):
-        # TODO
-        with h5py.File(self.file_name, "r") as network_file:
-            indices = network_file["edges"]["indices"][...]
-            indptr = network_file["edges"]["indptr"][...]
-        return indptr, indices
-
     def write_parameters(self, network_file, parameters):
         """
         Saves all parameters of an ion-network. They are saved in an .hdf
@@ -177,7 +168,7 @@ class Network(object):
             A dictionary with optional parameters for the creation of an
             ion-network.
         """
-        self.logger.info(f"Writing edges of ion-network {self.file_name}.")
+        self.logger.info(f"Writing parameters of ion-network {self.file_name}.")
         parameter_group = network_file.create_group("parameters")
         self.creation_time = time.time()
         parameter_group.attrs["creation_time"] = self.creation_time
@@ -192,7 +183,7 @@ class Network(object):
         ----------
         dimensions : str or list[str]
             The dimension(s) to retrieve from the ion-network.
-        indices : ellipsis, slice, iterable[int] or iterable[bool]
+        indices : ellipsis, slice, int, iterable[int] or iterable[bool]
             The indices that should be selected from the array. This is most
             performant when this is an ellipsis or slice, but fancy indexing
             with a mask, list or np.ndarray are also supported.
@@ -209,13 +200,13 @@ class Network(object):
             dimensions = [dimensions]
         try:
             iter(indices)
-            sliced = False
+            fancy_indices = True
         except TypeError:
-            sliced = True
+            fancy_indices = False
         with h5py.File(self.file_name, "r") as network_file:
             for dimension in dimensions:
                 array = network_file["nodes"][dimension]
-                if not sliced:
+                if fancy_indices:
                     array = array[...]
                 array = array[indices]
                 arrays.append(array)
@@ -224,15 +215,131 @@ class Network(object):
         else:
             return arrays
 
+    def get_edge_indptr_and_indices(
+        self,
+        rows=...,
+        columns=...,
+        return_as_scipy_csr=False
+    ):
+        # TODO
+        # try:
+        #     iter(rows)
+        #     fancy_indptr = True
+        # except TypeError:
+        #     fancy_indptr = False
+        with h5py.File(self.file_name, "r") as network_file:
+            indptr = network_file["edges"]["indptr"]
+            # if fancy_indptr:
+            #     indptr = indptr[...]
+            indptr = indptr[rows]
+            indices = network_file["edges"]["indices"][...]
+        return indptr, indices
+
+    def create_sparse_edges(
+        self,
+        rts,
+        dts,
+        max_dt_diff,
+        max_rt_diff,
+        symmetric
+    ):
+        # TODO
+        @numba.njit(fastmath=True)
+        def numba_wrapper():
+            if not symmetric:
+                lower_limits = np.arange(len(rts)) + 1
+            else:
+                lower_limits = np.searchsorted(
+                    rts,
+                    rts - max_rt_diff,
+                    "left"
+                )
+            upper_limits = np.searchsorted(
+                rts,
+                rts + max_rt_diff,
+                "right"
+            )
+            neighbors = []
+            for dt, low_limit, high_limit in zip(
+                dts,
+                lower_limits,
+                upper_limits
+            ):
+                small_dt_diffs = np.abs(
+                    dts[low_limit: high_limit] - dt
+                ) <= max_dt_diff
+                local_neighbors = low_limit + np.flatnonzero(small_dt_diffs)
+                neighbors.append(local_neighbors)
+            return neighbors
+        neighbors = numba_wrapper()
+        indptr = np.empty(len(neighbors) + 1, dtype=np.int)
+        indptr[0] = 0
+        indptr[1:] = np.cumsum([len(n) for n in neighbors])
+        indices = np.concatenate(neighbors)
+        return indptr, indices
+
     def align(
         self,
         other,
-        alignment_file_name=None,
+        alignment_file,
         parameters=None
     ):
         # TODO
-        print("align", self, other, alignment_file_name, parameters)
-        pass
+        # TODO update self.parameters and other.parameters?
+        self.logger.info(f"Aligning {self.file_name} with {other.file_name}.")
+        first_indices, second_indices = self.pairwise_node_align(
+            other,
+            parameters["ppm"],
+            parameters["max_rt_diff"],
+            parameters["max_dt_diff"]
+        )
+        alignment_file.create_dataset(
+            "first_indices",
+            data=first_indices
+        )
+        alignment_file.create_dataset(
+            "second_indices",
+            data=second_indices
+        )
+
+    def pairwise_node_align(self, other, ppm, max_rt_diff, max_dt_diff):
+        # TODO
+        mz1, rt1, dt1 = self.get_ion_coordinates(["MZ2", "RT", "DT"])
+        mz2, rt2, dt2 = other.get_ion_coordinates(["MZ2", "RT", "DT"])
+        @numba.njit
+        def numba_wrapper():
+            max_mz_diff = (1 + ppm * 10**-6)
+            mz1_order = np.argsort(mz1)
+            mz2_order = np.argsort(mz2)
+            low_limits = np.searchsorted(
+                mz2[mz2_order],
+                mz1[mz1_order] / max_mz_diff,
+                "left"
+            )
+            high_limits = np.searchsorted(
+                mz2[mz2_order],
+                mz1[mz1_order] * max_mz_diff,
+                "right"
+            )
+            rt2o = rt2[mz2_order]
+            dt2o = dt2[mz2_order]
+            results = []
+            for rt, dt, low, high in zip(
+                rt1[mz1_order],
+                dt1[mz1_order],
+                low_limits,
+                high_limits
+            ):
+                rtd = rt2o[low: high] - rt
+                dtd = dt2o[low: high] - dt
+                good = (np.abs(rtd) < max_rt_diff) & (np.abs(dtd) < max_dt_diff)
+                matches = mz2_order[low + np.flatnonzero(good)]
+                results.append(matches)
+            return results, mz1_order
+        results, mz1_order = numba_wrapper()
+        first_indices = np.repeat(mz1_order, [len(l) for l in results])
+        second_indices = np.concatenate(results)
+        return first_indices, second_indices
 
     def evidence(
         self,
@@ -247,47 +354,3 @@ class Network(object):
 
 if __name__ == "__main__":
     pass
-
-
-
-
-
-
-
-
-
-
-def create_sparse_edges(
-    rts,
-    dts,
-    max_dt_diff,
-    max_rt_diff,
-    symmetric
-):
-    @numba.njit(fastmath=True)
-    def numba_wrapper():
-        if not symmetric:
-            low_limits = np.arange(len(rts)) + 1
-        else:
-            low_limits = np.searchsorted(
-                rts,
-                rts - max_rt_diff,
-                "left"
-            )
-        high_limits = np.searchsorted(
-            rts,
-            rts + max_rt_diff,
-            "right"
-        )
-        neighbors = []
-        for dt, l, h in zip(dts, low_limits, high_limits):
-            small_dt_diffs = np.abs(dts[l: h] - dt) <= max_dt_diff
-            local_neighbors = l + np.flatnonzero(small_dt_diffs)
-            neighbors.append(local_neighbors)
-        return neighbors
-    neighbors = numba_wrapper()
-    indptr = np.empty(len(neighbors) + 1, dtype=np.int)
-    indptr[0] = 0
-    indptr[1:] = np.cumsum([len(n) for n in neighbors])
-    indices = np.concatenate(neighbors)
-    return indptr, indices

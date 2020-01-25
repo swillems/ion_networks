@@ -4,6 +4,7 @@ import click
 import logging
 import sys
 import os
+import h5py
 
 import network
 import parameter_io
@@ -28,10 +29,10 @@ def cli():
     "--centroided_file",
     "-c",
     help="The centroided input file (.csv) with centroided ion peaks. "
-        "The column INTENSITY and MZ2 need to be present. All other columns "
-        "are automically interpreted as precursor selection/separation "
-        "dimensions. This flag can be set multiple times to create multiple "
-        "ion-networks.",
+        "The columns RT, MZ2 and INTENSITY need to be present. All other "
+        "columns are automatically interpreted as precursor "
+        "selection/separation dimensions. This flag can be set multiple times "
+        "to create multiple ion-networks.",
     required=True,
     multiple=True,
     type=click.File('r')
@@ -117,8 +118,15 @@ def create(
         "an 'alignment.hdf' file will be created in directory of the first "
         "[ion_network_file]. WARNING: This overrides already existing files "
         "without confirmation.",
+    required=True,
     type=click.File('w')
 )
+# @click.option(
+#     "--write_mode",
+#     "-w",
+#     help="Alignment file write mode.",
+#     # type=click.File('r')
+# )
 @click.option(
     "--parameter_file",
     "-p",
@@ -139,30 +147,33 @@ def align(
 ):
     parameters = parameter_io.read(
         file_name=get_file_name(parameter_file),
-        default="create"
+        default="align"
     )
     with open_logger(get_file_name(log_file), parameters=parameters) as logger:
         alignment_file_name = get_file_name(alignment_file)
-        for index, first_ion_network_file in enumerate(ion_network_file[:-1]):
-            first_ion_network_file_name = get_file_name(first_ion_network_file)
-            first_ion_network = network.Network(
-                network_file_name=first_ion_network_file_name,
-                parameters=parameters,
-                logger=logger
-            )
-            for second_ion_network_file in ion_network_file[index + 1:]:
-                second_ion_network_file_name = get_file_name(second_ion_network_file)
-                second_ion_network = network.Network(
-                    network_file_name=second_ion_network_file_name,
+        with h5py.File(
+            alignment_file_name,
+            parameters["alignment_file_write_mode"]
+        ) as alignment_file:
+            for index, first_ion_network_file in enumerate(ion_network_file[:-1]):
+                first_ion_network_file_name = get_file_name(first_ion_network_file)
+                first_ion_network = network.Network(
+                    network_file_name=first_ion_network_file_name,
                     parameters=parameters,
                     logger=logger
                 )
-                first_ion_network.align(
-                    second_ion_network,
-                    alignment_file_name=alignment_file_name,
-                    parameters=parameters,
-                    logger=logger
-                )
+                for second_ion_network_file in ion_network_file[index + 1:]:
+                    second_ion_network_file_name = get_file_name(second_ion_network_file)
+                    second_ion_network = network.Network(
+                        network_file_name=second_ion_network_file_name,
+                        parameters=parameters,
+                        logger=logger
+                    )
+                    first_ion_network.align(
+                        second_ion_network,
+                        alignment_file,
+                        parameters=parameters,
+                    )
 
 
 @click.command(
@@ -221,7 +232,7 @@ def evidence(
 ):
     parameters = parameter_io.read(
         file_name=get_file_name(parameter_file),
-        default="create"
+        default="evidence"
     )
     with open_logger(get_file_name(log_file), parameters=parameters) as logger:
         alignment_file_name = get_file_name(alignment_file)
@@ -349,7 +360,7 @@ class open_logger(object):
             If overwrite is True, the current log is not appended to the file name
             but overwrites it instead.
         """
-        logger = logging.getLogger('network_log')
+        logger = logging.getLogger('ion_network_log')
         formatter = logging.Formatter(
             '%(asctime)s > %(message)s'
         )
@@ -379,8 +390,7 @@ class open_logger(object):
         else:
             parameters["log_file_name"] = ""
         logger.info("=" * 50)
-        logger.info("Executing from the command-line:")
-        logger.info(" ".join(sys.argv))
+        logger.info("Executing command: ion_networks.py " + " ".join(sys.argv[1:]))
         logger.info("")
         self.logger = logger
         self.log_file_name = log_file_name

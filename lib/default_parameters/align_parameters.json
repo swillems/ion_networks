@@ -1,3 +1,7 @@
 {
-    "log_file_name": null
+    "log_file_name": null,
+    "ppm": 50,
+    "max_rt_diff": 0.5,
+    "max_dt_diff": 5,
+    "alignment_file_write_mode": "w"
 }

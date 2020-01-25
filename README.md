@@ -1,5 +1,5 @@
 # Ion-networks
-Analysis of LC-IMS-MSMS data with ion-networks.
+Analysis of LC-[...]-MSMS data with ion-networks.
 
 ## Installation
 This repository requires [conda](https://conda.io/projects/conda/en/latest/index.html). After installation of conda, run the following commands in a terminal to download this repository in the desired location:
@@ -13,9 +13,9 @@ conda env create -f ion_networks/install/environment.yml
 Then add the following to your $~/.bashrc$:
 
 ```bash
-ion_networks(){
+ion_networks.py(){
         conda activate ion_networks
-        python /location/where/to/install/ion_networks/src/main.py $@
+        python /location/where/to/install/ion_networks/src/ion_networks.py $@
         conda deactivate
 }
 ```
@@ -25,12 +25,12 @@ ion_networks(){
 In a terminal, run the following command:
 
 ```bash
-ion_networks
+ion_networks.py
 ```
 
 Commands are:
 ```bash
-Usage: main.py [OPTIONS] COMMAND [ARGS]...
+Usage: ion_networks.py [OPTIONS] COMMAND [ARGS]...
 
   Analysis of LC-IMS-MSMS data with ion-networks.
 
@@ -47,7 +47,7 @@ Commands:
 
 Command options are:
 ```bash
-Usage: main.py create [OPTIONS]
+Usage: ion_networks.py create [OPTIONS]
 
   Create ion-networks.
 
@@ -68,7 +68,7 @@ Options:
 ```
 
 ```bash
-Usage: main.py align [OPTIONS]
+Usage: ion_networks.py align [OPTIONS]
 
   Align ion-networks.
 
@@ -88,7 +88,7 @@ Options:
 ```
 
 ```bash
-Usage: main.py evidence [OPTIONS]
+Usage: ion_networks.py evidence [OPTIONS]
 
   Evidence ion-networks.
 
