@@ -138,13 +138,24 @@ class Network(object):
         """
         self.logger.info(f"Writing edges of ion-network {self.file_name}.")
         edge_group = network_file.create_group("edges")
-        rts, dts = self.get_ion_coordinates(["RT", "DT"])
+        dimensions = self.get_ion_coordinates()
+        dimensions = [
+            dimension for dimension in dimensions if dimension not in [
+                "RT",
+                "MZ2",
+                "LOGINT"
+            ]
+        ]
+        max_deviations = [
+            parameters[
+                f"max_edge_deviation_{dimension}"
+            ] for dimension in dimensions
+        ]
         indptr, indices = self.create_sparse_edges(
-            rts,
-            dts,
-            parameters["max_dt_diff"],
-            parameters["max_rt_diff"],
-            symmetric=False
+            self.get_ion_coordinates("RT"),
+            parameters[f"max_edge_deviation_RT"],
+            tuple(self.get_ion_coordinates(dimensions)),
+            tuple(max_deviations)
         )
         edge_group.create_dataset(
             "indptr",
@@ -170,19 +181,26 @@ class Network(object):
         """
         self.logger.info(f"Writing parameters of ion-network {self.file_name}.")
         parameter_group = network_file.create_group("parameters")
-        self.creation_time = time.time()
+        self.creation_time = time.asctime()
         parameter_group.attrs["creation_time"] = self.creation_time
+        parameter_group.attrs["node_count"] = len(
+            network_file["edges"]["indptr"]
+        ) - 1
+        parameter_group.attrs["edge_count"] = len(
+            network_file["edges"]["indices"]
+        )
         for parameter_key, parameter_value in parameters.items():
             parameter_group.attrs[parameter_key] = parameter_value
 
-    def get_ion_coordinates(self, dimensions, indices=...):
+    def get_ion_coordinates(self, dimensions=None, indices=...):
         """
         Get an array with ion coordinates from the ion-network.
 
         Parameters
         ----------
-        dimensions : str or list[str]
-            The dimension(s) to retrieve from the ion-network.
+        dimensions : str, list[str] or None
+            The dimension(s) to retrieve from the ion-network. If this is None,
+            a sorted list with the available dimensions is returned.
         indices : ellipsis, slice, int, iterable[int] or iterable[bool]
             The indices that should be selected from the array. This is most
             performant when this is an ellipsis or slice, but fancy indexing
@@ -192,8 +210,13 @@ class Network(object):
         -------
         np.ndarray or list[np.ndarray]
             A (list of) numpy array(s) with the ion coordinates from the
-            requested dimension(s).
+            requested dimension(s). If dimensions is None, a sorted list with
+            the available dimensions is returned.
         """
+        if dimensions is None:
+            with h5py.File(self.file_name, "r") as network_file:
+                available_dimensions = sorted(network_file["nodes"].keys())
+            return available_dimensions
         arrays = []
         single_dimension = isinstance(dimensions, str)
         if single_dimension:
@@ -237,38 +260,52 @@ class Network(object):
 
     def create_sparse_edges(
         self,
-        rts,
-        dts,
-        max_dt_diff,
-        max_rt_diff,
-        symmetric
+        rt_coordinate_array,
+        max_rt_deviation,
+        coordinate_arrays,
+        max_deviations,
+        symmetric=False
     ):
         # TODO
         @numba.njit(fastmath=True)
         def numba_wrapper():
             if not symmetric:
-                lower_limits = np.arange(len(rts)) + 1
+                lower_limits = np.arange(len(rt_coordinate_array)) + 1
             else:
                 lower_limits = np.searchsorted(
-                    rts,
-                    rts - max_rt_diff,
+                    rt_coordinate_array,
+                    rt_coordinate_array - max_rt_deviation,
                     "left"
                 )
             upper_limits = np.searchsorted(
-                rts,
-                rts + max_rt_diff,
+                rt_coordinate_array,
+                rt_coordinate_array + max_rt_deviation,
                 "right"
             )
             neighbors = []
-            for dt, low_limit, high_limit in zip(
-                dts,
-                lower_limits,
-                upper_limits
+            for index, (low_limit, high_limit) in enumerate(
+                zip(
+                    lower_limits,
+                    upper_limits
+                )
             ):
-                small_dt_diffs = np.abs(
-                    dts[low_limit: high_limit] - dt
-                ) <= max_dt_diff
-                local_neighbors = low_limit + np.flatnonzero(small_dt_diffs)
+                small_deviations = np.repeat(True, high_limit - low_limit)
+                for max_deviation, coordinate_array in zip(
+                    max_deviations,
+                    coordinate_arrays
+                ):
+                    neighbor_coordinates = coordinate_array[
+                        low_limit: high_limit
+                    ]
+                    local_coordinate = coordinate_array[index]
+                    small_coordinate_deviations = np.abs(
+                        neighbor_coordinates - local_coordinate
+                    ) <= max_deviation
+                    small_deviations = np.logical_and(
+                        small_deviations,
+                        small_coordinate_deviations
+                    )
+                local_neighbors = low_limit + np.flatnonzero(small_deviations)
                 neighbors.append(local_neighbors)
             return neighbors
         neighbors = numba_wrapper()
@@ -290,9 +327,10 @@ class Network(object):
         first_indices, second_indices = self.pairwise_node_align(
             other,
             parameters["ppm"],
-            parameters["max_rt_diff"],
-            parameters["max_dt_diff"]
+            parameters["max_alignment_deviation_RT"],
+            parameters["max_alignment_deviation_DT"]
         )
+        # self.pairwise_edge_align
         alignment_file.create_dataset(
             "first_indices",
             data=first_indices
