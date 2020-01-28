@@ -8,6 +8,7 @@ import numpy as np
 import logging
 import numba
 import time
+import math
 
 
 class Network(object):
@@ -138,9 +139,8 @@ class Network(object):
         """
         self.logger.info(f"Writing edges of ion-network {self.file_name}.")
         edge_group = network_file.create_group("edges")
-        dimensions = self.get_ion_coordinates()
         dimensions = [
-            dimension for dimension in dimensions if dimension not in [
+            dimension for dimension in self.dimensions if dimension not in [
                 "RT",
                 "MZ2",
                 "LOGINT"
@@ -183,6 +183,7 @@ class Network(object):
         parameter_group = network_file.create_group("parameters")
         self.creation_time = time.asctime()
         parameter_group.attrs["creation_time"] = self.creation_time
+        parameter_group.attrs["original_file_name"] = self.file_name
         parameter_group.attrs["node_count"] = len(
             network_file["edges"]["indptr"]
         ) - 1
@@ -200,7 +201,7 @@ class Network(object):
         ----------
         dimensions : str, list[str] or None
             The dimension(s) to retrieve from the ion-network. If this is None,
-            a sorted list with the available dimensions is returned.
+            a sorted list with all the available dimensions is returned.
         indices : ellipsis, slice, int, iterable[int] or iterable[bool]
             The indices that should be selected from the array. This is most
             performant when this is an ellipsis or slice, but fancy indexing
@@ -211,12 +212,10 @@ class Network(object):
         np.ndarray or list[np.ndarray]
             A (list of) numpy array(s) with the ion coordinates from the
             requested dimension(s). If dimensions is None, a sorted list with
-            the available dimensions is returned.
+            all the available dimensions is returned.
         """
         if dimensions is None:
-            with h5py.File(self.file_name, "r") as network_file:
-                available_dimensions = sorted(network_file["nodes"].keys())
-            return available_dimensions
+            dimensions = self.dimensions
         arrays = []
         single_dimension = isinstance(dimensions, str)
         if single_dimension:
@@ -322,60 +321,125 @@ class Network(object):
         parameters=None
     ):
         # TODO
-        # TODO update self.parameters and other.parameters?
         self.logger.info(f"Aligning {self.file_name} with {other.file_name}.")
+        self_hashed_id = str(self.__hash__())
+        other_hashed_id = str(other.__hash__())
+        if self_hashed_id not in list(alignment_file.keys()):
+            alignment_group = alignment_file.create_group(
+                self_hashed_id
+            )
+            alignment_group = alignment_group.create_group(other_hashed_id)
+        elif other_hashed_id not in list(alignment_file[self_hashed_id].keys()):
+            alignment_group = alignment_file[self_hashed_id].create_group(
+                other_hashed_id
+            )
+        else:
+            alignment_group = alignment_file[self_hashed_id][other_hashed_id]
+        if "nodes" not in list(alignment_group.keys()):
+            alignment_group.create_group("nodes")
+        if "edges" not in list(alignment_group.keys()):
+            alignment_group.create_group("edges")
+        if "first_indices" in list(alignment_group["nodes"].keys()):
+            del alignment_group["nodes"]["first_indices"]
+        if "second_indices" in list(alignment_group["nodes"].keys()):
+            del alignment_group["nodes"]["second_indices"]
+        if "first_indices" in list(alignment_group["edges"].keys()):
+            del alignment_group["edges"]["first_indices"]
+        if "second_indices" in list(alignment_group["edges"].keys()):
+            del alignment_group["edges"]["second_indices"]
         first_indices, second_indices = self.pairwise_node_align(
             other,
-            parameters["ppm"],
-            parameters["max_alignment_deviation_RT"],
-            parameters["max_alignment_deviation_DT"]
+            parameters
         )
-        # self.pairwise_edge_align
-        alignment_file.create_dataset(
+        alignment_group["nodes"].create_dataset(
             "first_indices",
             data=first_indices
         )
-        alignment_file.create_dataset(
+        alignment_group["nodes"].create_dataset(
             "second_indices",
             data=second_indices
         )
+        # self.pairwise_edge_align
 
-    def pairwise_node_align(self, other, ppm, max_rt_diff, max_dt_diff):
+    def pairwise_node_align(self, other, parameters):
         # TODO
-        mz1, rt1, dt1 = self.get_ion_coordinates(["MZ2", "RT", "DT"])
-        mz2, rt2, dt2 = other.get_ion_coordinates(["MZ2", "RT", "DT"])
+        dimensions = set(self.dimensions + other.dimensions)
+        dimensions = [
+            dimension for dimension in dimensions if dimension not in [
+                "MZ2",
+                "LOGINT"
+            ]
+        ]
+        self_mz = self.get_ion_coordinates("MZ2")
+        other_mz = other.get_ion_coordinates("MZ2")
+        self_mz_order = np.argsort(self_mz)
+        other_mz_order = np.argsort(other_mz)
+        self_coordinates = tuple(
+            [
+                self_coordinate[
+                    self_mz_order
+                ] for self_coordinate in self.get_ion_coordinates(dimensions)
+            ]
+        )
+        other_coordinates = tuple(
+            [
+                other_coordinate[
+                    other_mz_order
+                ] for other_coordinate in other.get_ion_coordinates(dimensions)
+            ]
+        )
+        max_deviations = tuple(
+            [
+                parameters[
+                    f"max_alignment_deviation_{dimension}"
+                ] for dimension in dimensions
+            ]
+        )
+        ppm = parameters["ppm"]
+        max_mz_diff = 1 + ppm * 10**-6
         @numba.njit
         def numba_wrapper():
-            max_mz_diff = (1 + ppm * 10**-6)
-            mz1_order = np.argsort(mz1)
-            mz2_order = np.argsort(mz2)
             low_limits = np.searchsorted(
-                mz2[mz2_order],
-                mz1[mz1_order] / max_mz_diff,
+                other_mz[other_mz_order],
+                self_mz[self_mz_order] / max_mz_diff,
                 "left"
             )
             high_limits = np.searchsorted(
-                mz2[mz2_order],
-                mz1[mz1_order] * max_mz_diff,
+                other_mz[other_mz_order],
+                self_mz[self_mz_order] * max_mz_diff,
                 "right"
             )
-            rt2o = rt2[mz2_order]
-            dt2o = dt2[mz2_order]
             results = []
-            for rt, dt, low, high in zip(
-                rt1[mz1_order],
-                dt1[mz1_order],
-                low_limits,
-                high_limits
+            for index, (low_limit, high_limit) in enumerate(
+                zip(
+                    low_limits,
+                    high_limits
+                )
             ):
-                rtd = rt2o[low: high] - rt
-                dtd = dt2o[low: high] - dt
-                good = (np.abs(rtd) < max_rt_diff) & (np.abs(dtd) < max_dt_diff)
-                matches = mz2_order[low + np.flatnonzero(good)]
+                small_deviations = np.repeat(True, high_limit - low_limit)
+                for max_deviation, self_coordinate, other_coordinate in zip(
+                    max_deviations,
+                    self_coordinates,
+                    other_coordinates
+                ):
+                    local_coordinate = self_coordinate[index]
+                    alignment_coordinates = other_coordinate[
+                        low_limit: high_limit
+                    ]
+                    small_coordinate_deviations = np.abs(
+                        alignment_coordinates - local_coordinate
+                    ) <= max_deviation
+                    small_deviations = np.logical_and(
+                        small_deviations,
+                        small_coordinate_deviations
+                    )
+                matches = other_mz_order[
+                    low_limit + np.flatnonzero(small_deviations)
+                ]
                 results.append(matches)
-            return results, mz1_order
-        results, mz1_order = numba_wrapper()
-        first_indices = np.repeat(mz1_order, [len(l) for l in results])
+            return results
+        results = numba_wrapper()
+        first_indices = np.repeat(self_mz_order, [len(l) for l in results])
         second_indices = np.concatenate(results)
         return first_indices, second_indices
 
@@ -388,6 +452,134 @@ class Network(object):
         # TODO
         print("evidence", self, alignment_file_name, evidence_file_name, parameters)
         pass
+
+    @property
+    def node_count(self):
+        """
+        Get the number of nodes in the ion-network.
+
+        Returns
+        -------
+        int
+            The number of nodes in the ion-network.
+        """
+        with h5py.File(self.file_name, "r") as network_file:
+            node_count = network_file["parameters"].attrs["node_count"]
+        return node_count
+
+    @property
+    def dimensions(self):
+        """
+        Get a sorted list with all the dimensions of the nodes in the
+        ion-network.
+
+        Returns
+        -------
+        list[str]
+            A sorted list with the names of all dimensions ion-network.
+        """
+        with h5py.File(self.file_name, "r") as network_file:
+            dimensions = list(network_file["nodes"].keys())
+        return dimensions
+
+    @property
+    def edge_count(self):
+        """
+        Get the number of edges in the ion-network.
+
+        Returns
+        -------
+        int
+            The number of edges in the ion-network.
+        """
+        with h5py.File(self.file_name, "r") as network_file:
+            edge_count = network_file["parameters"].attrs["edge_count"]
+        return edge_count
+
+    @property
+    def original_file_name(self):
+        """
+        Get the original file name of the ion-network.
+
+        Returns
+        -------
+        str
+            The original file name of the ion-network.
+        """
+        with h5py.File(self.file_name, "r") as network_file:
+            original_file_name = network_file["parameters"].attrs[
+                "original_file_name"
+            ]
+        return original_file_name
+
+    @property
+    def creation_time(self):
+        """
+        Get the creation time of the ion-network.
+
+        Returns
+        -------
+        str
+            The creation time of the ion-network as a string.
+        """
+        with h5py.File(self.file_name, "r") as network_file:
+            creation_time = network_file["parameters"].attrs["creation_time"]
+        return creation_time
+
+    def __str__(self):
+        result = (
+            f"Ion-network {self.file_name} with {self.node_count} nodes "
+            f"and {self.edge_count} edges"
+        )
+        return result
+
+    def __hash__(self):
+        node_count = self.node_count
+        edge_count = self.edge_count
+        offset = math.ceil(math.log10(node_count + 1))
+        return int(edge_count * 10**offset + node_count)
+
+    def __cmp__(self, other):
+        # TODO
+        if self.edge_count != other.edge_count:
+            if self.edge_count < other.edge_count:
+                return -1
+            return 1
+        elif self.node_count != other.node_count:
+            if self.node_count < other.node_count:
+                return -1
+            return 1
+        return 0
+
+    def __eq__(self, other):
+        if self.__cmp__(other) == 0:
+            return True
+        return False
+
+    def __ne__(self, other):
+        if self.__cmp__(other) != 0:
+            return True
+        return False
+
+    def __lt__(self, other):
+        if self.__cmp__(other) < 0:
+            return True
+        return False
+
+    def __gt__(self, other):
+        if self.__cmp__(other) > 0:
+            return True
+        return False
+
+    def __le__(self, other):
+        if self.__cmp__(other) <= 0:
+            return True
+        return False
+
+    def __ge__(self, other):
+        if self.__cmp__(other) >= 0:
+            return True
+        return False
 
 
 if __name__ == "__main__":

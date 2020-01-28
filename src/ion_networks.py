@@ -73,20 +73,7 @@ def create(
         default="create"
     )
     with open_logger(log_file_name, parameters=parameters) as logger:
-        input_csv_files = set()
-        for current_path in input_path:
-            if os.path.isfile(current_path):
-                if current_path.endswith(".csv"):
-                    input_csv_files.add(current_path)
-            elif os.path.isdir(current_path):
-                for current_file_name in os.listdir(current_path):
-                    if current_file_name.endswith(".csv"):
-                        file_name = os.path.join(
-                            current_path,
-                            current_file_name
-                        )
-                        input_csv_files.add(file_name)
-        input_csv_files = sorted(input_csv_files)
+        input_csv_files = get_files_with_extension(input_path, ".csv")
         file_count = len(input_csv_files)
         logger.info(f"Found {file_count} .csv files to process.")
         for csv_file_name in input_csv_files:
@@ -119,7 +106,9 @@ def create(
     "-i",
     help="The ion-network files (.hdf) to align. "
         "This flag can be set multiple times to align multiple "
-        "ion-networks pairwise.",
+        "ion-networks pairwise."
+        "Alternatively, directories can be provided to align all "
+        ".hdf files contained in these directories.",
     required=True,
     multiple=True,
     type=click.Path(exists=True)
@@ -130,16 +119,10 @@ def create(
     "alignment_file_name",
     help="A new alignment file (.hdf) with all pairwise alignments. "
         "WARNING: This overrides already existing files "
-        "without confirmation.",
+        "without confirmation if write mode (parameters file) is set to 'w'.",
     required=True,
     type=click.Path(dir_okay=False)
 )
-# @click.option(
-#     "--write_mode",
-#     "-w",
-#     help="Alignment file write mode.",
-#     # type=click.File('r')
-# )
 @click.option(
     "--parameter_file",
     "-p",
@@ -165,40 +148,22 @@ def align(
         default="align"
     )
     with open_logger(log_file_name, parameters=parameters) as logger:
-        input_hdf_files = set()
-        for current_path in input_path:
-            if os.path.isfile(current_path):
-                if current_path.endswith(".hdf"):
-                    input_hdf_files.add(current_path)
-            elif os.path.isdir(current_path):
-                for current_file_name in os.listdir(current_path):
-                    if current_file_name.endswith(".hdf"):
-                        file_name = os.path.join(
-                            current_path,
-                            current_file_name
-                        )
-                        input_hdf_files.add(file_name)
-        input_hdf_files = sorted(input_hdf_files)
+        input_hdf_file_names = get_files_with_extension(input_path, ".hdf")
+        input_hdf_files = sorted(
+            {
+                network.Network(file_name) for file_name in input_hdf_file_names
+            }
+        )
         file_count = len(input_hdf_files)
         logger.info(f"Found {file_count} .hdf files to process.")
         with h5py.File(
             alignment_file_name,
             parameters["alignment_file_write_mode"]
         ) as alignment_file:
-            for index, first_ion_network_file in enumerate(ion_network_file[:-1]):
-                first_ion_network_file_name = first_ion_network_file
-                first_ion_network = network.Network(
-                    network_file_name=first_ion_network_file_name,
-                    parameters=parameters,
-                    logger=logger
-                )
-                for second_ion_network_file in ion_network_file[index + 1:]:
-                    second_ion_network_file_name = second_ion_network_file
-                    second_ion_network = network.Network(
-                        network_file_name=second_ion_network_file_name,
-                        parameters=parameters,
-                        logger=logger
-                    )
+            for index, first_ion_network in enumerate(
+                input_hdf_files[:-1]
+            ):
+                for second_ion_network in input_hdf_files[index + 1:]:
                     first_ion_network.align(
                         second_ion_network,
                         alignment_file,
@@ -349,6 +314,7 @@ def gui():
 
 
 class open_logger(object):
+    # TODO
 
     def __init__(
         self,
@@ -422,6 +388,24 @@ class open_logger(object):
             sys.exit()
         else:
             self.logger.info("Succesfully finished execution.")
+
+
+def get_files_with_extension(input_path, extension):
+    # TODO
+    input_files = set()
+    for current_path in input_path:
+        if os.path.isfile(current_path):
+            if current_path.endswith(extension):
+                input_files.add(current_path)
+        elif os.path.isdir(current_path):
+            for current_file_name in os.listdir(current_path):
+                if current_file_name.endswith(extension):
+                    file_name = os.path.join(
+                        current_path,
+                        current_file_name
+                    )
+                    input_files.add(file_name)
+    return sorted(input_files)
 
 
 if __name__ == "__main__":
