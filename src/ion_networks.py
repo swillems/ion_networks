@@ -4,8 +4,8 @@ import click
 import logging
 import sys
 import os
-import h5py
 
+import alignment
 import network
 import parameter_io
 
@@ -148,27 +148,20 @@ def align(
         default="align"
     )
     with open_logger(log_file_name, parameters=parameters) as logger:
-        input_hdf_file_names = get_files_with_extension(input_path, ".hdf")
-        input_hdf_files = sorted(
+        ion_network_names = get_files_with_extension(input_path, ".hdf")
+        ion_networks = sorted(
             {
-                network.Network(file_name) for file_name in input_hdf_file_names
+                network.Network(file_name) for file_name in ion_network_names
             }
         )
-        file_count = len(input_hdf_files)
+        file_count = len(ion_networks)
         logger.info(f"Found {file_count} .hdf files to process.")
-        with h5py.File(
+        alignment.Alignment(
             alignment_file_name,
-            parameters["alignment_file_write_mode"]
-        ) as alignment_file:
-            for index, first_ion_network in enumerate(
-                input_hdf_files[:-1]
-            ):
-                for second_ion_network in input_hdf_files[index + 1:]:
-                    first_ion_network.align(
-                        second_ion_network,
-                        alignment_file,
-                        parameters=parameters,
-                    )
+            ion_networks=ion_networks,
+            parameters=parameters,
+            logger=logger
+        )
 
 
 @click.command(

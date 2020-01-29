@@ -5,8 +5,10 @@ import os
 import h5py
 import pandas as pd
 import numpy as np
+import scipy
 import logging
 import numba
+import functools
 import time
 import math
 
@@ -67,6 +69,11 @@ class Network(object):
         -------
         pd.Dataframe
             A pd.Dataframe with centroided ion peaks.
+
+        Raises
+        -------
+        KeyError
+            If the RT, MZ2 or LOGINT column is missing.
         """
         self.logger.info(
             f"Reading centroided csv file {centroided_csv_file_name}."
@@ -76,6 +83,13 @@ class Network(object):
             engine="c",
             dtype=np.float,
         )
+        if "RT" not in data:
+            raise KeyError("No RT column present")
+        if "MZ2" not in data:
+            raise KeyError("No MZ2 column present")
+        if "LOGINT" not in data:
+            raise KeyError("No LOGINT column present")
+        data = data.sort_values(by=["RT", "MZ2"])
         return data
 
     def create_from_data(self, data, parameters):
@@ -163,7 +177,8 @@ class Network(object):
         )
         edge_group.create_dataset(
             "indices",
-            data=indices
+            data=indices,
+            compression="lzf"
         )
 
     def write_parameters(self, network_file, parameters):
@@ -181,8 +196,7 @@ class Network(object):
         """
         self.logger.info(f"Writing parameters of ion-network {self.file_name}.")
         parameter_group = network_file.create_group("parameters")
-        self.creation_time = time.asctime()
-        parameter_group.attrs["creation_time"] = self.creation_time
+        parameter_group.attrs["creation_time"] = time.asctime()
         parameter_group.attrs["original_file_name"] = self.file_name
         parameter_group.attrs["node_count"] = len(
             network_file["edges"]["indptr"]
@@ -193,13 +207,14 @@ class Network(object):
         for parameter_key, parameter_value in parameters.items():
             parameter_group.attrs[parameter_key] = parameter_value
 
+    # @functools.lru_cache() # LRU only works if dimensions always is a list
     def get_ion_coordinates(self, dimensions=None, indices=...):
         """
         Get an array with ion coordinates from the ion-network.
 
         Parameters
         ----------
-        dimensions : str, list[str] or None
+        dimensions : str, iterable[str] or None
             The dimension(s) to retrieve from the ion-network. If this is None,
             a sorted list with all the available dimensions is returned.
         indices : ellipsis, slice, int, iterable[int] or iterable[bool]
@@ -237,6 +252,7 @@ class Network(object):
         else:
             return arrays
 
+    @functools.lru_cache()
     def get_edge_indptr_and_indices(
         self,
         rows=...,
@@ -255,7 +271,18 @@ class Network(object):
             #     indptr = indptr[...]
             indptr = indptr[rows]
             indices = network_file["edges"]["indices"][...]
-        return indptr, indices
+        if return_as_scipy_csr:
+            matrix = scipy.sparse.csr_matrix(
+                (
+                    np.ones(self.edge_count, dtype=np.bool),
+                    indices,
+                    indptr
+                ),
+                shape=(self.node_count, self.node_count)
+            )
+            return matrix
+        else:
+            return indptr, indices
 
     def create_sparse_edges(
         self,
@@ -314,55 +341,9 @@ class Network(object):
         indices = np.concatenate(neighbors)
         return indptr, indices
 
-    def align(
-        self,
-        other,
-        alignment_file,
-        parameters=None
-    ):
+    def align_nodes(self, other, parameters):
         # TODO
         self.logger.info(f"Aligning {self.file_name} with {other.file_name}.")
-        self_hashed_id = str(self.__hash__())
-        other_hashed_id = str(other.__hash__())
-        if self_hashed_id not in list(alignment_file.keys()):
-            alignment_group = alignment_file.create_group(
-                self_hashed_id
-            )
-            alignment_group = alignment_group.create_group(other_hashed_id)
-        elif other_hashed_id not in list(alignment_file[self_hashed_id].keys()):
-            alignment_group = alignment_file[self_hashed_id].create_group(
-                other_hashed_id
-            )
-        else:
-            alignment_group = alignment_file[self_hashed_id][other_hashed_id]
-        if "nodes" not in list(alignment_group.keys()):
-            alignment_group.create_group("nodes")
-        if "edges" not in list(alignment_group.keys()):
-            alignment_group.create_group("edges")
-        if "first_indices" in list(alignment_group["nodes"].keys()):
-            del alignment_group["nodes"]["first_indices"]
-        if "second_indices" in list(alignment_group["nodes"].keys()):
-            del alignment_group["nodes"]["second_indices"]
-        if "first_indices" in list(alignment_group["edges"].keys()):
-            del alignment_group["edges"]["first_indices"]
-        if "second_indices" in list(alignment_group["edges"].keys()):
-            del alignment_group["edges"]["second_indices"]
-        first_indices, second_indices = self.pairwise_node_align(
-            other,
-            parameters
-        )
-        alignment_group["nodes"].create_dataset(
-            "first_indices",
-            data=first_indices
-        )
-        alignment_group["nodes"].create_dataset(
-            "second_indices",
-            data=second_indices
-        )
-        # self.pairwise_edge_align
-
-    def pairwise_node_align(self, other, parameters):
-        # TODO
         dimensions = set(self.dimensions + other.dimensions)
         dimensions = [
             dimension for dimension in dimensions if dimension not in [
@@ -442,6 +423,10 @@ class Network(object):
         first_indices = np.repeat(self_mz_order, [len(l) for l in results])
         second_indices = np.concatenate(results)
         return first_indices, second_indices
+
+    def align_edges(self, other, parameters):
+        # TODO
+        return np.arange(10), np.arange(10)
 
     def evidence(
         self,
@@ -525,6 +510,18 @@ class Network(object):
         with h5py.File(self.file_name, "r") as network_file:
             creation_time = network_file["parameters"].attrs["creation_time"]
         return creation_time
+
+    @property
+    def key(self):
+        """
+        Get the unique key that identifies an ion-network.
+
+        Returns
+        -------
+        str
+            The unique key of an ion-network as a string.
+        """
+        return f"{self.edge_count}_{self.node_count}"
 
     def __str__(self):
         result = (

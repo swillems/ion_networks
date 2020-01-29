@@ -4,5 +4,7 @@
     "max_alignment_deviation_RT": 0.5,
     "max_alignment_deviation_DT": 5.0,
     "max_alignment_deviation_MZ1": 12.5,
-    "alignment_file_write_mode": "a"
+    "alignment_file_write_mode": "a",
+    "alignment_file_force_overwrite_nodes": true,
+    "alignment_file_force_overwrite_edges": true
 }
