@@ -2,37 +2,42 @@
 Analysis of LC-[...]-MSMS data with ion-networks.
 
 ## Installation
-This repository requires [conda](https://conda.io/projects/conda/en/latest/index.html). After installation of conda, run the following commands in a terminal to download this repository in the desired location:
+The ion-networks repository was developed on a Ubuntu 18.04 machine with the [python](https://docs.python.org/3.8/) language and standard python packages. It is likely to function on other systems as well, but this has not been verified.
+
+### Windows
+For Windows users, the safest approach is to install a Windows subsystem for Linux (WSL) with Ubuntu 18.04 by following [these steps](https://docs.microsoft.com/en-us/windows/wsl/install-win10). After the WSL has been installed and a user account has been created, close the WSL and download and install [MobaXterm v11.1](https://mobaxterm.mobatek.net/download-home-edition.html) or higher. Then follow the installation steps for Ubuntu 18.04 within the MobaXterm WSL.
+
+### Ubuntu 18.04
+This repository requires python to be run within a [conda](https://conda.io/projects/conda/en/latest/index.html) environment. If not installed, the following commands will perform a full installation of Anaconda3, followed by the installation of the ion-networks repository:
 
 ```bash
-cd /location/where/to/install
-git clone https://github.com/swillems/ion_networks.git
-conda env create -f ion_networks/install/environment.yml
+cd /desired/installation/path/
+wget https://github.com/swillems/ion_networks/tree/master/install/install.sh
+bash install.sh
 ```
 
-Then add the following to your $~/.bashrc$:
-
-```bash
-ion_networks.py(){
-        conda activate ion_networks
-        python /location/where/to/install/ion_networks/src/ion_networks.py $@
-        conda deactivate
-}
-```
+If conda is already installed or if the ion-networks repository needs to be updated updates, download and/or run the ```update.sh``` bash script contained in the [install](https://github.com/swillems/ion_networks/tree/master/install) folder.
 
 ## Usage
+Four basic modules have been implemented for analysis of ion-networks:
 
-In a terminal, run the following command:
+1. Create
+2. Align
+3. Evidence
+4. Show
 
-```bash
-ion_networks.py
-```
+These modules can be run either with a GUI or through a CLI.
 
-Commands are:
+### Windows
+for Windows users, a (desktop) shortcut can be created in Windows that automatically runs MobaXterm, the WSL and the ion-networks GUI. This can be done by opening MobaXterm and pressing the *session* button on the top left. Select the rightmost tab *WSL* and set the Linux distribution to Ubuntu in the *Basic WSL settings* tab. Click the *Advanced WSL settings* tab and copy ```ion_networks.py gui``` to the *Execute the following commands at startup* window. Finally, click the *Bookmark settings* tab and change the *Session name* to e.g. *ion_network_gui*. Click the *Create a desktop shortcut to this session* button and select both options *Hide terminal on startup* and *Close MobaXterm on exit* before pressing *OK* in this popup. Confirm the session settings with *OK*. A pop-up with the GUI running should have appeared in your taskbar, allowing you to test the installation.
+
+### Ubuntu 18.04
+The ion-networks software can be run within a terminal with the command ```ion_networks.py``` (by default this is set during installation). Possible commands are:
+
 ```bash
 Usage: ion_networks.py [OPTIONS] COMMAND [ARGS]...
 
-  Analysis of LC-IMS-MSMS data with ion-networks.
+  Analysis of LC-[...]-MSMS data with ion-networks.
 
 Options:
   -h, --help  Show this message and exit.
@@ -45,72 +50,13 @@ Commands:
   show      Show ion-networks.
 ```
 
-Command options are:
-```bash
-Usage: ion_networks.py create [OPTIONS]
-
-  Create ion-networks.
-
-Options:
-  -r, --raw_file FILENAME         The raw input file (.csv or .hdf) with
-                                  centroided ion peaks. This flag can be set
-                                  multiple times to create multiple ion-
-                                  networks.  [required]
-  -i, --ion_network_file FILENAME
-                                  A new ion-network file (.hdf). This flag can
-                                  be set multiple times to save multiple ion-
-                                  networks in the same order. If not set, a
-                                  new '[raw_file].hdf' file will be created
-                                  per raw file. WARNING: This overrides
-                                  already existing files without confirmation.
-  -p, --parameters FILENAME       A parameter file (.json).
-  -h, --help                      Show this message and exit.
-```
+Each command then comes with its own help function. Typically, a workflow looks as follows:
 
 ```bash
-Usage: ion_networks.py align [OPTIONS]
-
-  Align ion-networks.
-
-Options:
-  -i, --ion_network_file FILENAME
-                                  The ion-network file (.hdf) to align. This
-                                  flag can be set multiple times to align
-                                  multiple ion-networks pairwise.  [required]
-  -a, --alignment_file FILENAME   A new alignment file (.hdf) with all
-                                  pairwise alignments. If not set, an
-                                  'alignment.hdf' file will be created in
-                                  directory of the first [ion_network_file].
-                                  WARNING: This overrides already existing
-                                  files without confirmation.
-  -p, --parameters FILENAME       A parameters file (.json).
-  -h, --help                      Show this message and exit.
+ion_networks.py create -i project_folder/centroided_csv_files/ -o project_folder/ion_networks/ -l project_folder/log.txt
+ion_networks.py align -i project_folder/ion_networks/ -o project_folder/alignment.hdf -l project_folder/log.txt
+ion_networks.py evidence -i project_folder/ion_networks/ -a project_folder/alignment.hdf -o project_folder/ion_networks/ -l project_folder/log.txt
+ion_networks.py show -i project_folder/ion_networks/ -a project_folder/alignment.hdf -e project_folder/ion_networks/ -l project_folder/log.txt
 ```
 
-```bash
-Usage: ion_networks.py evidence [OPTIONS]
-
-  Evidence ion-networks.
-
-Options:
-  -i, --ion_network_file FILENAME
-                                  The ion-network file (.hdf) to evidence.This
-                                  flag can be set multiple times to evidence
-                                  multiple ion-networks.  [required]
-  -a, --alignment_file FILENAME   The alignment file (.hdf) from where to get
-                                  the evidence. If a single ion-network was
-                                  provided, evidence is drawn from all ion-
-                                  networks present in the alignment file. If
-                                  multiple ion-networks are provided that are
-                                  present in the alignment file, only those
-                                  will be used as evidence for eachother.
-                                  [required]
-  -e, --evidence_file FILENAME    A new evidence file (.hdf) for the ion-
-                                  network. If not set, an
-                                  '[ion_network_file].evidence.hdf' file will
-                                  be created per ion-network. WARNING: This
-                                  overrides already existing files without
-                                  confirmation.
-  -p, --parameters FILENAME       A parameters file (.json).
-  -h, --help                      Show this message and exit.
-```
+Alternatively, a GUI can be used by running the command ```ion_networks.py gui```

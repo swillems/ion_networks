@@ -61,7 +61,7 @@ def cli():
     "--log_file",
     "-l",
     "log_file_name",
-    help="Save the log to a [log.csv] file.",
+    help="Save the log to a [log.txt] file.",
     type=click.Path(dir_okay=False)
 )
 def create(
@@ -137,7 +137,7 @@ def create(
     "--log_file",
     "-l",
     "log_file_name",
-    help="Save the log to a [log.csv] file.",
+    help="Save the log to a [log.txt] file.",
     type=click.Path(dir_okay=False)
 )
 def align(
@@ -208,7 +208,7 @@ def align(
     "--log_file",
     "-l",
     "log_file_name",
-    help="Save the log to a [log.csv] file.",
+    help="Save the log to a [log.txt] file.",
     type=click.Path(dir_okay=False)
 )
 def evidence(
@@ -287,7 +287,7 @@ def evidence(
     "--log_file",
     "-l",
     "log_file_name",
-    help="Save the log to a [log.csv] file.",
+    help="Save the log to a [log.txt] file.",
     type=click.Path(dir_okay=False)
 )
 def show(
