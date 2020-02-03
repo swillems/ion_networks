@@ -87,8 +87,6 @@ class Evidence(object):
                 negative = available - positive
 
 
-if __name__ == "__main__":
-    pass
 #
 # import numpy as np
 # import pandas as pd

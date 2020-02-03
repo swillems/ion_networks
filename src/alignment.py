@@ -138,7 +138,3 @@ class Alignment(object):
             elif swap:
                 alignment = alignment[:, ::-1]
         return alignment
-
-
-if __name__ == "__main__":
-    pass

@@ -7,6 +7,7 @@ import os
 BASE_PATH = os.path.dirname(os.path.dirname(__file__))
 LIB_PATH = os.path.join(BASE_PATH, "lib")
 DEFAULT_PARAMETER_PATH = os.path.join(LIB_PATH, "default_parameters")
+CONVERT_PARAMETERS = "convert_parameters.json"
 CREATE_PARAMETERS = "create_parameters.json"
 ALIGN_PARAMETERS = "align_parameters.json"
 EVIDENCE_PARAMETERS = "evidence_parameters.json"
@@ -21,6 +22,7 @@ def read(default=None, file_name=None):
     ----------
     default : str
         The default parameters that should be loaded. Options are:
+            "convert"
             "create"
             "align"
             "evidence"
@@ -38,7 +40,12 @@ def read(default=None, file_name=None):
     if default is None:
         parameters = {}
     else:
-        if default == "create":
+        if default == "convert":
+            default_parameter_file_name = os.path.join(
+                DEFAULT_PARAMETER_PATH,
+                CONVERT_PARAMETERS
+            )
+        elif default == "create":
             default_parameter_file_name = os.path.join(
                 DEFAULT_PARAMETER_PATH,
                 CREATE_PARAMETERS

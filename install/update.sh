@@ -5,6 +5,7 @@ if ! hash ion_networks.py 2>/dev/null; then
   cd $DIR
   cd ..
   echo "Ion-networks are already installed, updating from github."
+  git stash
   git pull
   conda env update --file install/environment.yml
 else

@@ -9,6 +9,7 @@ import click
 from alignment import Alignment
 from network import Network
 from evidence import Evidence
+import conversion
 import parameter_io
 
 
@@ -21,6 +22,87 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 )
 def cli():
     pass
+
+
+
+@click.command(
+    "convert",
+    help="Convert input files."
+)
+@click.option(
+    "--input_path",
+    "-i",
+    help="An [input.*] file with centroided ion peaks that needs to be "
+        "converted to an [input.csv] file before ion-network creation. "
+        "This flag can be set multiple times to create multiple files. "
+        "Equally, multiple directories can be provided to create multiple "
+        "[input.csv] for all [input.*] files contained in these directories.",
+    multiple=True,
+    required=True,
+    type=click.Path(exists=True)
+)
+@click.option(
+    "--output_directory",
+    "-o",
+    help="For each [input.*] file, an [input.csv] file is created. "
+        "WARNING: This overrides already existing files without confirmation.",
+    required=True,
+    type=click.Path(file_okay=False)
+)
+@click.option(
+    '--data_type',
+    '-d',
+    help="The data type.",
+    required=True,
+    type=click.Choice(
+        ['MGF', 'HDMSE', "SONAR", "SWIMDIA"],
+        case_sensitive=False
+    )
+)
+@click.option(
+    "--parameter_file",
+    "-p",
+    "parameter_file_name",
+    help="A [parameters.json] file with optional parameters.",
+    type=click.Path(exists=True, dir_okay=False)
+)
+@click.option(
+    "--log_file",
+    "-l",
+    "log_file_name",
+    help="Save the log to a [log.txt] file.",
+    type=click.Path(dir_okay=False)
+)
+def convert(
+    input_path,
+    output_directory,
+    data_type,
+    parameter_file_name,
+    log_file_name
+):
+    parameters = parameter_io.read(
+        file_name=parameter_file_name,
+        default="create"
+    )
+    with open_logger(log_file_name, parameters=parameters) as logger:
+        if not os.path.exists(output_directory):
+            os.makedirs(output_directory)
+        input_files = get_files_with_extension(input_path)
+        print(data_type)
+        for full_file_name in sorted(input_files):
+            logger.info(f"Reading {full_file_name}")
+            if data_type == "mgf":
+                data = conversion.read_mgf(full_file_name)
+            elif data_type == "sonar":
+                data = conversion.read_sonar(full_file_name)
+            elif data_type == "hdmse":
+                data = conversion.read_hdmse(full_file_name)
+            elif data_type == "swimdia":
+                data = conversion.read_swim_dia(full_file_name)
+            base_file_name = os.path.basename(full_file_name)
+            out_file_name = os.path.join(output_directory, base_file_name)
+            logger.info(f"Writing {out_file_name}")
+            conversion.write(data, out_file_name)
 
 
 @click.command(
@@ -390,7 +472,7 @@ class open_logger(object):
             self.logger.info("Successfully finished execution.")
 
 
-def get_files_with_extension(input_path, extension):
+def get_files_with_extension(input_path, extension=None):
     """
     Get all files with a specific extension from a list of files and folders.
 
@@ -410,11 +492,11 @@ def get_files_with_extension(input_path, extension):
     input_files = set()
     for current_path in input_path:
         if os.path.isfile(current_path):
-            if current_path.endswith(extension):
+            if (extension is None) or current_path.endswith(extension):
                 input_files.add(current_path)
         elif os.path.isdir(current_path):
             for current_file_name in os.listdir(current_path):
-                if current_file_name.endswith(extension):
+                if (extension is None) or current_file_name.endswith(extension):
                     file_name = os.path.join(
                         current_path,
                         current_file_name
@@ -424,6 +506,7 @@ def get_files_with_extension(input_path, extension):
 
 
 if __name__ == "__main__":
+    cli.add_command(convert)
     cli.add_command(create)
     cli.add_command(align)
     cli.add_command(evidence)
