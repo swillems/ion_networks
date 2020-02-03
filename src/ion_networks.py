@@ -24,7 +24,6 @@ def cli():
     pass
 
 
-
 @click.command(
     "convert",
     help="Convert input files."
@@ -87,22 +86,28 @@ def convert(
     with open_logger(log_file_name, parameters=parameters) as logger:
         if not os.path.exists(output_directory):
             os.makedirs(output_directory)
-        input_files = get_files_with_extension(input_path)
-        print(data_type)
+        if data_type == "mgf":
+            input_files = get_files_with_extension(input_path, extension=".mgf")
+        elif data_type == "sonar":
+            input_files = get_files_with_extension(input_path, extension=".csv")
+        elif data_type == "hdmse":
+            input_files = get_files_with_extension(input_path, extension=".csv")
+        elif data_type == "swimdia":
+            input_files = get_files_with_extension(input_path, extension=".csv")
+        file_count = len(input_files)
+        logger.info(f"Found {file_count} files to process.")
         for full_file_name in sorted(input_files):
-            logger.info(f"Reading {full_file_name}")
             if data_type == "mgf":
-                data = conversion.read_mgf(full_file_name)
+                data = conversion.read_mgf(full_file_name, logger)
             elif data_type == "sonar":
-                data = conversion.read_sonar(full_file_name)
+                data = conversion.read_sonar(full_file_name, logger)
             elif data_type == "hdmse":
-                data = conversion.read_hdmse(full_file_name)
+                data = conversion.read_hdmse(full_file_name, logger)
             elif data_type == "swimdia":
-                data = conversion.read_swim_dia(full_file_name)
+                data = conversion.read_swim_dia(full_file_name, logger)
             base_file_name = os.path.basename(full_file_name)
             out_file_name = os.path.join(output_directory, base_file_name)
-            logger.info(f"Writing {out_file_name}")
-            conversion.write(data, out_file_name)
+            conversion.write(data, out_file_name, logger)
 
 
 @click.command(

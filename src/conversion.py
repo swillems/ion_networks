@@ -1,17 +1,20 @@
 #!python
 
+import logging
+
 import numpy as np
 import pandas as pd
 from pyteomics import mgf
 
 
-def read_mgf(in_file_name):
+def read_mgf(full_file_name, logger=logging.getLogger('ion_network_log')):
     # TODO: Docstring
+    logger.info(f"Reading {full_file_name}")
     mz1s = []
     mz2s = []
     rts = []
     ints = []
-    for spectrum in mgf.read(in_file_name):
+    for spectrum in mgf.read(full_file_name):
         peak_count = len(spectrum["intensity array"])
         ints.append(spectrum["intensity array"])
         mz2s.append(spectrum["m/z array"])
@@ -27,10 +30,11 @@ def read_mgf(in_file_name):
     return df
 
 
-def read_sonar(in_file_name):
+def read_sonar(full_file_name, logger=logging.getLogger('ion_network_log')):
     # TODO: Docstring
+    logger.info(f"Reading {full_file_name}")
     data = pd.read_csv(
-        in_file_name,
+        full_file_name,
         engine="c",
         dtype=np.float,
         usecols=["Function", "m_z", "rt", "mobility", "area"]
@@ -42,10 +46,11 @@ def read_sonar(in_file_name):
     return pd.DataFrame(data, columns=dimensions)
 
 
-def read_hdmse(in_file_name):
+def read_hdmse(full_file_name, logger=logging.getLogger('ion_network_log')):
     # TODO: Docstring
+    logger.info(f"Reading {full_file_name}")
     data = pd.read_csv(
-        in_file_name,
+        full_file_name,
         engine="c",
         dtype=np.float,
         usecols=["Function", "m_z", "rt", "mobility", "area"]
@@ -56,10 +61,11 @@ def read_hdmse(in_file_name):
     return pd.DataFrame(data, columns=dimensions)
 
 
-def read_swim_dia(in_file_name):
+def read_swim_dia(full_file_name, logger=logging.getLogger('ion_network_log')):
     # TODO: Docstring
+    logger.info(f"Reading {full_file_name}")
     data = pd.read_csv(
-        in_file_name,
+        full_file_name,
         engine="c",
         dtype=np.float,
         usecols=["Function", "m_z", "rt", "mobility", "area"]
@@ -69,6 +75,7 @@ def read_swim_dia(in_file_name):
     return pd.DataFrame(data, columns=dimensions)
 
 
-def write(data, out_file_name):
+def write(data, out_file_name, logger=logging.getLogger('ion_network_log')):
     # TODO: Docstring
+    logger.info(f"Writing {out_file_name}")
     data.to_csv(out_file_name, index=False)
