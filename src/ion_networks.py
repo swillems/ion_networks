@@ -6,8 +6,9 @@ import os
 
 import click
 
-import alignment
-import network
+from alignment import Alignment
+from network import Network
+from evidence import Evidence
 import parameter_io
 
 
@@ -90,7 +91,7 @@ def create(
                     output_directory,
                     f"{local_file_name[:-4]}.inet.hdf"
                 )
-            network.Network(
+            Network(
                 network_file_name=ion_network_file_name,
                 centroided_csv_file_name=csv_file_name,
                 parameters=parameters,
@@ -151,12 +152,10 @@ def align(
     )
     with open_logger(log_file_name, parameters=parameters) as logger:
         ion_network_names = get_files_with_extension(input_path, ".inet.hdf")
-        ion_networks = {
-            network.Network(file_name) for file_name in ion_network_names
-        }
+        ion_networks = {Network(file_name) for file_name in ion_network_names}
         file_count = len(ion_networks)
         logger.info(f"Found {file_count} .inet.hdf files to process.")
-        alignment.Alignment(
+        Alignment(
             alignment_file_name,
             ion_networks=ion_networks,
             parameters=parameters,
@@ -190,7 +189,7 @@ def align(
     type=click.Path(exists=True, dir_okay=False)
 )
 @click.option(
-    "--output_path",
+    "--output_directory",
     "-o",
     help="For each [input.inet.hdf] file, an evidence is created as "
         "[input.evidence.hdf]. If no output_path is set, these are saved in the "
@@ -215,7 +214,7 @@ def align(
 def evidence(
     input_path,
     alignment_file_name,
-    evidence_file_name,
+    output_directory,
     parameter_file_name,
     log_file_name
 ):
@@ -224,25 +223,36 @@ def evidence(
         default="evidence"
     )
     with open_logger(log_file_name, parameters=parameters) as logger:
-        alignment_file = alignment.Alignment(alignment_file)
-        for index, first_ion_network_file_name in enumerate(ion_network_file):
-            ion_network = network.Network(
-                network_file_name=first_ion_network_file_name,
+        alignment = Alignment(alignment_file_name)
+        ion_network_names = get_files_with_extension(input_path, ".inet.hdf")
+        ion_networks = sorted(
+            {
+                Network(file_name) for file_name in ion_network_names
+            }
+        )
+        file_count = len(ion_networks)
+        logger.info(f"Found {file_count} .inet.hdf files to process.")
+        for ion_network in ion_networks:
+            local_path = os.path.dirname(ion_network.file_name)
+            local_file_name = os.path.basename(ion_network.file_name)
+            if output_directory is None:
+                evidence_file_name = os.path.join(
+                    local_path,
+                    f"{local_file_name[:-9]}.evidence.hdf"
+                )
+            else:
+                evidence_file_name = os.path.join(
+                    output_directory,
+                    f"{local_file_name[:-9]}.evidence.hdf"
+                )
+            Evidence(
+                evidence_file_name=evidence_file_name,
+                ion_network=ion_network,
+                alignment=alignment,
+                evidence_ion_networks=ion_networks,
                 parameters=parameters,
                 logger=logger
             )
-            if len(evidence_file) > index:
-                evidence_file_name = evidence_file[index]
-                ion_network.evidence(
-                    alignment_file_name,
-                    evidence_file_name=evidence_file_name,
-                    parameters=parameters
-                )
-            else:
-                ion_network.evidence(
-                    alignment_file_name,
-                    parameters=parameters
-                )
 
 
 @click.command(
