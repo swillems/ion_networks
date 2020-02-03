@@ -1,19 +1,20 @@
 #!python
 
 import os
-
-import h5py
-import pandas as pd
-import numpy as np
-import scipy
 import logging
-import numba
 import functools
 import time
 import math
 
+import h5py
+import scipy
+import numba
+import pandas as pd
+import numpy as np
+
 
 class Network(object):
+    # TODO: Docstring
 
     def __init__(
         self,
@@ -207,7 +208,7 @@ class Network(object):
         for parameter_key, parameter_value in parameters.items():
             parameter_group.attrs[parameter_key] = parameter_value
 
-    # @functools.lru_cache() # LRU only works if dimensions always is a list
+    # @functools.lru_cache() # TODO LRU only works if dimensions always is a list
     def get_ion_coordinates(self, dimensions=None, indices=...):
         """
         Get an array with ion coordinates from the ion-network.
@@ -253,13 +254,13 @@ class Network(object):
             return arrays
 
     @functools.lru_cache()
-    def get_edge_indptr_and_indices(
+    def get_edges(
         self,
         rows=...,
         columns=...,
-        return_as_scipy_csr=False
+        return_as_scipy_csr=True
     ):
-        # TODO
+        # TODO: Docstring
         # try:
         #     iter(rows)
         #     fancy_indptr = True
@@ -292,7 +293,7 @@ class Network(object):
         max_deviations,
         symmetric=False
     ):
-        # TODO
+        # TODO: Docstring
         @numba.njit(fastmath=True)
         def numba_wrapper():
             if not symmetric:
@@ -342,7 +343,7 @@ class Network(object):
         return indptr, indices
 
     def align_nodes(self, other, parameters):
-        # TODO
+        # TODO: Docstring
         self.logger.info(f"Aligning {self.file_name} with {other.file_name}.")
         dimensions = set(self.dimensions + other.dimensions)
         dimensions = [
@@ -422,11 +423,7 @@ class Network(object):
         results = numba_wrapper()
         first_indices = np.repeat(self_mz_order, [len(l) for l in results])
         second_indices = np.concatenate(results)
-        return first_indices, second_indices
-
-    def align_edges(self, other, parameters):
-        # TODO
-        return np.arange(10), np.arange(10)
+        return np.stack([first_indices, second_indices]).T
 
     def evidence(
         self,
@@ -434,7 +431,7 @@ class Network(object):
         evidence_file_name=None,
         parameters=None
     ):
-        # TODO
+        # TODO: Docstring
         print("evidence", self, alignment_file_name, evidence_file_name, parameters)
         pass
 
@@ -537,7 +534,6 @@ class Network(object):
         return int(edge_count * 10**offset + node_count)
 
     def __cmp__(self, other):
-        # TODO
         if self.edge_count != other.edge_count:
             if self.edge_count < other.edge_count:
                 return -1

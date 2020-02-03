@@ -1,9 +1,10 @@
 #!python
 
-import click
 import logging
 import sys
 import os
+
+import click
 
 import alignment
 import network
@@ -28,23 +29,23 @@ def cli():
 @click.option(
     "--input_path",
     "-i",
-    help="An input file (.csv) with centroided ion peaks. "
+    help="An [input.csv] file with centroided ion peaks. "
         "The columns RT, MZ2 and LOGINT need to be present. "
         "All other columns are automatically interpreted as precursor "
         "selection/separation dimensions. "
         "This flag can be set multiple times to create multiple ion-networks. "
-        "Alternatively, directories can be provided to create "
-        "ion-networks for all .csv files contained in these directories.",
+        "Equally, multiple directories can be provided to create "
+        "ion-networks for all [input.csv] files contained in these directories.",
     multiple=True,
     required=True,
     type=click.Path(exists=True)
 )
 @click.option(
-    "--output_path",
+    "--output_directory",
     "-o",
     help="For each [input.csv] file, an ion-networks is created as "
-        "[input.hdf]. If no output_path is set, these are saved in the "
-        "original directory as the [input.csv] file. "
+        "[input.inet.hdf]. If no output_directory is set, these are saved in the "
+        "original directory as the [input.csv] files. "
         "WARNING: This overrides already existing files without confirmation.",
     type=click.Path(file_okay=False)
 )
@@ -52,19 +53,19 @@ def cli():
     "--parameter_file",
     "-p",
     "parameter_file_name",
-    help="A file with optional parameters (.json).",
+    help="A [parameters.json] file with optional parameters.",
     type=click.Path(exists=True, dir_okay=False)
 )
 @click.option(
     "--log_file",
     "-l",
     "log_file_name",
-    help="Save the log to a file (.txt).",
+    help="Save the log to a [log.csv] file.",
     type=click.Path(dir_okay=False)
 )
 def create(
     input_path,
-    output_path,
+    output_directory,
     parameter_file_name,
     log_file_name
 ):
@@ -79,15 +80,15 @@ def create(
         for csv_file_name in input_csv_files:
             local_path = os.path.dirname(csv_file_name)
             local_file_name = os.path.basename(csv_file_name)
-            if output_path is None:
+            if output_directory is None:
                 ion_network_file_name = os.path.join(
                     local_path,
-                    f"{local_file_name[:-4]}.hdf"
+                    f"{local_file_name[:-4]}.inet.hdf"
                 )
             else:
                 ion_network_file_name = os.path.join(
-                    output_path,
-                    f"{local_file_name[:-4]}.hdf"
+                    output_directory,
+                    f"{local_file_name[:-4]}.inet.hdf"
                 )
             network.Network(
                 network_file_name=ion_network_file_name,
@@ -104,22 +105,23 @@ def create(
 @click.option(
     "--input_path",
     "-i",
-    help="The ion-network files (.hdf) to align. "
+    help="The [input.inet.hdf] ion-network files to align. "
         "This flag can be set multiple times to align multiple "
         "ion-networks pairwise."
-        "Alternatively, directories can be provided to align all "
-        ".hdf files contained in these directories.",
+        "Equally, multiple directories can be provided to align all "
+        "[input.inet.hdf] files contained in these directories.",
     required=True,
     multiple=True,
     type=click.Path(exists=True)
 )
 @click.option(
-    "--alignment_file",
-    "-a",
+    "--output_file",
+    "-o",
     "alignment_file_name",
-    help="A new alignment file (.hdf) with all pairwise alignments. "
-        "WARNING: This overrides already existing files "
-        "without confirmation if write mode (parameters file) is set to 'w'.",
+    help="A new [alignment.hdf] file with all pairwise alignments. "
+        "WARNING: This overrides already existing alignments "
+        "without confirmation unless 'force_overwrite' "
+        "is set to false in a [parameters.json] file.",
     required=True,
     type=click.Path(dir_okay=False)
 )
@@ -127,14 +129,14 @@ def create(
     "--parameter_file",
     "-p",
     "parameter_file_name",
-    help="A file with optional parameters (.json).",
+    help="A [parameters.json] file with optional parameters.",
     type=click.Path(exists=True, dir_okay=False)
 )
 @click.option(
     "--log_file",
     "-l",
     "log_file_name",
-    help="Save the log to a file (.txt).",
+    help="Save the log to a [log.csv] file.",
     type=click.Path(dir_okay=False)
 )
 def align(
@@ -148,14 +150,12 @@ def align(
         default="align"
     )
     with open_logger(log_file_name, parameters=parameters) as logger:
-        ion_network_names = get_files_with_extension(input_path, ".hdf")
-        ion_networks = sorted(
-            {
-                network.Network(file_name) for file_name in ion_network_names
-            }
-        )
+        ion_network_names = get_files_with_extension(input_path, ".inet.hdf")
+        ion_networks = {
+            network.Network(file_name) for file_name in ion_network_names
+        }
         file_count = len(ion_networks)
-        logger.info(f"Found {file_count} .hdf files to process.")
+        logger.info(f"Found {file_count} .inet.hdf files to process.")
         alignment.Alignment(
             alignment_file_name,
             ion_networks=ion_networks,
@@ -169,54 +169,53 @@ def align(
     help="Evidence ion-networks."
 )
 @click.option(
-    "--ion_network_file",
+    "--input_path",
     "-i",
-    help="The ion-network file (.hdf) to evidence."
+    help="The ion-network file (.inet.hdf) to evidence."
         "This flag can be set multiple times to evidence multiple "
-        "ion-networks.",
+        "ion-networks against each other."
+        "Alternatively, directories can be provided to evidence all "
+        "[.inet.hdf] files contained in these directories.",
     required=True,
     multiple=True,
-    type=click.File('r')
+    type=click.Path(exists=True)
 )
 @click.option(
     "--alignment_file",
     "-a",
     help="The alignment file (.hdf) from where to get the evidence. "
-        "If a single ion-network was provided, evidence is drawn from all "
-        "ion-networks present in the alignment file. If multiple ion-networks "
-        "are provided that are present in the alignment file, only those will "
-        "be used as evidence for eachother.",
+        "Only those ion-networks with actual alignments will be used as "
+        "evidence for eachother.",
     required=True,
-    type=click.File('r')
+    type=click.Path(exists=True, dir_okay=False)
 )
 @click.option(
-    "--evidence_file",
-    "-e",
-    help="A new evidence file (.hdf) for the ion-network. If not set, "
-        "an '[ion_network_file].evidence.hdf' file will be created per "
-        "ion-network. WARNING: This overrides already existing files without "
-        "confirmation.",
-    multiple=True,
-    type=click.File('w')
+    "--output_path",
+    "-o",
+    help="For each [input.inet.hdf] file, an evidence is created as "
+        "[input.evidence.hdf]. If no output_path is set, these are saved in the "
+        "original directory as the [input.inet.hdf] files. "
+        "WARNING: This overrides already existing files without confirmation.",
+    type=click.Path(file_okay=False)
 )
 @click.option(
     "--parameter_file",
     "-p",
     "parameter_file_name",
-    help="A file with optional parameters (.json).",
+    help="A [parameters.json] file with optional parameters.",
     type=click.Path(exists=True, dir_okay=False)
 )
 @click.option(
     "--log_file",
     "-l",
     "log_file_name",
-    help="Save the log to a file (.txt).",
+    help="Save the log to a [log.csv] file.",
     type=click.Path(dir_okay=False)
 )
 def evidence(
-    ion_network_file,
-    alignment_file,
-    evidence_file,
+    input_path,
+    alignment_file_name,
+    evidence_file_name,
     parameter_file_name,
     log_file_name
 ):
@@ -225,9 +224,8 @@ def evidence(
         default="evidence"
     )
     with open_logger(log_file_name, parameters=parameters) as logger:
-        alignment_file_name = alignment_file
-        for index, first_ion_network_file in enumerate(ion_network_file):
-            first_ion_network_file_name = first_ion_network_file
+        alignment_file = alignment.Alignment(alignment_file)
+        for index, first_ion_network_file_name in enumerate(ion_network_file):
             ion_network = network.Network(
                 network_file_name=first_ion_network_file_name,
                 parameters=parameters,
@@ -254,7 +252,7 @@ def evidence(
 @click.option(
     "--ion_network_file",
     "-i",
-    help="The ion-network file (.hdf) to show."
+    help="The ion-network file (.inet.hdf) to show."
         "This flag can be set multiple times to evidence multiple "
         "ion-networks.",
     required=True,
@@ -264,7 +262,7 @@ def evidence(
 @click.option(
     "--evidence_file",
     "-e",
-    help="The evidence file (.hdf).",
+    help="The evidence file (.evidence.hdf).",
     required=True,
     type=click.File('r')
 )
@@ -272,14 +270,14 @@ def evidence(
     "--parameter_file",
     "-p",
     "parameter_file_name",
-    help="A file with optional parameters (.json).",
+    help="A [parameters.json] file with optional parameters.",
     type=click.Path(exists=True, dir_okay=False)
 )
 @click.option(
     "--log_file",
     "-l",
     "log_file_name",
-    help="Save the log to a file (.txt).",
+    help="Save the log to a [log.csv] file.",
     type=click.Path(dir_okay=False)
 )
 def show(
@@ -288,7 +286,8 @@ def show(
     parameter_file_name,
     log_file_name
 ):
-    # TODO
+    # TODO: implement
+    raise NotImplementedError
     parameters = parameter_io.read(
         file_name=parameter_file_name,
         default="create"
@@ -302,12 +301,12 @@ def show(
     help="Graphical user interface for ion-networks."
 )
 def gui():
-    # TODO
-    pass
+    # TODO: implement
+    raise NotImplementedError
 
 
 class open_logger(object):
-    # TODO
+    # TODO: Docstring
 
     def __init__(
         self,
@@ -367,11 +366,9 @@ class open_logger(object):
         self.log_file_name = log_file_name
 
     def __enter__(self):
-        # TODO
         return self.logger
 
     def __exit__(self, type, value, traceback):
-        # TODO
         if type is not None:
             self.logger.exception("Errors occurred, execution incomplete!")
             handlers = self.logger.handlers[:]
@@ -380,11 +377,26 @@ class open_logger(object):
                 self.logger.removeHandler(handler)
             sys.exit()
         else:
-            self.logger.info("Succesfully finished execution.")
+            self.logger.info("Successfully finished execution.")
 
 
 def get_files_with_extension(input_path, extension):
-    # TODO
+    """
+    Get all files with a specific extension from a list of files and folders.
+
+    Parameters
+    ----------
+    input_path : iterable[str]
+        An iterable with files or folders from which all files with a specific
+        extension need to be selected.
+    extension : str
+        The extension of the files of interest.
+
+    Returns
+    -------
+    list
+        A sorted list with unique file names with the specific extension.
+    """
     input_files = set()
     for current_path in input_path:
         if os.path.isfile(current_path):

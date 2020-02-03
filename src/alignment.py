@@ -1,12 +1,16 @@
 #!python
 
-
-import h5py
 import logging
 import time
+import functools
+
+import h5py
+import scipy
+import numpy as np
 
 
 class Alignment(object):
+    # TODO: Docstring
 
     def __init__(
         self,
@@ -23,12 +27,12 @@ class Alignment(object):
         ----------
         alignment_file_name : str
             The file name of the alignment.
-        ion_networks : None or list[ion-network]
+        ion_networks : None or iterable[ion-network]
             The ion-networks to align. If this is None, the alignment file
             is opened as read only.
         parameters : dict
-            A dictionary with optional parameters for the creation of an
-            ion-network.
+            A dictionary with optional parameters for the alignment of
+            ion-networks.
         logger : logging.logger
             The logger that indicates all progress
         """
@@ -38,122 +42,102 @@ class Alignment(object):
             self.align_ion_networks(ion_networks, parameters)
 
     def align_ion_networks(self, ion_networks, parameters):
-        # TODO
+        """
+        Pairwise align multiple ion-networks against each other.
+
+        Parameters
+        ----------
+        ion_networks : iterable[ion_network]
+            The ion-networks that will all be pairwise aligned ageainst each
+            other.
+        parameters : dict
+            A dictionary with optional parameters for the alignment of
+            ion-networks.
+        """
         with h5py.File(
             self.file_name,
-            parameters["alignment_file_write_mode"]
+            parameters["file_mode"]
         ) as alignment_file:
             ion_networks = sorted(ion_networks)
             for index, first_ion_network in enumerate(
                 ion_networks[:-1]
             ):
+                if first_ion_network.key in alignment_file:
+                    first_group = alignment_file[first_ion_network.key]
+                else:
+                    first_group = alignment_file.create_group(
+                        first_ion_network.key
+                    )
                 for second_ion_network in ion_networks[index + 1:]:
-                    if first_ion_network.key not in list(alignment_file.keys()):
-                        alignment_group = alignment_file.create_group(
-                            first_ion_network.key
-                        )
-                        alignment_group = alignment_group.create_group(
-                            second_ion_network.key
-                        )
-                    elif second_ion_network.key not in list(
-                        alignment_file[first_ion_network.key].keys()
-                    ):
-                        alignment_group = alignment_file[
-                            first_ion_network.key
-                        ].create_group(
-                            second_ion_network.key
-                        )
-                    else:
-                        alignment_group = alignment_file[
-                            first_ion_network.key
-                        ][
-                            second_ion_network.key
-                        ]
-                    if parameters["alignment_file_force_overwrite_nodes"]:
-                        align_nodes = True
-                    else:
-                        try:
-                            alignment_group["nodes"]["first_indices"]
-                            alignment_group["nodes"]["second_indices"]
-                            align_nodes = False
-                        except KeyError:
-                            align_nodes = True
-                    if align_nodes:
-                        if "nodes" in list(alignment_group.keys()):
-                            del alignment_group["nodes"]
-                        alignment_group.create_group("nodes")
-                        first_indices, second_indices = first_ion_network.align_nodes(
+                    if second_ion_network.key in first_group:
+                        if parameters["force_overwrite"]:
+                            del first_group[second_ion_network.key]
+                        else:
+                            continue
+                    second_group = first_group.create_dataset(
+                        second_ion_network.key,
+                        data=first_ion_network.align_nodes(
                             second_ion_network,
                             parameters
                         )
-                        alignment_group["nodes"].create_dataset(
-                            "first_indices",
-                            data=first_indices
-                        )
-                        alignment_group["nodes"].create_dataset(
-                            "second_indices",
-                            data=second_indices
-                        )
-                        alignment_group["nodes"].attrs[
-                            "creation_time"
-                        ] = time.asctime()
-                    if parameters["alignment_file_force_overwrite_edges"]:
-                        align_edges = True
-                    else:
-                        try:
-                            alignment_group["edges"]["first_indices"]
-                            alignment_group["edges"]["second_indices"]
-                            align_edges = False
-                        except KeyError:
-                            align_edges = True
-                    if align_edges:
-                        if "edges" in list(alignment_group.keys()):
-                            del alignment_group["edges"]
-                        alignment_group.create_group("edges")
-                        first_indices, second_indices = first_ion_network.align_edges(
-                            second_ion_network,
-                            parameters
-                        )
-                        alignment_group["edges"].create_dataset(
-                            "first_indices",
-                            data=first_indices
-                        )
-                        alignment_group["edges"].create_dataset(
-                            "second_indices",
-                            data=second_indices
-                        )
-                    if align_nodes or align_edges:
-                        if "parameters" in list(alignment_group.keys()):
-                            del alignment_group["parameters"]
-                        alignment_group["parameters"].attrs[
-                            "creation_time"
-                        ] = time.asctime()
-                        for parameter_key, parameter_value in parameters.items():
-                            alignment_group["parameters"].attrs[
-                                parameter_key
-                            ] = parameter_value
+                    )
+                    second_group.attrs["creation_time"] = time.asctime()
+                    for parameter_key, parameter_value in parameters.items():
+                        second_group.attrs[parameter_key] = parameter_value
 
-    def get_alignment(self, first_ion_network, second_ion_network):
-        # TODO
+    @functools.lru_cache
+    def get_alignment(
+        self,
+        first_ion_network,
+        second_ion_network,
+        return_as_scipy_csr=False
+    ):
+        """
+        Get the pairwise alignment between two ion-networks.
+
+        Parameters
+        ----------
+        first_ion_network : ion_network
+            The first ion-networks of the alignment.
+        second_ion_network : ion_network
+            The second ion-networks of the alignment.
+        return_as_scipy_csr : bool
+            If True, return the alignment as a scipy.sparse.csr_matrix,
+            otherwise, return the alignment as a 2-dimensional np.ndarray.
+
+        Returns
+        ----------
+        np.ndarray or scipy.sparse.csr_matrix(bool)
+            A 2-dimensional array of shape (2, n) with n the number of nodes
+            aligned. The first column are the indices of the first ion-network
+            and the second column contains the indices of the second
+            ion-network. If return_as_scipy_csr is True, a sparse csr matrix
+            is created from this array before it is returned.
+        """
+        swap = False
         if first_ion_network > second_ion_network:
             first_ion_network, second_ion_network = second_ion_network, first_ion_network
             swap = True
-        else:
-            swap = False
         with h5py.File(self.file_name, "r") as alignment_file:
-            alignment_group = alignment_file[
-                first_ion_network.key
-            ][
+            alignment = alignment_file[first_ion_network.key][
                 second_ion_network.key
-            ]
-            nodes_first_indices = alignment_group["nodes/first_indices"][...]
-            nodes_second_indices = alignment_group["nodes/second_indices"][...]
-            edges_first_indices = alignment_group["edges/first_indices"][...]
-            edges_second_indices = alignment_group["edges/second_indices"][...]
-        if swap:
-            return nodes_second_indices, nodes_first_indices, edges_second_indices, edges_first_indices
-        else:
-            return nodes_first_indices, nodes_second_indices, edges_first_indices, edges_second_indices
+            ][...]
+            if return_as_scipy_csr:
+                alignment = scipy.sparse.csr_matrix(
+                    (
+                        np.ones(alignment.shape[0], dtype=np.bool),
+                        (alignment[:, 0], alignment[:, 1])
+                    ),
+                    shape=(
+                        first_ion_network.node_count,
+                        second_ion_network.node_count
+                    )
+                )
+                if swap:
+                    alignment = alignment.T.tocsr()
+            elif swap:
+                alignment = alignment[:, ::-1]
+        return alignment
 
 
 if __name__ == "__main__":
