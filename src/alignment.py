@@ -2,7 +2,7 @@
 
 import logging
 import time
-import functools
+# import functools # NOTE: Can be used to increase speed, but costs RAM
 
 import h5py
 import scipy
@@ -81,13 +81,20 @@ class Alignment(object):
                         data=first_ion_network.align_nodes(
                             second_ion_network,
                             parameters
-                        )
+                        ),
+                        compression="lzf"
                     )
                     second_group.attrs["creation_time"] = time.asctime()
+                    dimension_overlap = first_ion_network.dimension_overlap(
+                        second_ion_network
+                    )
                     for parameter_key, parameter_value in parameters.items():
+                        if parameter_key.startswith("max_edge_deviation"):
+                            if parameter_key[24:] not in dimension_overlap:
+                                continue
                         second_group.attrs[parameter_key] = parameter_value
 
-    @functools.lru_cache
+    # @functools.lru_cache # NOTE: not used frequently enough to enable
     def get_alignment(
         self,
         first_ion_network,
@@ -124,19 +131,19 @@ class Alignment(object):
             alignment = alignment_file[first_ion_network.key][
                 second_ion_network.key
             ][...]
-            if return_as_scipy_csr:
-                alignment = scipy.sparse.csr_matrix(
-                    (
-                        np.ones(alignment.shape[0], dtype=np.bool),
-                        (alignment[:, 0], alignment[:, 1])
-                    ),
-                    shape=(
-                        first_ion_network.node_count,
-                        second_ion_network.node_count
-                    )
+        if return_as_scipy_csr:
+            alignment = scipy.sparse.csr_matrix(
+                (
+                    np.ones(alignment.shape[0], dtype=np.bool),
+                    (alignment[:, 0], alignment[:, 1])
+                ),
+                shape=(
+                    first_ion_network.node_count,
+                    second_ion_network.node_count
                 )
-                if swap:
-                    alignment = alignment.T.tocsr()
-            elif swap:
-                alignment = alignment[:, ::-1]
+            )
+            if swap:
+                alignment = alignment.T.tocsr()
+        elif swap:
+            alignment = alignment[:, ::-1]
         return alignment

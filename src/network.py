@@ -2,12 +2,13 @@
 
 import os
 import logging
-import functools
+# import functools # NOTE: Can be used to increase speed, but costs RAM
 import time
 import math
 
 import h5py
 import scipy
+import scipy.sparse
 import numba
 import pandas as pd
 import numpy as np
@@ -138,7 +139,8 @@ class Network(object):
         for column in data.columns:
             node_group.create_dataset(
                 column,
-                data=data[column]
+                data=data[column],
+                compression="lzf"
             )
 
     def write_edges(self, network_file, parameters):
@@ -177,7 +179,8 @@ class Network(object):
         )
         edge_group.create_dataset(
             "indptr",
-            data=indptr
+            data=indptr,
+            compression="lzf"
         )
         edge_group.create_dataset(
             "indices",
@@ -199,19 +202,19 @@ class Network(object):
             ion-network.
         """
         self.logger.info(f"Writing parameters of ion-network {self.file_name}.")
-        parameter_group = network_file.create_group("parameters")
-        parameter_group.attrs["creation_time"] = time.asctime()
-        parameter_group.attrs["original_file_name"] = self.file_name
-        parameter_group.attrs["node_count"] = len(
+        network_file.attrs["creation_time"] = time.asctime()
+        network_file.attrs["node_count"] = len(
             network_file["edges"]["indptr"]
         ) - 1
-        parameter_group.attrs["edge_count"] = len(
+        network_file.attrs["edge_count"] = len(
             network_file["edges"]["indices"]
         )
         for parameter_key, parameter_value in parameters.items():
-            parameter_group.attrs[parameter_key] = parameter_value
+            if parameter_key.startswith("max_edge_deviation"):
+                if parameter_key[19:] not in self.dimensions:
+                    continue
+            network_file.attrs[parameter_key] = parameter_value
 
-    # @functools.lru_cache() # TODO LRU only works if dimensions always is a list
     def get_ion_coordinates(self, dimensions=None, indices=...):
         """
         Get an array with ion coordinates from the ion-network.
@@ -235,10 +238,10 @@ class Network(object):
         """
         if dimensions is None:
             dimensions = self.dimensions
-        arrays = []
         single_dimension = isinstance(dimensions, str)
         if single_dimension:
             dimensions = [dimensions]
+        arrays = []
         try:
             iter(indices)
             fancy_indices = True
@@ -256,12 +259,13 @@ class Network(object):
         else:
             return arrays
 
-    @functools.lru_cache()
+    # @functools.lru_cache(2) # NOTE: 2 suffices for most use cases
     def get_edges(
         self,
         rows=...,
         columns=...,
-        return_as_scipy_csr=True
+        return_as_scipy_csr=True,
+        symmetric=False
     ):
         # TODO: Docstring
         # try:
@@ -275,7 +279,7 @@ class Network(object):
             #     indptr = indptr[...]
             indptr = indptr[rows]
             indices = network_file["edges"]["indices"][...]
-        if return_as_scipy_csr:
+        if return_as_scipy_csr or symmetric:
             matrix = scipy.sparse.csr_matrix(
                 (
                     np.ones(self.edge_count, dtype=np.bool),
@@ -284,7 +288,12 @@ class Network(object):
                 ),
                 shape=(self.node_count, self.node_count)
             )
-            return matrix
+            if symmetric and return_as_scipy_csr:
+                return matrix + matrix.T
+            elif return_as_scipy_csr:
+                return matrix
+            else:
+                return matrix.indptr, matrix.indices
         else:
             return indptr, indices
 
@@ -348,13 +357,7 @@ class Network(object):
     def align_nodes(self, other, parameters):
         # TODO: Docstring
         self.logger.info(f"Aligning {self.file_name} with {other.file_name}.")
-        dimensions = set(self.dimensions + other.dimensions)
-        dimensions = [
-            dimension for dimension in dimensions if dimension not in [
-                "MZ2",
-                "LOGINT"
-            ]
-        ]
+        dimensions = self.dimension_overlap(other)
         self_mz = self.get_ion_coordinates("MZ2")
         other_mz = other.get_ion_coordinates("MZ2")
         self_mz_order = np.argsort(self_mz)
@@ -438,6 +441,17 @@ class Network(object):
         print("evidence", self, alignment_file_name, evidence_file_name, parameters)
         pass
 
+    def dimension_overlap(self, other):
+        # TODO: Docstring
+        dimensions = set(self.dimensions + other.dimensions)
+        dimensions = [
+            dimension for dimension in dimensions if dimension not in [
+                "MZ2",
+                "LOGINT"
+            ]
+        ]
+        return dimensions
+
     @property
     def node_count(self):
         """
@@ -449,7 +463,7 @@ class Network(object):
             The number of nodes in the ion-network.
         """
         with h5py.File(self.file_name, "r") as network_file:
-            node_count = network_file["parameters"].attrs["node_count"]
+            node_count = network_file.attrs["node_count"]
         return node_count
 
     @property
@@ -464,7 +478,7 @@ class Network(object):
             A sorted list with the names of all dimensions ion-network.
         """
         with h5py.File(self.file_name, "r") as network_file:
-            dimensions = list(network_file["nodes"].keys())
+            dimensions = list(network_file["nodes"])
         return dimensions
 
     @property
@@ -478,24 +492,8 @@ class Network(object):
             The number of edges in the ion-network.
         """
         with h5py.File(self.file_name, "r") as network_file:
-            edge_count = network_file["parameters"].attrs["edge_count"]
+            edge_count = network_file.attrs["edge_count"]
         return edge_count
-
-    @property
-    def original_file_name(self):
-        """
-        Get the original file name of the ion-network.
-
-        Returns
-        -------
-        str
-            The original file name of the ion-network.
-        """
-        with h5py.File(self.file_name, "r") as network_file:
-            original_file_name = network_file["parameters"].attrs[
-                "original_file_name"
-            ]
-        return original_file_name
 
     @property
     def creation_time(self):
@@ -508,7 +506,7 @@ class Network(object):
             The creation time of the ion-network as a string.
         """
         with h5py.File(self.file_name, "r") as network_file:
-            creation_time = network_file["parameters"].attrs["creation_time"]
+            creation_time = network_file.attrs["creation_time"]
         return creation_time
 
     @property
@@ -524,11 +522,10 @@ class Network(object):
         return f"{self.edge_count}_{self.node_count}"
 
     def __str__(self):
-        result = (
+        return (
             f"Ion-network {self.file_name} with {self.node_count} nodes "
             f"and {self.edge_count} edges"
         )
-        return result
 
     def __hash__(self):
         node_count = self.node_count

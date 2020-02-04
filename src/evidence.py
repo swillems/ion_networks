@@ -1,16 +1,20 @@
 #!python
 
 import logging
+import os
 import time
-import functools
 
 import h5py
-import scipy
 import numpy as np
+
+from network import Network
 
 
 class Evidence(object):
-    # TODO: Docstring
+    """
+    An evidence set containing positive and negative edge evidence, as well as
+    node evidence.
+    """
 
     def __init__(
         self,
@@ -41,15 +45,15 @@ class Evidence(object):
         # """
         self.file_name = evidence_file_name
         self.logger = logger
-        if len(evidence_ion_networks) is not None:
-            self.evidence_ion_networks(
+        if len(evidence_ion_networks) > 0:
+            self.set_ion_networks_evidence(
                 ion_network,
                 alignment,
                 evidence_ion_networks,
                 parameters
             )
 
-    def evidence_ion_networks(
+    def set_ion_networks_evidence(
         self,
         ion_network,
         alignment,
@@ -69,75 +73,144 @@ class Evidence(object):
         #     A dictionary with optional parameters for the alignment of
         #     ion-networks.
         # """
+        directory = os.path.dirname(self.file_name)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
         with h5py.File(
             self.file_name,
             parameters["file_mode"]
         ) as evidence_file:
             ion_network_edges = ion_network.get_edges()
+            ion_network_edges_as_int = ion_network_edges.astype(np.int)
+            left_node_indices, right_node_indices = ion_network_edges.nonzero()
+            if "ion_network_key" not in evidence_file.attrs:
+                evidence_file.attrs["ion_network_key"] = ion_network.key
             for second_ion_network in evidence_ion_networks:
-                pairwise_alignment = alignment.get_node_alignment(
+                if ion_network == second_ion_network:
+                    continue
+                if second_ion_network.key in evidence_file:
+                    if parameters["force_overwrite"]:
+                        del evidence_file[second_ion_network.key]
+                    else:
+                        continue
+                self.logger.info(
+                    f"Evidencing {ion_network.file_name} with "
+                    f"{second_ion_network.file_name}"
+                )
+                evidence_group = evidence_file.create_group(
+                    second_ion_network.key
+                )
+                pairwise_alignment = alignment.get_alignment(
                     ion_network,
                     second_ion_network,
                     return_as_scipy_csr=True
                 )
-                second_ion_network_edges = second_ion_network.get_edges()
-                indirect = pairwise_alignment.T * second_ion_network_edges * pairwise_alignment
-                positive = indirect.multiply(ion_network_edges)
-                available = ion_network_edges * pairwise_alignment.T * pairwise_alignment
-                negative = available - positive
+                positive = pairwise_alignment * second_ion_network.get_edges() * pairwise_alignment.T
+                positive = (positive + positive.T).multiply(ion_network_edges)
+                positive_mask = (ion_network_edges_as_int + positive).data == 2
+                alignment_mask = np.diff(pairwise_alignment.indptr) > 0
+                negative_mask = (
+                    alignment_mask[left_node_indices] & alignment_mask[right_node_indices]
+                ) & (~positive_mask)
+                evidence_group.create_dataset(
+                    "positive_edge_mask",
+                    data=positive_mask,
+                    compression="lzf",
+                )
+                evidence_group.create_dataset(
+                    "negative_edge_mask",
+                    data=negative_mask,
+                    compression="lzf",
+                )
+                evidence_group.create_dataset(
+                    "node_mask",
+                    data=alignment_mask,
+                    compression="lzf",
+                )
+                evidence_group.attrs["creation_time"] = time.asctime()
 
+    def get_evidence(
+        self,
+        network_keys=None,
+        kind=["positive_edges", "negative_edges", "nodes"],
+        return_total=False
+    ):
+        # TODO: Docstring
+        if network_keys is None:
+            network_keys = self.network_keys
+        if isinstance(network_keys, Network):
+            # FIXME: Does not work?
+            network_keys = [network_keys.key]
+        elif isinstance(network_keys, str):
+            network_keys = [network_keys]
+        else:
+            network_keys = [
+                network_key if isinstance(
+                    network_key, str
+                ) else network_key.key for network_key in network_keys
+            ]
+        arrays = {
+            "positive_edges": [],
+            "negative_edges": [],
+            "nodes": [],
+        }
+        single_kind = False
+        if isinstance(kind, str):
+            kind = [kind]
+            single_kind = True
+        with h5py.File(self.file_name, "r") as evidence_file:
+            for network_key in network_keys:
+                if "positive_edges" in kind:
+                    arrays["positive_edges"].append(
+                        evidence_file[network_key]["positive_edge_mask"][...]
+                    )
+                if "negative_edges" in kind:
+                    arrays["negative_edges"].append(
+                        evidence_file[network_key]["negative_edge_mask"][...]
+                    )
+                if "nodes" in kind:
+                    arrays["nodes"].append(
+                        evidence_file[network_key]["node_mask"][...]
+                    )
+        if return_total:
+            arrays = {
+                key: np.sum(value, axis=0) for key, value in arrays.items()
+            }
+        if (len(network_keys) == 1) or return_total:
+            if return_total:
+                if single_kind:
+                    return arrays[kind[0]]
+                return tuple(arrays[k] for k in kind)
+            if single_kind:
+                return arrays[kind[0]][0]
+            return tuple(arrays[k][0] for k in kind)
+        else:
+            if single_kind:
+                return arrays[kind[0]]
+            return tuple(arrays[k] for k in kind)
 
-#
-# import numpy as np
-# import pandas as pd
-# import os
-# import network
-# import importlib
-# import matplotlib
-# from matplotlib import pyplot as plt
-# from timeit import timeit
-# import logging
-# import sys
-# import seaborn as sns
-# import importlib
-# import alignment
-# import h5py
-# formatter = logging.Formatter(
-#     '%(asctime)s > %(message)s'
-# )
-# logger = logging.getLogger('network_log')
-# logger.setLevel(logging.DEBUG)
-# console_handler = logging.StreamHandler(stream=sys.stdout)
-# console_handler.setLevel(logging.DEBUG)
-# console_handler.setFormatter(formatter)
-# logger.addHandler(console_handler)
-#
-#
-#
-#
-# importlib.reload(network)
-# importlib.reload(alignment)
-# inets = []
-# in_folder = "/home/sander/Documents/Proteomics/data/ion_networks/ecoli_sonar/ion_networks"
-# for file_name in sorted(os.listdir(in_folder)):
-#     in_file_name = os.path.join(in_folder, file_name)
-#     inet = network.Network(
-#         in_file_name
-#     )
-#     inets.append(inet)
-# al = alignment.Alignment(
-#     "/home/sander/Documents/Proteomics/data/ion_networks/ecoli_sonar/alignment.hdf"
-# #     "/home/sander/Documents/Proteomics/data/ion_networks/dda/dda_sonar_test_align.hdf"
-# )
-#
-#
-#
-#
-# %matplotlib notebook
-#
-# first_mz2, first_rt1, first_mz1, first_logint = inets[0].get_ion_coordinates(["MZ2", "RT", "MZ1", "LOGINT"])
-# second_mz2, second_rt2, second_mz1, second_logint = inets[1].get_ion_coordinates(["MZ2", "RT", "MZ1", "LOGINT"])
-# a = al.get_alignment(inets[0], inets[1], return_as_scipy_csr=False)
-#
-# sns.jointplot(first_mz1, first_mz2, kind="hex", gridsize=500)
-# sns.jointplot(first_logint[a[:,0]], second_logint[a[:,1]], kind="hex", gridsize=500)
+    @property
+    def network_keys(self):
+        """
+        Get a sorted list with all the ion-network keys providing evidence.
+
+        Returns
+        -------
+        list[str]
+            A sorted list with the keys of all ion-network.
+        """
+        with h5py.File(self.file_name, "r") as network_file:
+            ion_networks = list(network_file)
+        return ion_networks
+
+    @property
+    def network_count(self):
+        """
+        Get the number of ion-network providing evidence.
+
+        Returns
+        -------
+        int
+            The number of ion-network providing evidence.
+        """
+        return len(self.network_keys)

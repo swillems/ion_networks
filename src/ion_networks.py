@@ -278,6 +278,7 @@ def align(
 @click.option(
     "--alignment_file",
     "-a",
+    "alignment_file_name",
     help="The alignment file (.hdf) from where to get the evidence. "
         "Only those ion-networks with actual alignments will be used as "
         "evidence for eachother.",

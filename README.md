@@ -54,16 +54,16 @@ Commands:
   show      Show ion-networks.
 ```
 
-Each command then comes with its own help function through ```ion_networks.py COMMAND -h```
+Each command then comes with its own help function through ```ion_networks.py COMMAND -h```.
 
 Typically, a workflow looks as follows:
 
 ```bash
-ion_networks.py convert -i project_folder/centroided_data/ -o project_folder/centroided_csv_files/ -hdmse
+ion_networks.py convert -i project_folder/centroided_data/ -o project_folder/centroided_csv_files/ -hdmse l project_folder/log.txt
 ion_networks.py create -i project_folder/centroided_csv_files/ -o project_folder/ion_networks/ -l project_folder/log.txt
 ion_networks.py align -i project_folder/ion_networks/ -o project_folder/alignment.hdf -l project_folder/log.txt
 ion_networks.py evidence -i project_folder/ion_networks/ -a project_folder/alignment.hdf -o project_folder/ion_networks/ -l project_folder/log.txt
 ion_networks.py show -i project_folder/ion_networks/ -a project_folder/alignment.hdf -e project_folder/ion_networks/ -l project_folder/log.txt
 ```
 
-Alternatively, a GUI can be used by running the command ```ion_networks.py gui```
+Alternatively, a GUI can be used by running the command ```ion_networks.py gui```.
