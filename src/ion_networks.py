@@ -51,10 +51,19 @@ def cli():
 @click.option(
     '--data_type',
     '-d',
-    help="The data type.",
+    help="The data type of the [input.*] file. If this is DDA, an .mgf file "
+    "that was centroided with ms-convert is expected with the field "
+    "RTINSECONDS as the LC dimension. "
+    "For HDMSE, SONAR and SWIM-DIA, a .csv generated with Waters' Apex3d is "
+    "expected, typically generated as follows 'Apex3D64.exe -pRawDirName "
+    "sample.raw -outputDirName peak_picked_sample_folder -lockMassZ2 785.8426 "
+    "-lockmassToleranceAMU 0.25 -bCSVOutput 1 -writeFuncCsvFiles 0 "
+    "-leThresholdCounts 1 -heThresholdCounts 1 -apexTrackSNRThreshold 1 "
+    "-bEnableCentroids 0'."
+    ,
     required=True,
     type=click.Choice(
-        ['MGF', 'HDMSE', "SONAR", "SWIMDIA"],
+        ['DDA', 'HDMSE', "SONAR", "SWIMDIA"],
         case_sensitive=False
     )
 )
@@ -86,7 +95,7 @@ def convert(
     with open_logger(log_file_name, parameters=parameters) as logger:
         if not os.path.exists(output_directory):
             os.makedirs(output_directory)
-        if data_type == "mgf":
+        if data_type == "dda":
             input_files = get_files_with_extension(input_path, extension=".mgf")
         elif data_type == "sonar":
             input_files = get_files_with_extension(input_path, extension=".csv")
@@ -97,7 +106,7 @@ def convert(
         file_count = len(input_files)
         logger.info(f"Found {file_count} files to process.")
         for full_file_name in sorted(input_files):
-            if data_type == "mgf":
+            if data_type == "dda":
                 data = conversion.read_mgf(full_file_name, logger)
             elif data_type == "sonar":
                 data = conversion.read_sonar(full_file_name, logger)

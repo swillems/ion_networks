@@ -10,7 +10,9 @@ import numpy as np
 
 
 class Alignment(object):
-    # TODO: Docstring
+    """
+    An alignment with pairwise ion-network alignments.
+    """
 
     def __init__(
         self,
@@ -34,7 +36,7 @@ class Alignment(object):
             A dictionary with optional parameters for the alignment of
             ion-networks.
         logger : logging.logger
-            The logger that indicates all progress
+            The logger that indicates all progress.
         """
         self.file_name = alignment_file_name
         self.logger = logger

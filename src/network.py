@@ -14,7 +14,10 @@ import numpy as np
 
 
 class Network(object):
-    # TODO: Docstring
+    """
+    An ion-network with ions as nodes and possible precursor origin of fragments
+    as edges.
+    """
 
     def __init__(
         self,
@@ -39,7 +42,7 @@ class Network(object):
             A dictionary with optional parameters for the creation of an
             ion-network.
         logger : logging.logger
-            The logger that indicates all progress
+            The logger that indicates all progress.
         """
         self.file_name = network_file_name
         self.logger = logger

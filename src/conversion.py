@@ -8,7 +8,22 @@ from pyteomics import mgf
 
 
 def read_mgf(full_file_name, logger=logging.getLogger('ion_network_log')):
-    # TODO: Docstring
+    """
+    Convert an [mgf_input.mgf] file to a pd.DataFrame with as columns the
+    RT, MZ1, MZ2 and LOGINT dimensions.
+
+    Parameters
+    ----------
+    full_file_name : str
+        The file name of the DDA .mgf file (generated with ms-convert).
+    logger : logging.logger
+        The logger that indicates all progress.
+
+    Returns
+    -------
+    pd.DataFrame
+        A pd.DataFrame with as columns the RT, MZ1, MZ2 and LOGINT dimensions.
+    """
     logger.info(f"Reading {full_file_name}")
     mz1s = []
     mz2s = []
@@ -26,12 +41,26 @@ def read_mgf(full_file_name, logger=logging.getLogger('ion_network_log')):
     ints = np.log(np.concatenate(ints))
     dimensions = ["MZ2", "RT", "LOGINT", "MZ1"]
     data = np.stack([mz2s, rts, ints, mz1s]).T
-    df = pd.DataFrame(data, columns=dimensions)
-    return df
+    return pd.DataFrame(data, columns=dimensions)
 
 
 def read_sonar(full_file_name, logger=logging.getLogger('ion_network_log')):
-    # TODO: Docstring
+    """
+    Convert a [sonar_input.csv] file to a pd.DataFrame with as columns the
+    RT, MZ1, MZ2 and LOGINT dimensions.
+
+    Parameters
+    ----------
+    full_file_name : str
+        The file name of the SONAR .csv file (generated with Waters' Apex3d).
+    logger : logging.logger
+        The logger that indicates all progress.
+
+    Returns
+    -------
+    pd.DataFrame
+        A pd.DataFrame with as columns the RT, MZ1, MZ2 and LOGINT dimensions.
+    """
     logger.info(f"Reading {full_file_name}")
     data = pd.read_csv(
         full_file_name,
@@ -47,7 +76,22 @@ def read_sonar(full_file_name, logger=logging.getLogger('ion_network_log')):
 
 
 def read_hdmse(full_file_name, logger=logging.getLogger('ion_network_log')):
-    # TODO: Docstring
+    """
+    Convert a [hdmse_input.csv] file to a pd.DataFrame with as columns the
+    RT, DT, MZ2 and LOGINT dimensions.
+
+    Parameters
+    ----------
+    full_file_name : str
+        The file name of the HDMSE .csv file (generated with Waters' Apex3d).
+    logger : logging.logger
+        The logger that indicates all progress.
+
+    Returns
+    -------
+    pd.DataFrame
+        A pd.DataFrame with as columns the RT, DT, MZ2 and LOGINT dimensions.
+    """
     logger.info(f"Reading {full_file_name}")
     data = pd.read_csv(
         full_file_name,
@@ -62,7 +106,22 @@ def read_hdmse(full_file_name, logger=logging.getLogger('ion_network_log')):
 
 
 def read_swim_dia(full_file_name, logger=logging.getLogger('ion_network_log')):
-    # TODO: Docstring
+    """
+    Convert a [swim_dia_input.csv] file to a pd.DataFrame with as columns the
+    RT, DT, MZ2 and LOGINT dimensions.
+
+    Parameters
+    ----------
+    full_file_name : str
+        The file name of the SWIM-DIA .csv file (generated with Waters' Apex3d).
+    logger : logging.logger
+        The logger that indicates all progress.
+
+    Returns
+    -------
+    pd.DataFrame
+        A pd.DataFrame with as columns the RT, DT, MZ2 and LOGINT dimensions.
+    """
     logger.info(f"Reading {full_file_name}")
     data = pd.read_csv(
         full_file_name,
@@ -76,6 +135,17 @@ def read_swim_dia(full_file_name, logger=logging.getLogger('ion_network_log')):
 
 
 def write(data, out_file_name, logger=logging.getLogger('ion_network_log')):
-    # TODO: Docstring
+    """
+    Save a pandas dataframe with ion coordinates to a file.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        A pd.DataFrame with as columns the selection / separation dimensions.
+    out_file_name : str
+        The file name of the .csv file in which to save the data.
+    logger : logging.logger
+        The logger that indicates all progress.
+    """
     logger.info(f"Writing {out_file_name}")
     data.to_csv(out_file_name, index=False)

@@ -37,7 +37,7 @@ class Evidence(object):
         #     A dictionary with optional parameters for the alignment of
         #     ion-networks.
         # logger : logging.logger
-        #     The logger that indicates all progress
+        #     The logger that indicates all progress.
         # """
         self.file_name = evidence_file_name
         self.logger = logger
