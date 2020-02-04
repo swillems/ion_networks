@@ -5,26 +5,27 @@ Analysis of LC-[...]-MSMS data with ion-networks.
 The ion-networks repository was developed on a Ubuntu 18.04 machine with the [python](https://docs.python.org/3.8/) language and standard python packages. It is likely to function on other systems as well, but this has not been verified.
 
 ### Windows 10
-For Windows users, the safest approach is to install a Windows subsystem for Linux (WSL) with Ubuntu 18.04 by following [these steps](https://docs.microsoft.com/en-us/windows/wsl/install-win10). After the WSL has been installed and a user account has been created, close the WSL and download and install [MobaXterm v11.1](https://mobaxterm.mobatek.net/download-home-edition.html) or higher. Then, follow the installation steps for Ubuntu 18.04 within the MobaXterm WSL.
+For Windows users, the recommended approach is to install a Windows subsystem for Linux (WSL) with Ubuntu 18.04 by following [these steps](https://docs.microsoft.com/en-us/windows/wsl/install-win10). After the WSL has been installed and a user account has been created, close the WSL and download and install [MobaXterm v11.1](https://mobaxterm.mobatek.net/download-home-edition.html) or higher. Then, follow the installation steps for Ubuntu 18.04 within the MobaXterm WSL.
 
 ### Ubuntu 18.04
-This repository requires python to be run within a [conda](https://conda.io/projects/conda/en/latest/index.html) environment. If not installed, the following commands will perform a full installation of Anaconda3, followed by the installation of the ion-networks repository:
+This repository requires python to be run within a [conda](https://conda.io/projects/conda/en/latest/index.html) environment. If not installed, the following commands will perform a full installation of Anaconda3, followed by the installation of the ion-networks repository by [downloading](https://github.com/swillems/ion_networks/tree/master/install/install.sh) and running the install script:
 
 ```bash
 cd /desired/installation/path/
-wget https://github.com/swillems/ion_networks/tree/master/install/install.sh
+wget https://github.com/swillems/ion_networks/blob/master/install/install.sh
 bash install.sh
 ```
 
 If conda is already installed or if the ion-networks repository needs to be updated, [download](https://github.com/swillems/ion_networks/tree/master/install/update.sh) and/or run the ```update.sh``` bash script contained in the [install](https://github.com/swillems/ion_networks/tree/master/install) folder of the ion-networks repository.
 
 ## Usage
-Four basic modules have been implemented for analysis of ion-networks:
+Five basic modules have been implemented for analysis of ion-networks:
 
-1. Create
-2. Align
-3. Evidence
-4. Show
+1. Convert
+2. Create
+3. Align
+4. Evidence
+5. Show
 
 These modules can be run either with a GUI or through a CLI.
 
