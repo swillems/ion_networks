@@ -12,8 +12,10 @@ This repository requires python to be run within a [conda](https://conda.io/proj
 
 ```bash
 cd /desired/installation/path/
-wget https://github.com/swillems/ion_networks/blob/master/install/install.sh
+wget 'https://raw.githubusercontent.com/swillems/ion_networks/master/install/install.sh'
+# wget --auth-no-challenge -O install.sh https://raw.githubusercontent.com/swillems/ion_networks/master/install/install.sh?token=XXX
 bash install.sh
+rm install.sh
 ```
 
 If conda is already installed or if the ion-networks repository needs to be updated, [download](https://github.com/swillems/ion_networks/tree/master/install/update.sh) and/or run the ```update.sh``` bash script contained in the [install](https://github.com/swillems/ion_networks/tree/master/install) folder of the ion-networks repository.
