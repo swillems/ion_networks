@@ -11,6 +11,7 @@ from network import Network
 from evidence import Evidence
 import conversion
 import parameter_io
+import gui as inet_gui
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -357,21 +358,20 @@ def evidence(
     help="Show ion-networks."
 )
 @click.option(
-    "--ion_network_file",
+    "--input_path",
     "-i",
-    help="The ion-network file (.inet.hdf) to show."
-        "This flag can be set multiple times to evidence multiple "
-        "ion-networks.",
+    "ion_network_file_name",
+    help="The ion-network file (.inet.hdf) to show.",
     required=True,
-    multiple=True,
-    type=click.File('r')
+    type=click.Path(exists=True, dir_okay=False)
 )
 @click.option(
     "--evidence_file",
     "-e",
-    help="The evidence file (.evidence.hdf).",
+    "evidence_file_name",
+    help="The corresponding evidence file (.evidence.hdf).",
     required=True,
-    type=click.File('r')
+    type=click.Path(exists=True, dir_okay=False)
 )
 @click.option(
     "--parameter_file",
@@ -388,19 +388,23 @@ def evidence(
     type=click.Path(dir_okay=False)
 )
 def show(
-    ion_network_file,
-    evidence_file,
+    ion_network_file_name,
+    evidence_file_name,
     parameter_file_name,
     log_file_name
 ):
     # TODO: implement
-    raise NotImplementedError
+    # raise NotImplementedError
     parameters = parameter_io.read(
         file_name=parameter_file_name,
-        default="create"
+        default="show"
     )
     with open_logger(log_file_name, parameters=parameters) as logger:
-        pass
+        inet_gui.GUI(
+            Network(ion_network_file_name),
+            Evidence(evidence_file_name),
+            logger
+        )
 
 
 @click.command(

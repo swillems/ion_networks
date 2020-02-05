@@ -201,6 +201,8 @@ class Evidence(object):
         """
         with h5py.File(self.file_name, "r") as network_file:
             ion_networks = list(network_file)
+            # FIXME: Can be deleted
+            ion_networks.remove("parameters")
         return ion_networks
 
     @property

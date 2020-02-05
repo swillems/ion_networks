@@ -265,7 +265,7 @@ class Network(object):
         rows=...,
         columns=...,
         return_as_scipy_csr=True,
-        symmetric=False
+        symmetric=False,
     ):
         # TODO: Docstring
         # try:
@@ -293,9 +293,9 @@ class Network(object):
             elif return_as_scipy_csr:
                 return matrix
             else:
-                return matrix.indptr, matrix.indices
+                return np.repeat(np.arange(self.node_count), np.diff(matrix.indptr)), matrix.indices
         else:
-            return indptr, indices
+            return np.repeat(np.arange(self.node_count), np.diff(indptr)), indices
 
     def create_sparse_edges(
         self,
