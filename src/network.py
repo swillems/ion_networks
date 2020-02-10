@@ -2,7 +2,6 @@
 
 import os
 import logging
-# import functools # NOTE: Can be used to increase speed, but costs RAM
 import time
 import math
 
@@ -78,7 +77,7 @@ class Network(object):
         Raises
         -------
         KeyError
-            If the RT, MZ2 or LOGINT column is missing.
+            If the PRECURSOR_RT, FRAGMENT_MZ or FRAGMENT_LOGINT column is missing.
         """
         self.logger.info(
             f"Reading centroided csv file {centroided_csv_file_name}."
@@ -88,13 +87,13 @@ class Network(object):
             engine="c",
             dtype=np.float,
         )
-        if "RT" not in data:
-            raise KeyError("No RT column present")
-        if "MZ2" not in data:
-            raise KeyError("No MZ2 column present")
-        if "LOGINT" not in data:
-            raise KeyError("No LOGINT column present")
-        data = data.sort_values(by=["RT", "MZ2"])
+        if "PRECURSOR_RT" not in data:
+            raise KeyError("No PRECURSOR_RT column present")
+        if "FRAGMENT_MZ" not in data:
+            raise KeyError("No FRAGMENT_MZ column present")
+        if "FRAGMENT_LOGINT" not in data:
+            raise KeyError("No FRAGMENT_LOGINT column present")
+        data = data.sort_values(by=["PRECURSOR_RT", "FRAGMENT_MZ"])
         return data
 
     def create_from_data(self, data, parameters):
@@ -161,9 +160,9 @@ class Network(object):
         edge_group = network_file.create_group("edges")
         dimensions = [
             dimension for dimension in self.dimensions if dimension not in [
-                "RT",
-                "MZ2",
-                "LOGINT"
+                "PRECURSOR_RT",
+                "FRAGMENT_MZ",
+                "FRAGMENT_LOGINT"
             ]
         ]
         max_deviations = [
@@ -172,8 +171,8 @@ class Network(object):
             ] for dimension in dimensions
         ]
         indptr, indices = self.create_sparse_edges(
-            self.get_ion_coordinates("RT"),
-            parameters[f"max_edge_deviation_RT"],
+            self.get_ion_coordinates("PRECURSOR_RT"),
+            parameters[f"max_edge_deviation_PRECURSOR_RT"],
             tuple(self.get_ion_coordinates(dimensions)),
             tuple(max_deviations)
         )
@@ -259,26 +258,14 @@ class Network(object):
         else:
             return arrays
 
-    # @functools.lru_cache(2) # NOTE: 2 suffices for most use cases
     def get_edges(
         self,
-        rows=...,
-        columns=...,
         return_as_scipy_csr=True,
         symmetric=False,
         data_as_index=False
     ):
-        # TODO: Docstring
-        # try:
-        #     iter(rows)
-        #     fancy_indptr = True
-        # except TypeError:
-        #     fancy_indptr = False
         with h5py.File(self.file_name, "r") as network_file:
-            indptr = network_file["edges"]["indptr"]
-            # if fancy_indptr:
-            #     indptr = indptr[...]
-            indptr = indptr[rows]
+            indptr = network_file["edges"]["indptr"][...]
             indices = network_file["edges"]["indices"][...]
         if return_as_scipy_csr or symmetric:
             matrix = scipy.sparse.csr_matrix(
@@ -361,8 +348,8 @@ class Network(object):
         # TODO: Docstring
         self.logger.info(f"Aligning {self.file_name} with {other.file_name}.")
         dimensions = self.dimension_overlap(other)
-        self_mz = self.get_ion_coordinates("MZ2")
-        other_mz = other.get_ion_coordinates("MZ2")
+        self_mz = self.get_ion_coordinates("FRAGMENT_MZ")
+        other_mz = other.get_ion_coordinates("FRAGMENT_MZ")
         self_mz_order = np.argsort(self_mz)
         other_mz_order = np.argsort(other_mz)
         self_coordinates = tuple(
@@ -434,26 +421,31 @@ class Network(object):
         second_indices = np.concatenate(results)
         return np.stack([first_indices, second_indices]).T
 
-    def evidence(
-        self,
-        alignment_file_name,
-        evidence_file_name=None,
-        parameters=None
-    ):
-        # TODO: Docstring
-        print("evidence", self, alignment_file_name, evidence_file_name, parameters)
-        pass
+    def dimension_overlap(self, other, remove_mz2=True, remove_logint=True):
+        """
+        Get the overlapping dimensions of this ion-network with another
+        ion-network.
 
-    def dimension_overlap(self, other):
-        # TODO: Docstring
+        Parameters
+        ----------
+        other : ion_network
+            The second ion-network.
+        remove_mz2 : bool
+            If True, remove 'FRAGMENT_MZ' from the overlapping dimensions.
+        remove_mz2 : bool
+            If True, remove 'FRAGMENT_LOGINT' from the overlapping dimensions.
+
+        Returns
+        -------
+        list[str]
+            A sorted list with all the overlapping dimensions.
+        """
         dimensions = set(self.dimensions + other.dimensions)
-        dimensions = [
-            dimension for dimension in dimensions if dimension not in [
-                "MZ2",
-                "LOGINT"
-            ]
-        ]
-        return dimensions
+        if remove_mz2:
+            dimensions.remove("FRAGMENT_MZ")
+        if remove_logint:
+            dimensions.remove("FRAGMENT_LOGINT")
+        return sorted(dimensions)
 
     @property
     def node_count(self):

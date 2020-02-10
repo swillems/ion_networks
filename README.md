@@ -25,9 +25,8 @@ Five basic modules have been implemented for analysis of ion-networks:
 
 1. Convert
 2. Create
-3. Align
-4. Evidence
-5. Show
+3. Evidence
+4. Show
 
 These modules can be run either with a GUI or through a CLI.
 
@@ -46,7 +45,6 @@ Options:
   -h, --help  Show this message and exit.
 
 Commands:
-  align     Align ion-networks.
   convert   Convert input files.
   create    Create ion-networks.
   evidence  Evidence ion-networks.
@@ -59,11 +57,10 @@ Each command then comes with its own help function through ```ion_networks.py CO
 Typically, a workflow looks as follows:
 
 ```bash
-ion_networks.py convert -i project_folder/centroided_data/ -o project_folder/centroided_csv_files/ -hdmse l project_folder/log.txt
-ion_networks.py create -i project_folder/centroided_csv_files/ -o project_folder/ion_networks/ -l project_folder/log.txt
-ion_networks.py align -i project_folder/ion_networks/ -o project_folder/alignment.hdf -l project_folder/log.txt
-ion_networks.py evidence -i project_folder/ion_networks/ -a project_folder/alignment.hdf -o project_folder/ion_networks/ -l project_folder/log.txt
-ion_networks.py show -i project_folder/ion_networks/ -a project_folder/alignment.hdf -e project_folder/ion_networks/ -l project_folder/log.txt
+ion_networks.py convert -i project_folder/centroided_data/ -o project_folder/ion_networks/ -hdmse -l project_folder/ion_networks/log.txt
+ion_networks.py create -i project_folder/ion_networks/ -l project_folder/ion_networks/log.txt
+ion_networks.py evidence -i project_folder/ion_networks/ -l project_folder/ion_networks/log.txt
+ion_networks.py show -i project_folder/ion_networks/ -l project_folder/ion_networks/log.txt
 ```
 
 Alternatively, a GUI can be used by running the command ```ion_networks.py gui```.

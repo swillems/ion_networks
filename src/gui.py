@@ -87,7 +87,7 @@ class GUI(object):
                 )
             ]
         )
-        self.y_axis = "MZ2"
+        self.y_axis = "FRAGMENT_MZ"
         layout.append(
             [
                 sg.Text('y-axis', size=(25, 1)),

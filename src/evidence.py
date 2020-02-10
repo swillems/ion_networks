@@ -217,3 +217,56 @@ class Evidence(object):
             The number of ion-network providing evidence.
         """
         return len(self.network_keys)
+
+    # def get_alignment(
+    #     self,
+    #     first_ion_network,
+    #     second_ion_network,
+    #     return_as_scipy_csr=False
+    # ):
+    #     """
+    #     Get the pairwise alignment between two ion-networks.
+    #
+    #     Parameters
+    #     ----------
+    #     first_ion_network : ion_network
+    #         The first ion-networks of the alignment.
+    #     second_ion_network : ion_network
+    #         The second ion-networks of the alignment.
+    #     return_as_scipy_csr : bool
+    #         If True, return the alignment as a scipy.sparse.csr_matrix,
+    #         otherwise, return the alignment as a 2-dimensional np.ndarray.
+    #
+    #     Returns
+    #     ----------
+    #     np.ndarray or scipy.sparse.csr_matrix(bool)
+    #         A 2-dimensional array of shape (2, n) with n the number of nodes
+    #         aligned. The first column are the indices of the first ion-network
+    #         and the second column contains the indices of the second
+    #         ion-network. If return_as_scipy_csr is True, a sparse csr matrix
+    #         is created from this array before it is returned.
+    #     """
+    #     swap = False
+    #     if first_ion_network > second_ion_network:
+    #         first_ion_network, second_ion_network = second_ion_network, first_ion_network
+    #         swap = True
+    #     with h5py.File(self.file_name, "r") as alignment_file:
+    #         alignment = alignment_file[first_ion_network.key][
+    #             second_ion_network.key
+    #         ][...]
+    #     if return_as_scipy_csr:
+    #         alignment = scipy.sparse.csr_matrix(
+    #             (
+    #                 np.ones(alignment.shape[0], dtype=np.bool),
+    #                 (alignment[:, 0], alignment[:, 1])
+    #             ),
+    #             shape=(
+    #                 first_ion_network.node_count,
+    #                 second_ion_network.node_count
+    #             )
+    #         )
+    #         if swap:
+    #             alignment = alignment.T.tocsr()
+    #     elif swap:
+    #         alignment = alignment[:, ::-1]
+    #     return alignment
