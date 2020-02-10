@@ -266,6 +266,7 @@ class Network(object):
         columns=...,
         return_as_scipy_csr=True,
         symmetric=False,
+        data_as_index=False
     ):
         # TODO: Docstring
         # try:
@@ -291,6 +292,8 @@ class Network(object):
             if symmetric and return_as_scipy_csr:
                 return matrix + matrix.T
             elif return_as_scipy_csr:
+                if data_as_index:
+                    matrix.data = np.arange(matrix.nnz)
                 return matrix
             else:
                 return np.repeat(np.arange(self.node_count), np.diff(matrix.indptr)), matrix.indices

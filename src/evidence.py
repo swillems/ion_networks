@@ -173,6 +173,7 @@ class Evidence(object):
                         evidence_file[network_key]["node_mask"][...]
                     )
         if return_total:
+            # TODO: earlier summation saves memory!
             arrays = {
                 key: np.sum(value, axis=0) for key, value in arrays.items()
             }
