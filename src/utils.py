@@ -329,7 +329,6 @@ class open_logger(object):
         self,
         log_file_name,
         log_level=logging.DEBUG,
-        overwrite=False,
         parameters={}
     ):
         """
@@ -360,14 +359,7 @@ class open_logger(object):
             directory = os.path.dirname(log_file_name)
             if not os.path.exists(directory):
                 os.makedirs(directory)
-            if overwrite:
-                mode = "w"
-            else:
-                mode = "a"
-            file_handler = logging.FileHandler(
-                log_file_name,
-                mode=mode
-            )
+            file_handler = logging.FileHandler(log_file_name, mode="a")
             file_handler.setLevel(log_level)
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)

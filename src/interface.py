@@ -1,14 +1,15 @@
 #!python
 
+# builtin
 import os
-
+# local
 import network
 import evidence
-import gui as inet_gui
+import gui
 import utils
 
 
-def convert_data_to_csv(
+def convert_data_formats_to_csvs(
     input_path,
     output_directory,
     data_type,
@@ -36,7 +37,9 @@ def convert_data_to_csv(
     log_file_name : str or None
         If provided, all logs will be written to this file.
     """
-    parameters = utils.read_parameters_from_json_file(file_name=parameter_file_name)
+    parameters = utils.read_parameters_from_json_file(
+        file_name=parameter_file_name
+    )
     with utils.open_logger(log_file_name, parameters=parameters) as logger:
         if not os.path.exists(output_directory):
             os.makedirs(output_directory)
@@ -58,7 +61,7 @@ def convert_data_to_csv(
             utils.write_data_to_csv_file(data, output_file_name, logger)
 
 
-def create_ion_network(
+def create_ion_networks(
     input_path,
     output_directory,
     parameter_file_name,
@@ -107,7 +110,7 @@ def create_ion_network(
             )
 
 
-def evidence_ion_network(
+def evidence_ion_networks(
     input_path,
     output_directory,
     parameter_file_name,
@@ -141,6 +144,7 @@ def evidence_ion_network(
         ion_networks = [
             network.Network(file_name) for file_name in input_file_names
         ]
+        evidence_files = []
         for ion_network in ion_networks:
             local_file_name = os.path.basename(ion_network.file_name)
             if output_directory is None:
@@ -151,81 +155,38 @@ def evidence_ion_network(
                 output_path,
                 f"{local_file_name[:-9]}.evidence.hdf"
             )
-            evidence.Evidence(
-                evidence_file_name=evidence_file_name,
-                ion_network=ion_network,
-                # alignment=align_ion_networks(ion_networks, parameters),
-                evidence_ion_networks=ion_networks,
-                parameters=parameters,
-                logger=logger
+            ion_network.evidence_file_name = evidence_file_name
+            evidence_files.append(
+                evidence.Evidence(
+                    evidence_file_name=ion_network.evidence_file_name,
+                    ion_network=ion_network,
+                    parameters=parameters,
+                    logger=logger
+                )
             )
+        for index, evidence_file in enumerate(evidence_files[:-1]):
+            for secondary_evidence_file in evidence_files[index + 1:]:
+                evidence_file.mutual_collect_evidence_from(
+                    secondary_evidence_file,
+                    parameters=parameters,
+                    logger=logger
+                )
 
 
-# def align_ion_networks(self, ion_networks, parameters):
-#     """
-#     Pairwise align multiple ion-networks against each other.
-#
-#     Parameters
-#     ----------
-#     ion_networks : iterable[ion_network]
-#         The ion-networks that will all be pairwise aligned ageainst each
-#         other.
-#     parameters : dict
-#         A dictionary with optional parameters for the alignment of
-#         ion-networks.
-#     """
-#     with h5py.File(
-#         self.file_name,
-#         parameters["file_mode"]
-#     ) as alignment_file:
-#         ion_networks = sorted(ion_networks)
-#         for index, first_ion_network in enumerate(
-#             ion_networks[:-1]
-#         ):
-#             if first_ion_network.key in alignment_file:
-#                 first_group = alignment_file[first_ion_network.key]
-#             else:
-#                 first_group = alignment_file.create_group(
-#                     first_ion_network.key
-#                 )
-#             for second_ion_network in ion_networks[index + 1:]:
-#                 if second_ion_network.key in first_group:
-#                     if parameters["force_overwrite"]:
-#                         del first_group[second_ion_network.key]
-#                     else:
-#                         continue
-#                 second_group = first_group.create_dataset(
-#                     second_ion_network.key,
-#                     data=first_ion_network.align_nodes(
-#                         second_ion_network,
-#                         parameters
-#                     ),
-#                     compression="lzf"
-#                 )
-#                 second_group.attrs["creation_time"] = time.asctime()
-#                 dimension_overlap = first_ion_network.dimension_overlap(
-#                     second_ion_network
-#                 )
-#                 for parameter_key, parameter_value in parameters.items():
-#                     if parameter_key.startswith("max_edge_deviation"):
-#                         if parameter_key[24:] not in dimension_overlap:
-#                             continue
-#                     second_group.attrs[parameter_key] = parameter_value
-
-
-def show_ion_network(
+def show_ion_networks(
     ion_network_file_name,
     evidence_file_name,
     parameter_file_name,
     log_file_name
 ):
     # TODO: Docstring
+    # TODO: Implement
     parameters = utils.read_parameters_from_json_file(
         file_name=parameter_file_name,
         default="show"
     )
     with utils.open_logger(log_file_name, parameters=parameters) as logger:
-        inet_gui.GUI(
+        gui.GUI(
             network.Network(ion_network_file_name),
             evidence.Evidence(evidence_file_name),
             logger
@@ -233,5 +194,6 @@ def show_ion_network(
 
 
 def start_gui():
+    # TODO: Docstring
     # TODO: implement
     raise NotImplementedError

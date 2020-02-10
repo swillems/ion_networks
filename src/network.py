@@ -1,10 +1,11 @@
 #!python
 
+# builtin
 import os
 import logging
 import time
 import math
-
+# external
 import h5py
 import scipy
 import scipy.sparse
@@ -77,7 +78,8 @@ class Network(object):
         Raises
         -------
         KeyError
-            If the PRECURSOR_RT, FRAGMENT_MZ or FRAGMENT_LOGINT column is missing.
+            If the PRECURSOR_RT, FRAGMENT_MZ or FRAGMENT_LOGINT column is
+            missing.
         """
         self.logger.info(
             f"Reading centroided csv file {centroided_csv_file_name}."
@@ -144,9 +146,9 @@ class Network(object):
 
     def write_edges(self, network_file, parameters):
         """
-        Creates and saves all edges of an ion-network. They are saved in an .hdf
-        file as indptr and indices of a scipy.sparse.csr matrix in en 'edge'
-        group.
+        Creates and saves all edges of an ion-network. They are saved in an
+        .hdf file as indptr and indices of a scipy.sparse.csr matrix in an
+        'edge' group.
 
         Parameters
         ----------
@@ -208,6 +210,7 @@ class Network(object):
         network_file.attrs["edge_count"] = len(
             network_file["edges"]["indices"]
         )
+        network_file.attrs["original_file_name"] = self.file_name
         for parameter_key, parameter_value in parameters.items():
             if parameter_key.startswith("max_edge_deviation"):
                 if parameter_key[19:] not in self.dimensions:
@@ -283,9 +286,17 @@ class Network(object):
                     matrix.data = np.arange(matrix.nnz)
                 return matrix
             else:
-                return np.repeat(np.arange(self.node_count), np.diff(matrix.indptr)), matrix.indices
+                second_indices = np.repeat(
+                    np.arange(self.node_count),
+                    np.diff(matrix.indptr)
+                )
+                return second_indices, matrix.indices
         else:
-            return np.repeat(np.arange(self.node_count), np.diff(indptr)), indices
+            second_indices = np.repeat(
+                np.arange(self.node_count),
+                np.diff(indptr)
+            )
+            return second_indices, indices
 
     def create_sparse_edges(
         self,
@@ -344,7 +355,7 @@ class Network(object):
         indices = np.concatenate(neighbors)
         return indptr, indices
 
-    def align_nodes(self, other, parameters):
+    def align_nodes(self, other, parameters, return_as_scipy_csr=True):
         # TODO: Docstring
         self.logger.info(f"Aligning {self.file_name} with {other.file_name}.")
         dimensions = self.dimension_overlap(other)
@@ -417,11 +428,24 @@ class Network(object):
                 results.append(matches)
             return results
         results = numba_wrapper()
-        first_indices = np.repeat(self_mz_order, [len(l) for l in results])
-        second_indices = np.concatenate(results)
-        return np.stack([first_indices, second_indices]).T
+        self_indices = np.repeat(self_mz_order, [len(l) for l in results])
+        other_indices = np.concatenate(results)
+        if return_as_scipy_csr:
+            return scipy.sparse.csr_matrix(
+                (
+                    np.ones(self_indices.shape[0], dtype=np.bool),
+                    (self_indices, other_indices)
+                ),
+                shape=(self.node_count, other.node_count)
+            )
+        return self_indices, other_indices
 
-    def dimension_overlap(self, other, remove_mz2=True, remove_logint=True):
+    def dimension_overlap(
+        self,
+        other,
+        remove_mz2=True,
+        remove_logint=True
+    ):
         """
         Get the overlapping dimensions of this ion-network with another
         ion-network.
@@ -503,6 +527,32 @@ class Network(object):
         with h5py.File(self.file_name, "r") as network_file:
             creation_time = network_file.attrs["creation_time"]
         return creation_time
+
+    @property
+    def original_file_name(self):
+        """
+        Get the original file name of the ion-network.
+
+        Returns
+        -------
+        str
+            The original file name of the ion-network as a string.
+        """
+        with h5py.File(self.file_name, "r") as network_file:
+            original_file_name = network_file.attrs["original_file_name"]
+        return original_file_name
+
+    @property
+    def file_name_base(self):
+        """
+        Get the file name base of the ion-network.
+
+        Returns
+        -------
+        str
+            The file name base of the ion-network as a string.
+        """
+        return os.path.basename(self.original_file_name)[:-9]
 
     @property
     def key(self):

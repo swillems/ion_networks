@@ -45,11 +45,11 @@ Options:
   -h, --help  Show this message and exit.
 
 Commands:
-  convert   Convert input files.
-  create    Create ion-networks.
-  evidence  Evidence ion-networks.
-  gui       Graphical user interface for ion-networks.
-  show      Show ion-networks.
+  convert   Convert various input formats to unified input.
+  create    Create ion-networks from unified input.
+  evidence  Collect evidence for ion-networks.
+  gui       Graphical user interface to analyse ion-networks.
+  show      Show and browse ion-networks.
 ```
 
 Each command then comes with its own help function through ```ion_networks.py COMMAND -h```.

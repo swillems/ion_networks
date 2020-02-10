@@ -1,7 +1,8 @@
 #!python
 
+# external
 import click
-
+# local
 import interface
 
 
@@ -19,7 +20,8 @@ def cli():
 @click.command(
     "convert",
     help="Convert [input.*] files with centroided ions to unified "
-        "[input.inet.csv] csv files."
+        "[input.inet.csv] csv files.",
+    short_help="Convert various input formats to unified input."
 )
 @click.option(
     "--input_path",
@@ -82,7 +84,7 @@ def convert(
     parameter_file_name,
     log_file_name
 ):
-    interface.convert_data_to_csv(
+    interface.convert_data_formats_to_csvs(
         input_path,
         output_directory,
         data_type,
@@ -94,7 +96,8 @@ def convert(
 @click.command(
     "create",
     help="Create [input.inet.hdf] ion-network files from unified "
-        "[input.inet.csv] files."
+        "[input.inet.csv] files.",
+    short_help="Create ion-networks from unified input."
 )
 @click.option(
     "--input_path",
@@ -142,7 +145,7 @@ def create(
     parameter_file_name,
     log_file_name
 ):
-    interface.create_ion_network(
+    interface.create_ion_networks(
         input_path,
         output_directory,
         parameter_file_name,
@@ -152,16 +155,16 @@ def create(
 
 @click.command(
     "evidence",
-    help="Evidence ion-networks."
+    help="Collect pairwise evidence for [input.inet.hdf] ion-network files as "
+        "[input.evidence.hdf] evidence files.",
+    short_help="Collect evidence for ion-networks."
 )
 @click.option(
     "--input_path",
     "-i",
-    help="The ion-network file (.inet.hdf) to evidence."
-        "This flag can be set multiple times to evidence multiple "
-        "ion-networks against each other."
-        "Alternatively, directories can be provided to evidence all "
-        "[.inet.hdf] files contained in these directories.",
+    help="An [input.inet.hdf] ion-network file."
+        "Individual files can be provided, as well as folders."
+        "This flag can be set multiple times.",
     required=True,
     multiple=True,
     type=click.Path(exists=True)
@@ -169,9 +172,10 @@ def create(
 @click.option(
     "--output_directory",
     "-o",
-    help="For each [input.inet.hdf] file, an evidence is created as "
-        "[input.evidence.hdf]. If no output_path is set, these are saved in the "
-        "original directory as the [input.inet.hdf] files. "
+    help="For each [input.inet.hdf] file, an [input.evidence.hdf] evidence "
+        "file is created. "
+        "If no output directory is provided, each [input.evidence.hdf] file is "
+        "placed in the same folder as its corresponding [input.inet.hdf] file. "
         "WARNING: This overrides already existing files without confirmation.",
     type=click.Path(file_okay=False)
 )
@@ -197,7 +201,7 @@ def evidence(
     parameter_file_name,
     log_file_name
 ):
-    interface.evidence_ion_network(
+    interface.evidence_ion_networks(
         input_path,
         output_directory,
         parameter_file_name,
@@ -205,9 +209,11 @@ def evidence(
     )
 
 
+# TODO: Implement
 @click.command(
     "show",
-    help="Show ion-networks."
+    help="Show and browse ion-networks and their evidence.",
+    short_help="Show and browse ion-networks."
 )
 @click.option(
     "--input_path",
@@ -256,7 +262,7 @@ def show(
 
 @click.command(
     "gui",
-    help="Graphical user interface for ion-networks."
+    help="Graphical user interface to analyse ion-networks.",
 )
 def gui():
     interface.start_gui()

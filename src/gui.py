@@ -1,9 +1,9 @@
 #!python
 
+# external
 import numpy as np
 import matplotlib.pyplot as plt
 import PySimpleGUI as sg
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib
 matplotlib.use('TkAgg')
 
@@ -161,7 +161,7 @@ class GUI(object):
             [sg.Canvas(size=(figure_w, figure_h), key='canvas')]
         ]
         self.plot_window = sg.Window('Plot', layout, finalize=True)
-        self.figure_canvas_agg = FigureCanvasTkAgg(self.fig, self.plot_window['canvas'].TKCanvas)
+        self.figure_canvas_agg = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(self.fig, self.plot_window['canvas'].TKCanvas)
         self.figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
         self.update_plot()
 

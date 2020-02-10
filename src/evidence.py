@@ -1,12 +1,14 @@
 #!python
 
+# builtin
 import logging
 import os
 import time
-
+# external
 import h5py
 import numpy as np
-
+import scipy
+# local
 from network import Network
 
 
@@ -19,115 +21,114 @@ class Evidence(object):
     def __init__(
         self,
         evidence_file_name,
-        ion_network=None,
-        alignment=None,
-        evidence_ion_networks=[],
+        ion_network,
         parameters={},
         logger=logging.getLogger('ion_network_log')
     ):
         # TODO: Docstring
-        # """
-        # Loads an alignment. Alternatively, an alignment is created if list of
-        # ion-networks is provided.
-        #
-        # Parameters
-        # ----------
-        # alignment_file_name : str
-        #     The file name of the alignment.
-        # ion_networks : None or iterable[ion-network]
-        #     The ion-networks to align. If this is None, the alignment file
-        #     is opened as read only.
-        # parameters : dict
-        #     A dictionary with optional parameters for the alignment of
-        #     ion-networks.
-        # logger : logging.logger
-        #     The logger that indicates all progress.
-        # """
         self.file_name = evidence_file_name
         self.logger = logger
-        if len(evidence_ion_networks) > 0:
-            self.set_ion_networks_evidence(
-                ion_network,
-                alignment,
-                evidence_ion_networks,
-                parameters
-            )
+        self.ion_network = ion_network
 
-    def set_ion_networks_evidence(
+    def mutual_collect_evidence_from(
         self,
-        ion_network,
-        alignment,
-        evidence_ion_networks,
-        parameters
+        other,
+        parameters={},
+        logger=logging.getLogger('ion_network_log')
     ):
         # TODO: Docstring
-        # """
-        # Pairwise align multiple ion-networks against each other.
-        #
-        # Parameters
-        # ----------
-        # ion_networks : iterable[ion_network]
-        #     The ion-networks that will all be pairwise aligned ageainst each
-        #     other.
-        # parameters : dict
-        #     A dictionary with optional parameters for the alignment of
-        #     ion-networks.
-        # """
         directory = os.path.dirname(self.file_name)
         if not os.path.exists(directory):
             os.makedirs(directory)
-        with h5py.File(
-            self.file_name,
-            parameters["file_mode"]
-        ) as evidence_file:
-            ion_network_edges = ion_network.get_edges()
-            ion_network_edges_as_int = ion_network_edges.astype(np.int)
-            left_node_indices, right_node_indices = ion_network_edges.nonzero()
-            if "ion_network_key" not in evidence_file.attrs:
-                evidence_file.attrs["ion_network_key"] = ion_network.key
-            for second_ion_network in evidence_ion_networks:
-                if ion_network == second_ion_network:
-                    continue
-                if second_ion_network.key in evidence_file:
-                    if parameters["force_overwrite"]:
-                        del evidence_file[second_ion_network.key]
-                    else:
-                        continue
-                self.logger.info(
-                    f"Evidencing {ion_network.file_name} with "
-                    f"{second_ion_network.file_name}"
+        if self.is_evidenced_with(other) or other.is_evidenced_with(self):
+            # TODO: Should always be mutual evidence
+            if parameters["force_overwrite"]:
+                self.remove_evidence_from(other)
+                other.remove_evidence_from(self)
+            else:
+                logger.info(
+                    f"Evidence for {self.file_name} and {other.file_name} "
+                    f"has already been collected"
                 )
-                evidence_group = evidence_file.create_group(
-                    second_ion_network.key
-                )
-                pairwise_alignment = alignment.get_alignment(
-                    ion_network,
-                    second_ion_network,
-                    return_as_scipy_csr=True
-                )
-                positive = pairwise_alignment * second_ion_network.get_edges() * pairwise_alignment.T
-                positive = (positive + positive.T).multiply(ion_network_edges)
-                positive_mask = (ion_network_edges_as_int + positive).data == 2
-                alignment_mask = np.diff(pairwise_alignment.indptr) > 0
-                negative_mask = (
-                    alignment_mask[left_node_indices] & alignment_mask[right_node_indices]
-                ) & (~positive_mask)
-                evidence_group.create_dataset(
-                    "positive_edge_mask",
-                    data=positive_mask,
-                    compression="lzf",
-                )
-                evidence_group.create_dataset(
-                    "negative_edge_mask",
-                    data=negative_mask,
-                    compression="lzf",
-                )
-                evidence_group.create_dataset(
-                    "node_mask",
-                    data=alignment_mask,
-                    compression="lzf",
-                )
-                evidence_group.attrs["creation_time"] = time.asctime()
+                return
+        pairwise_alignment = self.ion_network.align_nodes(
+            other.ion_network,
+            parameters
+        )
+        pairwise_alignment_T = pairwise_alignment.T.tocsr()
+        self_edges = self.ion_network.get_edges()
+        other_edges = other.ion_network.get_edges()
+        self.align_edges(
+            other,
+            pairwise_alignment,
+            pairwise_alignment_T,
+            self_edges,
+            other_edges,
+        )
+        other.align_edges(
+            self,
+            pairwise_alignment_T,
+            pairwise_alignment,
+            other_edges,
+            self_edges,
+        )
+
+    def is_evidenced_with(self, other):
+        # TODO: Docstring
+        result = False
+        with h5py.File(self.file_name, "a") as evidence_file:
+            if other.ion_network.file_name_base in evidence_file:
+                result = True
+        return result
+
+    def remove_evidence_from(self, other):
+        # TODO: Docstring
+        if self.is_evidenced_with(other):
+            with h5py.File(self.file_name, "a") as evidence_file:
+                del evidence_file[other.ion_network.file_name_base]
+
+    def align_edges(
+        self,
+        other,
+        pairwise_alignment,
+        pairwise_alignment_T,
+        self_edges,
+        other_edges,
+    ):
+        # TODO: Docstring
+        self.logger.info(
+            f"Collecting evidence for {self.ion_network.file_name} from "
+            f"{other.ion_network.file_name}."
+        )
+        with h5py.File(self.file_name, "a") as evidence_file:
+            evidence_group = evidence_file.create_group(
+                other.ion_network.file_name_base
+            )
+            self_edges_as_int = self_edges.astype(np.int)
+            left_node_indices, right_node_indices = self_edges.nonzero()
+            positive = pairwise_alignment * other_edges * pairwise_alignment_T
+            positive = (positive + positive.T).multiply(self_edges)
+            positive_mask = (self_edges_as_int + positive).data == 2
+            alignment_mask = np.diff(pairwise_alignment.indptr) > 0
+            negative_mask = (
+                alignment_mask[left_node_indices] & alignment_mask[right_node_indices]
+            ) & (~positive_mask)
+            evidence_group.create_dataset(
+                "positive_edges",
+                data=positive_mask,
+                compression="lzf",
+            )
+            evidence_group.create_dataset(
+                "negative_edges",
+                data=negative_mask,
+                compression="lzf",
+            )
+            evidence_group.create_dataset(
+                "aligned_nodes",
+                data=pairwise_alignment_T.indices,
+                compression="lzf",
+            )
+            evidence_group.attrs["creation_time"] = time.asctime()
 
     def get_evidence(
         self,
@@ -202,8 +203,6 @@ class Evidence(object):
         """
         with h5py.File(self.file_name, "r") as network_file:
             ion_networks = list(network_file)
-            # FIXME: Can be deleted
-            ion_networks.remove("parameters")
         return ion_networks
 
     @property
@@ -270,3 +269,55 @@ class Evidence(object):
     #     elif swap:
     #         alignment = alignment[:, ::-1]
     #     return alignment
+
+
+# def align_ion_networks(self, ion_networks, parameters):
+#     """
+#     Pairwise align multiple ion-networks against each other.
+#
+#     Parameters
+#     ----------
+#     ion_networks : iterable[ion_network]
+#         The ion-networks that will all be pairwise aligned ageainst each
+#         other.
+#     parameters : dict
+#         A dictionary with optional parameters for the alignment of
+#         ion-networks.
+#     """
+#     with h5py.File(
+#         self.file_name,
+#         parameters["file_mode"]
+#     ) as alignment_file:
+#         ion_networks = sorted(ion_networks)
+#         for index, first_ion_network in enumerate(
+#             ion_networks[:-1]
+#         ):
+#             if first_ion_network.key in alignment_file:
+#                 first_group = alignment_file[first_ion_network.key]
+#             else:
+#                 first_group = alignment_file.create_group(
+#                     first_ion_network.key
+#                 )
+#             for second_ion_network in ion_networks[index + 1:]:
+#                 if second_ion_network.key in first_group:
+#                     if parameters["force_overwrite"]:
+#                         del first_group[second_ion_network.key]
+#                     else:
+#                         continue
+#                 second_group = first_group.create_dataset(
+#                     second_ion_network.key,
+#                     data=first_ion_network.align_nodes(
+#                         second_ion_network,
+#                         parameters
+#                     ),
+#                     compression="lzf"
+#                 )
+#                 second_group.attrs["creation_time"] = time.asctime()
+#                 dimension_overlap = first_ion_network.dimension_overlap(
+#                     second_ion_network
+#                 )
+#                 for parameter_key, parameter_value in parameters.items():
+#                     if parameter_key.startswith("max_edge_deviation"):
+#                         if parameter_key[24:] not in dimension_overlap:
+#                             continue
+#                     second_group.attrs[parameter_key] = parameter_value
