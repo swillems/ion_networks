@@ -155,10 +155,9 @@ def evidence_ion_networks(
                 output_path,
                 f"{local_file_name[:-9]}.evidence.hdf"
             )
-            ion_network.evidence_file_name = evidence_file_name
             evidence_files.append(
                 evidence.Evidence(
-                    evidence_file_name=ion_network.evidence_file_name,
+                    evidence_file_name=evidence_file_name,
                     ion_network=ion_network,
                     parameters=parameters,
                     logger=logger
@@ -173,7 +172,7 @@ def evidence_ion_networks(
                 )
 
 
-def show_ion_networks(
+def show_ion_network(
     ion_network_file_name,
     evidence_file_name,
     parameter_file_name,
@@ -183,12 +182,19 @@ def show_ion_networks(
     # TODO: Implement
     parameters = utils.read_parameters_from_json_file(
         file_name=parameter_file_name,
-        default="show"
+        default="create"
     )
     with utils.open_logger(log_file_name, parameters=parameters) as logger:
+        inet = network.Network(ion_network_file_name)
+        evi = evidence.Evidence(
+            evidence_file_name=evidence_file_name,
+            ion_network=inet,
+            parameters=parameters,
+            logger=logger
+        )
         gui.GUI(
-            network.Network(ion_network_file_name),
-            evidence.Evidence(evidence_file_name),
+            inet,
+            evi,
             logger
         )
 

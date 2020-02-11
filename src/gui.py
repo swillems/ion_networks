@@ -55,7 +55,11 @@ class GUI(object):
         self.node_threshold = 2 * len(self.node_dimensions)
         self.nodes = np.repeat(self.node_threshold, self.ion_network.node_count)
         self.edges = self.ion_network.get_edges(data_as_index=True)
-        self.positive_edge_evidence, self.negative_edge_evidence, node_evidence = self.evidence.get_evidence(return_total=True)
+        self.positive_edge_evidence = self.evidence.get_edge_mask_from_group()
+        self.negative_edge_evidence = self.evidence.get_edge_mask_from_group(
+            positive=False
+        )
+        node_evidence = self.evidence.get_aligned_nodes_from_group()
         self.nodes -= node_evidence < max_node_count
         layout.append(
             [
@@ -74,7 +78,7 @@ class GUI(object):
                 ),
             ]
         )
-        self.x_axis = "RT"
+        self.x_axis = "PRECURSOR_RT"
         layout.append(
             [
                 sg.Text('x-axis', size=(25, 1)),
@@ -92,7 +96,7 @@ class GUI(object):
             [
                 sg.Text('y-axis', size=(25, 1)),
                 sg.Combo(
-                    self.ion_network.dimensions + ["node_count"],
+                    self.ion_network.dimensions,# + ["node_count"],
                     size=(20, 1),
                     default_value=self.y_axis,
                     key="y_axis",
@@ -110,7 +114,7 @@ class GUI(object):
                 )
             ]
         )
-        self.min_positive_threshold = 0
+        self.min_positive_threshold = max_node_count
         self.max_positive_threshold = max_node_count
         layout.append(
             [
@@ -130,7 +134,7 @@ class GUI(object):
             ]
         )
         self.min_negative_threshold = 0
-        self.max_negative_threshold = max_node_count
+        self.max_negative_threshold = 0
         layout.append(
             [
                 sg.Text('NEGATIVE EDGE EVIDENCE', size=(25, 1)),
@@ -253,13 +257,13 @@ class GUI(object):
             if key == "node_evidence":
                 if low != float(values["min_node_count"]):
                     update = True
-                    node_count = self.evidence.get_evidence(kind="nodes", return_total=True)
+                    node_count = self.evidence.get_aligned_nodes_from_group()
                     self.nodes -= node_count >= low
                     self.nodes += node_count >= float(values["min_node_count"])
                     self.node_dimensions["node_evidence"][0] = float(values["min_node_count"])
                 if high != float(values["max_node_count"]):
                     update = True
-                    node_count = self.evidence.get_evidence(kind="nodes", return_total=True)
+                    node_count = self.evidence.get_aligned_nodes_from_group()
                     self.nodes -= node_count <= high
                     self.nodes += node_count <= float(values["max_node_count"])
                     self.node_dimensions["node_evidence"][1] = float(values["max_node_count"])
