@@ -1,10 +1,11 @@
 #!python
 
+# builtins
 import os
 import sys
 import logging
 import json
-
+# external
 import numpy as np
 import pandas as pd
 from pyteomics import mgf
@@ -18,10 +19,10 @@ DEFAULT_PARAMETER_FILES = {
     "evidence": "evidence_parameters.json"
 }
 DATA_TYPE_FILE_EXTENSIONS = {
-    "dda": "mgf",
-    "sonar": "csv",
-    "hdmse": "csv",
-    "swimdia": "csv",
+    "DDA": "mgf",
+    "SONAR": "csv",
+    "HDMSE": "csv",
+    "SWIMDIA": "csv",
 }
 
 
@@ -46,7 +47,7 @@ def read_parameters_from_json_file(file_name=None, default=None):
         A dictionary with parameters.
     """
     if default is None:
-        parameters = {}
+        parameters = {"log_file_name": None}
     else:
         default_parameter_file_name = os.path.join(
             DEFAULT_PARAMETER_PATH,
@@ -108,10 +109,10 @@ def read_data_from_file(
     ----------
     data_type : str
         The data type of the [input_file.*] file. Options are:
-            'dda'
-            'sonar'
-            'hdmse'
-            'swimdia'
+            'DDA'
+            'SONAR'
+            'HDMSE'
+            'SWIMDIA'
     file_name : str
         The file name of the DDA .mgf file (generated with ms-convert).
     logger : logging.logger
@@ -123,13 +124,13 @@ def read_data_from_file(
         A pd.DataFrame with as columns the PRECURSOR_RT, PRECURSOR_MZ,
         FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
     """
-    if data_type == "dda":
+    if data_type == "DDA":
         data = read_data_from_mgf_file(file_name, logger)
-    elif data_type == "sonar":
+    elif data_type == "SONAR":
         data = read_data_from_sonar_file(file_name, logger)
-    elif data_type == "hdmse":
+    elif data_type == "HDMSE":
         data = read_data_from_hdmse_file(file_name, logger)
-    elif data_type == "swimdia":
+    elif data_type == "SWIMDIA":
         data = read_data_from_swimdia_file(file_name, logger)
     return data
 

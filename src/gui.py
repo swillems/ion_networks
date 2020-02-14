@@ -84,7 +84,7 @@ class GUI(object):
                 sg.Text('x-axis', size=(25, 1)),
                 sg.Combo(
                     self.ion_network.dimensions,# + ["node_count"],
-                    size=(20, 1),
+                    size=(21, 1),
                     default_value=self.x_axis,
                     key="x_axis",
                     # enable_events=True
@@ -97,7 +97,7 @@ class GUI(object):
                 sg.Text('y-axis', size=(25, 1)),
                 sg.Combo(
                     self.ion_network.dimensions,# + ["node_count"],
-                    size=(20, 1),
+                    size=(21, 1),
                     default_value=self.y_axis,
                     key="y_axis",
                     # enable_events=True
@@ -159,14 +159,21 @@ class GUI(object):
     # TODO: Docstring
         self.fig = plt.figure(1, figsize=(13, 9))
         self.aggregate_ax = self.fig.add_subplot(111)
-        # self.fig = plt.gcf()      # if using Pyplot then get the figure from the plot
         figure_x, figure_y, figure_w, figure_h = self.fig.bbox.bounds
         layout = [
             [sg.Canvas(size=(figure_w, figure_h), key='canvas')]
         ]
         self.plot_window = sg.Window('Plot', layout, finalize=True)
-        self.figure_canvas_agg = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(self.fig, self.plot_window['canvas'].TKCanvas)
-        self.figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
+        mpl_backend = matplotlib.backends.backend_tkagg
+        self.figure_canvas_agg = mpl_backend.FigureCanvasTkAgg(
+            self.fig,
+            self.plot_window['canvas'].TKCanvas
+        )
+        self.figure_canvas_agg.get_tk_widget().pack(
+            side='top',
+            fill='both',
+            expand=1
+        )
         self.update_plot()
 
     def update_plot(self):
@@ -177,20 +184,38 @@ class GUI(object):
             nodes
         )
         # if not hasattr(self, "old_scatter"):
-        #     self.old_scatter = plt.scatter(x_coordinates, y_coordinates, marker=".", color="r")
+        #     self.old_scatter = plt.scatter(
+        #         x_coordinates,
+        #         y_coordinates,
+        #         marker=".",
+        #         color="r"
+        #     )
         # elif not hasattr(self, "new_scatter"):
-        #     self.new_scatter = plt.scatter(x_coordinates, y_coordinates, marker=".", color="g")
+        #     self.new_scatter = plt.scatter(
+        #         x_coordinates,
+        #         y_coordinates,
+        #         marker=".",
+        #         color="g"
+        #     )
         # else:
         #     self.old_scatter.set_offsets(self.new_scatter.get_offsets())
         #     self.new_scatter.set_offsets(np.c_[x_coordinates, y_coordinates])
         if not hasattr(self, "node_scatter"):
-            self.node_scatter = self.aggregate_ax.scatter(x_coordinates, y_coordinates, marker=".")
+            self.node_scatter = self.aggregate_ax.scatter(
+                x_coordinates,
+                y_coordinates,
+                marker="."
+            )
         else:
             self.node_scatter.set_offsets(np.c_[x_coordinates, y_coordinates])
         self.aggregate_ax.set_xlabel(self.x_axis)
         self.aggregate_ax.set_ylabel(self.y_axis)
-        self.aggregate_ax.set_xlim([np.min(x_coordinates), np.max(x_coordinates)])
-        self.aggregate_ax.set_ylim([np.min(y_coordinates), np.max(y_coordinates)])
+        self.aggregate_ax.set_xlim(
+            [np.min(x_coordinates), np.max(x_coordinates)]
+        )
+        self.aggregate_ax.set_ylim(
+            [np.min(y_coordinates), np.max(y_coordinates)]
+        )
         if not hasattr(self, "edge_collection"):
             self.edge_collection = self.aggregate_ax.add_collection(
                 matplotlib.collections.LineCollection([], [])
@@ -199,8 +224,12 @@ class GUI(object):
             if self.show_edges:
                 selected_neighbors = self.edges[nodes].T.tocsr()[nodes]
                 a, b = selected_neighbors.nonzero()
-                positive_counts = self.positive_edge_evidence[selected_neighbors.data]
-                negative_counts = self.negative_edge_evidence[selected_neighbors.data]
+                positive_counts = self.positive_edge_evidence[
+                    selected_neighbors.data
+                ]
+                negative_counts = self.negative_edge_evidence[
+                    selected_neighbors.data
+                ]
                 selection = positive_counts >= self.min_positive_threshold
                 selection &= positive_counts <= self.max_positive_threshold
                 selection &= negative_counts >= self.min_negative_threshold
@@ -242,16 +271,24 @@ class GUI(object):
             self.y_axis = values["y_axis"]
             update = True
         if self.min_positive_threshold != values["min_positive_edge_count"]:
-            self.min_positive_threshold = float(values["min_positive_edge_count"])
+            self.min_positive_threshold = float(
+                values["min_positive_edge_count"]
+            )
             update = True
         if self.max_positive_threshold != values["max_positive_edge_count"]:
-            self.max_positive_threshold = float(values["max_positive_edge_count"])
+            self.max_positive_threshold = float(
+                values["max_positive_edge_count"]
+            )
             update = True
         if self.min_negative_threshold != values["min_negative_edge_count"]:
-            self.min_negative_threshold = float(values["min_negative_edge_count"])
+            self.min_negative_threshold = float(
+                values["min_negative_edge_count"]
+            )
             update = True
         if self.max_negative_threshold != values["max_negative_edge_count"]:
-            self.max_negative_threshold = float(values["max_negative_edge_count"])
+            self.max_negative_threshold = float(
+                values["max_negative_edge_count"]
+            )
             update = True
         for key, (low, high) in list(self.node_dimensions.items()):
             if key == "node_evidence":
@@ -260,13 +297,17 @@ class GUI(object):
                     node_count = self.evidence.get_aligned_nodes_from_group()
                     self.nodes -= node_count >= low
                     self.nodes += node_count >= float(values["min_node_count"])
-                    self.node_dimensions["node_evidence"][0] = float(values["min_node_count"])
+                    self.node_dimensions["node_evidence"][0] = float(
+                        values["min_node_count"]
+                    )
                 if high != float(values["max_node_count"]):
                     update = True
                     node_count = self.evidence.get_aligned_nodes_from_group()
                     self.nodes -= node_count <= high
                     self.nodes += node_count <= float(values["max_node_count"])
-                    self.node_dimensions["node_evidence"][1] = float(values["max_node_count"])
+                    self.node_dimensions["node_evidence"][1] = float(
+                        values["max_node_count"]
+                    )
             else:
                 if low != float(values[f"min_{key}"]):
                     update = True

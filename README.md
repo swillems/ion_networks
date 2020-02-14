@@ -8,7 +8,7 @@ The ion-networks repository was developed on a Ubuntu 18.04 machine with the [py
 For Windows users, the recommended approach is to install a Windows subsystem for Linux (WSL) with Ubuntu 18.04 by following [these steps](https://docs.microsoft.com/en-us/windows/wsl/install-win10). After the WSL has been installed and a user account has been created, close the WSL and download and install [MobaXterm v11.1](https://mobaxterm.mobatek.net/download-home-edition.html) or higher. Then, follow the installation steps for Ubuntu 18.04 within the MobaXterm WSL.
 
 ### Ubuntu 18.04
-This repository requires python to be run within a [conda](https://conda.io/projects/conda/en/latest/index.html) environment. If not installed, the following commands will perform a full installation of Anaconda3, followed by the installation of the ion-networks repository by [downloading](https://github.com/swillems/ion_networks/tree/master/install/install.sh) and running the install script:
+This repository requires python to be run within a [conda](https://conda.io/projects/conda/en/latest/index.html) environment. If not installed, the following commands will perform a full installation of Anaconda3, followed by the installation of the ion-networks repository by [downloading](https://github.com/swillems/ion_networks/tree/master/install/install.sh) and running the install script at the desired location:
 
 ```bash
 cd /desired/installation/path/

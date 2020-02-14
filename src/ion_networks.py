@@ -58,7 +58,7 @@ def cli():
     required=True,
     type=click.Choice(
         ['DDA', 'HDMSE', "SONAR", "SWIMDIA"],
-        case_sensitive=False
+        case_sensitive=True
     )
 )
 @click.option(

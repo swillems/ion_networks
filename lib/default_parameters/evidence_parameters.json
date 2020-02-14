@@ -4,5 +4,5 @@
     "ppm": 50,
     "max_alignment_deviation_PRECURSOR_RT": 1.0,
     "max_alignment_deviation_PRECURSOR_DT": 3.0,
-    "max_alignment_deviation_PRECURSOR_MZ": 5.0
+    "max_alignment_deviation_PRECURSOR_MZ": 7.5
 }

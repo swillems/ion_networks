@@ -41,8 +41,9 @@ def convert_data_formats_to_csvs(
         file_name=parameter_file_name
     )
     with utils.open_logger(log_file_name, parameters=parameters) as logger:
-        if not os.path.exists(output_directory):
-            os.makedirs(output_directory)
+        if output_directory is not None:
+            if not os.path.exists(output_directory):
+                os.makedirs(output_directory)
         input_file_names = utils.get_file_names_with_extension(
             input_path,
             extension=utils.DATA_TYPE_FILE_EXTENSIONS[data_type]
@@ -54,8 +55,12 @@ def convert_data_formats_to_csvs(
             file_name_base = os.path.splitext(
                 os.path.basename(input_file_name)
             )[0]
+            if output_directory is None:
+                output_path = os.path.dirname(input_file_name)
+            else:
+                output_path = output_directory
             output_file_name = os.path.join(
-                output_directory,
+                output_path,
                 f"{file_name_base}.inet.csv"
             )
             utils.write_data_to_csv_file(data, output_file_name, logger)
@@ -182,7 +187,6 @@ def show_ion_network(
     # TODO: Implement
     parameters = utils.read_parameters_from_json_file(
         file_name=parameter_file_name,
-        default="create"
     )
     with utils.open_logger(log_file_name, parameters=parameters) as logger:
         inet = network.Network(ion_network_file_name)
