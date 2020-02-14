@@ -11,14 +11,14 @@ if ! hash conda 2>/dev/null; then
   echo "Updating conda."
   # eval "$(~/anaconda3/bin/conda bash hook)"
   eval "$(~/miniconda3/bin/conda shell.bash hook)"
-  conda update -n root conda
+  conda update -n root conda -y
   conda init
   conda config --set auto_activate_base false
-  conda activate
-  conda install -c conda-forge nb_conda_kernels
+  conda install -c conda-forge nb_conda_kernels -y
   conda deactivate
   # echo 'function conda_notebooks() { conda activate && jupyter_notebook && conda deactivate; }' >> ~/.bashrc
   # apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6
+  source ~/.bashrc
 else
   echo "Conda already installed."
 fi
