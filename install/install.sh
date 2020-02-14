@@ -10,7 +10,8 @@ if ! hash conda 2>/dev/null; then
   bash Miniconda3-latest-Linux-x86_64.sh -b -p ~/miniconda3
   echo "Updating conda."
   conda update -n root conda
-  eval "$(~/anaconda3/bin/conda bash hook)"
+  # eval "$(~/anaconda3/bin/conda bash hook)"
+  eval "$(~/miniconda3/bin/conda bash hook)"
   conda init
   conda config --set auto_activate_base false
   conda activate
