@@ -12,10 +12,14 @@ if ! hash conda 2>/dev/null; then
   # eval "$(~/anaconda3/bin/conda bash hook)"
   eval "$(~/miniconda3/bin/conda shell.bash hook)"
   conda update -n root conda -y
+  echo "Initializing conda."
   conda init
   conda config --set auto_activate_base false
+  echo "Installing conda notebook kernels."
   conda install -c conda-forge nb_conda_kernels -y
   conda deactivate
+  echo "Adding conda_notebooks command."
+  echo "alias conda_notebooks='conda activate && jupyter notebook && conda deactivate'" >> ~/.bashrc
   # echo 'function conda_notebooks() { conda activate && jupyter_notebook && conda deactivate; }' >> ~/.bashrc
   # apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6
   source ~/.bashrc
@@ -24,7 +28,7 @@ else
 fi
 
 if ! hash ion_networks.py 2>/dev/null; then
-  echo "Downloading latest ion-networks repository from github."
+  echo "Downloading latest ion-networks repository from GitHub."
   git clone https://github.com/swillems/ion_networks.git
   echo "Installing ion-networks."
   conda env create --file ion_networks/install/environment.yml
@@ -35,8 +39,7 @@ if ! hash ion_networks.py 2>/dev/null; then
   ion_networks_command="$(which python)"
   conda deactivate
   echo "alias ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'" >> ~/.bashrc
-  source ~/.bashrc
 else
   echo "Ion-networks are already installed."
-  echo "Update with command: bash ion_networks install/update.sh"
+  echo "Update with command 'bash ion_networks install/update.sh'."
 fi
