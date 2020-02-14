@@ -3,7 +3,7 @@
 if ! hash conda 2>/dev/null; then
   echo "Conda not found."
   echo "Downloading conda."
-  wget https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh
+  # wget https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh
   # wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
   echo "Installing conda."
   # bash Anaconda3-2019.10-Linux-x86_64.sh -b -p ~/anaconda3
