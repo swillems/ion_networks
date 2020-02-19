@@ -386,13 +386,15 @@ class Network(object):
         ppm = parameters["ppm"]
         max_mz_diff = 1 + ppm * 10**-6
         if parameters["calibrate_PRECURSOR_RT"]:
-            self_coordinates = self.get_ion_coordinates("PRECURSOR_RT")[
-                self_mz_order
+            self_coordinates += [
+                self.get_ion_coordinates("PRECURSOR_RT")[
+                    self_mz_order
+                ]
             ]
             other_coordinates += other.calibrate_precursor_rt(self, parameters)[
                 other_mz_order
             ]
-            max_deviations += parameters["max_alignment_deviation_PRECURSOR_RT"]
+            max_deviations += [parameters["max_alignment_deviation_PRECURSOR_RT"]]
         self_coordinates = tuple(self_coordinates)
         other_coordinates = tuple(other_coordinates)
         max_deviations = tuple(max_deviations)

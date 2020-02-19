@@ -1,7 +1,7 @@
 {
     "log_file_name": null,
     "force_overwrite": true,
-    "ppm": 50,
+    "ppm": 50.0,
     "max_alignment_deviation_PRECURSOR_RT": 0.5,
     "max_alignment_deviation_PRECURSOR_DT": 2.0,
     "max_alignment_deviation_PRECURSOR_MZ": 5.0,
