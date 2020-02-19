@@ -78,7 +78,7 @@ class GUI(object):
                 ),
             ]
         )
-        self.x_axis = "PRECURSOR_RT"
+        self.x_axis = "FRAGMENT_MZ"
         layout.append(
             [
                 sg.Text('x-axis', size=(25, 1)),
@@ -91,7 +91,7 @@ class GUI(object):
                 )
             ]
         )
-        self.y_axis = "FRAGMENT_MZ"
+        self.y_axis = "FRAGMENT_LOGINT"
         layout.append(
             [
                 sg.Text('y-axis', size=(25, 1)),

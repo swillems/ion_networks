@@ -5,18 +5,18 @@ Analysis of LC-[...]-MSMS data with ion-networks.
 The ion-networks repository was developed on a Ubuntu 18.04 machine with the [python](https://docs.python.org/3.8/) language and standard python packages. It is likely to function on other systems as well, but this has not been verified.
 
 ### Windows 10
-For Windows users, the recommended approach is to install a Windows subsystem for Linux (WSL) with Ubuntu 18.04 by following [these steps](https://docs.microsoft.com/en-us/windows/wsl/install-win10). After the WSL has been installed and a user account has been created, close the WSL and download and install [MobaXterm v11.1](https://mobaxterm.mobatek.net/download-home-edition.html) or higher. Then, follow the installation steps for Ubuntu 18.04 within the MobaXterm WSL.
+For Windows users, the recommended approach is to install a Windows subsystem for Linux (WSL) with Ubuntu 18.04 by following [these steps](https://docs.microsoft.com/en-us/windows/wsl/install-win10). After the WSL has been installed and a user account has been created, close the WSL and download and install [MobaXterm v11.1](https://mobaxterm.mobatek.net/download-home-edition.html) or higher. Open MobaXterm and from within open the WSL by clicking the WSL icon on the left of the window. Now, follow the installation steps for Ubuntu 18.04 within the MobaXterm WSL.
 
 ### Ubuntu 18.04
-This repository requires python to be run within a [conda](https://conda.io/projects/conda/en/latest/index.html) environment. If not installed, the following commands will perform a full installation of Anaconda3, followed by the installation of the ion-networks repository by [downloading](https://github.com/swillems/ion_networks/tree/master/install/install.sh) and running the install script at the desired location:
+This repository requires python to be run within a [conda](https://conda.io/projects/conda/en/latest/index.html) environment. Tthe following command will install of Miniconda3 (only if this is not installed yet), followed by the installation of the ion-networks repository by [downloading](https://github.com/swillems/ion_networks/tree/master/install/install.sh) and running the install script at the desired location:
 
 ```bash
-cd /desired/installation/path/
+cd /desired/path/where/to/install/ion_networks/
 wget https://raw.githubusercontent.com/swillems/ion_networks/master/install/install.sh && bash install.sh && rm install.sh && source ~/.bashrc
 # wget --auth-no-challenge -O install.sh https://raw.githubusercontent.com/swillems/ion_networks/master/install/install.sh?token=XXX && bash install.sh && rm install.sh && source ~/.bashrc
 ```
 
-If conda is already installed or if the ion-networks repository needs to be updated, [download](https://github.com/swillems/ion_networks/tree/master/install/update.sh) and/or run the ```update.sh``` bash script contained in the [install](https://github.com/swillems/ion_networks/tree/master/install) folder of the ion-networks repository.
+If the ion-networks repository needs to be updated, [download](https://github.com/swillems/ion_networks/tree/master/install/update.sh) and/or run the ```update.sh``` bash script contained in the [install](https://github.com/swillems/ion_networks/tree/master/install) folder of the ion-networks repository.
 
 ## Usage
 Five basic modules have been implemented for analysis of ion-networks:
@@ -55,7 +55,7 @@ Each command then comes with its own help function through ```ion_networks.py CO
 Typically, a workflow looks as follows:
 
 ```bash
-ion_networks.py convert -i project_folder/centroided_data/ -o project_folder/ion_networks/ -hdmse -l project_folder/ion_networks/log.txt
+ion_networks.py convert -i data_folder/centroided_data/ -o project_folder/ion_networks/ -d HDMSE -l project_folder/ion_networks/log.txt
 ion_networks.py create -i project_folder/ion_networks/ -l project_folder/ion_networks/log.txt
 ion_networks.py evidence -i project_folder/ion_networks/ -l project_folder/ion_networks/log.txt
 ion_networks.py show -i project_folder/ion_networks/ -l project_folder/ion_networks/log.txt

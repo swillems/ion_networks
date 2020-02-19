@@ -19,10 +19,10 @@ DEFAULT_PARAMETER_FILES = {
     "evidence": "evidence_parameters.json"
 }
 DATA_TYPE_FILE_EXTENSIONS = {
-    "DDA": "mgf",
-    "SONAR": "csv",
-    "HDMSE": "csv",
-    "SWIMDIA": "csv",
+    "DDA": ".mgf",
+    "SONAR": ".csv",
+    "HDMSE": ".csv",
+    "SWIMDIA": ".csv",
 }
 
 
