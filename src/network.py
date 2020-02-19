@@ -389,7 +389,7 @@ class Network(object):
             self_coordinates = self.get_ion_coordinates("PRECURSOR_RT")[
                 self_mz_order
             ]
-            other_coordinates += other.calibrate_precursor_rt(self, ppm)[
+            other_coordinates += other.calibrate_precursor_rt(self, parameters)[
                 other_mz_order
             ]
             max_deviations += parameters["max_alignment_deviation_PRECURSOR_RT"]
