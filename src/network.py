@@ -358,34 +358,44 @@ class Network(object):
     def align_nodes(self, other, parameters, return_as_scipy_csr=True):
         # TODO: Docstring
         self.logger.info(f"Aligning {self.file_name} with {other.file_name}.")
-        dimensions = self.dimension_overlap(other)
+        dimensions = self.dimension_overlap(
+            other,
+            remove_fragment_mz=True,
+            remove_fragment_logint=True,
+            remove_precursor_rt=parameters["calibrate_PRECURSOR_RT"]
+        )
         self_mz = self.get_ion_coordinates("FRAGMENT_MZ")
         other_mz = other.get_ion_coordinates("FRAGMENT_MZ")
         self_mz_order = np.argsort(self_mz)
         other_mz_order = np.argsort(other_mz)
-        self_coordinates = tuple(
-            [
-                self_coordinate[
-                    self_mz_order
-                ] for self_coordinate in self.get_ion_coordinates(dimensions)
-            ]
-        )
-        other_coordinates = tuple(
-            [
-                other_coordinate[
-                    other_mz_order
-                ] for other_coordinate in other.get_ion_coordinates(dimensions)
-            ]
-        )
-        max_deviations = tuple(
-            [
-                parameters[
-                    f"max_alignment_deviation_{dimension}"
-                ] for dimension in dimensions
-            ]
-        )
+        self_coordinates = [
+            self_coordinate[
+                self_mz_order
+            ] for self_coordinate in self.get_ion_coordinates(dimensions)
+        ]
+        other_coordinates = [
+            other_coordinate[
+                other_mz_order
+            ] for other_coordinate in other.get_ion_coordinates(dimensions)
+        ]
+        max_deviations = [
+            parameters[
+                f"max_alignment_deviation_{dimension}"
+            ] for dimension in dimensions
+        ]
         ppm = parameters["ppm"]
         max_mz_diff = 1 + ppm * 10**-6
+        if parameters["calibrate_PRECURSOR_RT"]:
+            self_coordinates = self.get_ion_coordinates("PRECURSOR_RT")[
+                self_mz_order
+            ]
+            other_coordinates += other.calibrate_precursor_rt(self, ppm)[
+                other_mz_order
+            ]
+            max_deviations += parameters["max_alignment_deviation_PRECURSOR_RT"]
+        self_coordinates = tuple(self_coordinates)
+        other_coordinates = tuple(other_coordinates)
+        max_deviations = tuple(max_deviations)
         @numba.njit
         def numba_wrapper():
             low_limits = np.searchsorted(
@@ -440,11 +450,79 @@ class Network(object):
             )
         return self_indices, other_indices
 
+    def quick_align(self, other, ppm):
+        # TODO:
+        self_mzs = self.get_ion_coordinates("FRAGMENT_MZ")
+        other_mzs = other.get_ion_coordinates("FRAGMENT_MZ")
+        self_mz_order = np.argsort(self_mzs)
+        other_mz_order = np.argsort(other_mzs)
+        max_mz_diff = 1 + ppm * 10**-6
+        low_limits = np.searchsorted(
+            self_mzs[self_mz_order],
+            other_mzs[other_mz_order] / max_mz_diff,
+            "left"
+        )
+        high_limits = np.searchsorted(
+            self_mzs[self_mz_order],
+            other_mzs[other_mz_order] * max_mz_diff,
+            "right"
+        )
+        other_rt_order = np.argsort(other_mz_order)
+        self_indices = np.concatenate(
+            [
+                self_mz_order[l:h] for l, h in zip(
+                    low_limits[other_rt_order],
+                    high_limits[other_rt_order]
+                )
+            ]
+        )
+        other_indices = np.repeat(
+            np.arange(len(other_rt_order)),
+            high_limits[other_rt_order] - low_limits[other_rt_order]
+        )
+        selection = longest_increasing_subsequence(self_indices)
+        self_indices_mask = np.empty(len(selection) + 2, dtype=int)
+        self_indices_mask[0] = 0
+        self_indices_mask[1: -1] = self_indices[selection]
+        self_indices_mask[-1] = len(self_mzs) - 1
+        other_indices_mask = np.empty(len(selection) + 2, dtype=int)
+        other_indices_mask[0] = 0
+        other_indices_mask[1: -1] = other_indices[selection]
+        other_indices_mask[-1] = len(other_mzs) - 1
+        return self_indices_mask, other_indices_mask
+
+    def calibrate_precursor_rt(self, other, parameters):
+        # TODO:
+        self_indices, other_indices = self.quick_align(other, parameters["ppm"])
+        self_rts = self.get_ion_coordinates("PRECURSOR_RT")
+        other_rts = other.get_ion_coordinates("PRECURSOR_RT", indices=other_indices)
+        calibrated_self_rts = []
+        for self_start_index, self_end_index, other_rt_start, other_rt_end in zip(
+            self_indices[:-1],
+            self_indices[1:],
+            other_rts[:-1],
+            other_rts[1:]
+        ):
+            self_rt_start = self_rts[self_start_index]
+            self_rt_end = self_rts[self_end_index]
+            if self_rt_start == self_rt_end:
+                new_rts = np.repeat(other_rt_start, self_end_index - self_start_index)
+            else:
+                slope = (other_rt_end - other_rt_start) / (self_rt_end - self_rt_start)
+                new_rts = other_rt_start + slope * (
+                    self_rts[self_start_index: self_end_index] - self_rt_start
+                )
+            calibrated_self_rts.append(new_rts)
+        calibrated_self_rts.append([other_rts[-1]])
+        calibrated_self_rts = np.concatenate(calibrated_self_rts)
+        return calibrated_self_rts
+
     def dimension_overlap(
         self,
         other,
-        remove_mz2=True,
-        remove_logint=True
+        remove_fragment_mz=False,
+        remove_fragment_logint=False,
+        remove_precursor_rt=False
     ):
         """
         Get the overlapping dimensions of this ion-network with another
@@ -454,10 +532,12 @@ class Network(object):
         ----------
         other : ion_network
             The second ion-network.
-        remove_mz2 : bool
+        remove_fragment_mz : bool
             If True, remove 'FRAGMENT_MZ' from the overlapping dimensions.
-        remove_mz2 : bool
+        remove_fragment_logint : bool
             If True, remove 'FRAGMENT_LOGINT' from the overlapping dimensions.
+        remove_precursor_rt : bool
+            If True, remove 'PRECURSOR_RT' from the overlapping dimensions.
 
         Returns
         -------
@@ -465,10 +545,12 @@ class Network(object):
             A sorted list with all the overlapping dimensions.
         """
         dimensions = set(self.dimensions + other.dimensions)
-        if remove_mz2:
+        if remove_fragment_mz:
             dimensions.remove("FRAGMENT_MZ")
-        if remove_logint:
+        if remove_fragment_logint:
             dimensions.remove("FRAGMENT_LOGINT")
+        if remove_precursor_rt:
+            dimensions.remove("PRECURSOR_RT")
         return sorted(dimensions)
 
     @property
@@ -618,3 +700,34 @@ class Network(object):
         if self.__cmp__(other) >= 0:
             return True
         return False
+
+
+@numba.njit(fastmath=True)
+def longest_increasing_subsequence(sequence):
+    # TODO:
+    M = np.repeat(0, len(sequence) + 1)
+    P = np.repeat(0, len(sequence))
+    max_subsequence_length = 0
+    for current_index, current_element in enumerate(sequence):
+        low_bound = 1
+        high_bound = max_subsequence_length
+        while low_bound <= high_bound:
+            mid = (low_bound + high_bound) // 2
+            if sequence[M[mid]] <= current_element:
+                low_bound = mid + 1
+            else:
+                high_bound = mid - 1
+        subsequence_length = low_bound
+        P[current_index] = M[subsequence_length - 1]
+        M[subsequence_length] = current_index
+        if subsequence_length > max_subsequence_length:
+            max_subsequence_length = subsequence_length
+    longest_increasing_subsequence = np.repeat(0, max_subsequence_length)
+    index = M[max_subsequence_length]
+    for current_index in range(max_subsequence_length - 1, -1, -1):
+        longest_increasing_subsequence[current_index] = index
+        index = P[index]
+    # good = np.repeat(True, max_subsequence_length)
+    # good[1:] = sequence[longest_increasing_subsequence[:-1]] != sequence[longest_increasing_subsequence[1:]]
+    # return longest_increasing_subsequence[good]
+    return longest_increasing_subsequence

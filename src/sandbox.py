@@ -539,7 +539,9 @@ def longest_increasing_subsequence(sequence):
     return longest_increasing_subsequence
 
 
-def quick_align(self_mzs, other_mzs, ppm):
+def quick_align(self, other, ppm):
+    self_mzs = self.get_ion_coordinates("FRAGMENT_MZ")
+    other_mzs = other.get_ion_coordinates("FRAGMENT_MZ")
     self_mz_order = np.argsort(self_mzs)
     other_mz_order = np.argsort(other_mzs)
     max_mz_diff = 1 + ppm * 10**-6
@@ -579,9 +581,7 @@ def quick_align(self_mzs, other_mzs, ppm):
 
 
 def calibrate_precursor_rt(self, other, ppm=10):
-    self_mzs = self.get_ion_coordinates("FRAGMENT_MZ")
-    other_mzs = other.get_ion_coordinates("FRAGMENT_MZ")
-    self_indices, other_indices = quick_align(self_mzs, other_mzs, ppm=10)
+    self_indices, other_indices = quick_align(self, other, ppm=10)
     self_rts = self.get_ion_coordinates("PRECURSOR_RT")
     other_rts = other.get_ion_coordinates("PRECURSOR_RT", indices=other_indices)
     new_self_rts = []
