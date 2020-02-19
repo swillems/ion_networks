@@ -509,13 +509,6 @@ def align_edges(self, other, alignment):
     #         return tuple(arrays[k] for k in kind)
 
 
-def lis2(a):
-	L = []
-	for (k,v) in enumerate(a):
-		L.append(max([L[i] for (i,n) in enumerate(a[:k]) if n<v] or [[]], key=len) + [v])
-	return max(L, key=len)
-
-
 @numba.njit(fastmath=True)
 def longest_increasing_subsequence(sequence):
     M = np.repeat(0, len(sequence) + 1)
@@ -540,4 +533,74 @@ def longest_increasing_subsequence(sequence):
     for current_index in range(max_subsequence_length - 1, -1, -1):
         longest_increasing_subsequence[current_index] = index
         index = P[index]
+    # good = np.repeat(True, max_subsequence_length)
+    # good[1:] = sequence[longest_increasing_subsequence[:-1]] != sequence[longest_increasing_subsequence[1:]]
+    # return longest_increasing_subsequence[good]
     return longest_increasing_subsequence
+
+
+def quick_align(self_mzs, other_mzs, ppm):
+    self_mz_order = np.argsort(self_mzs)
+    other_mz_order = np.argsort(other_mzs)
+    max_mz_diff = 1 + ppm * 10**-6
+    low_limits = np.searchsorted(
+        self_mzs[self_mz_order],
+        other_mzs[other_mz_order] / max_mz_diff,
+        "left"
+    )
+    high_limits = np.searchsorted(
+        self_mzs[self_mz_order],
+        other_mzs[other_mz_order] * max_mz_diff,
+        "right"
+    )
+    other_rt_order = np.argsort(other_mz_order)
+    self_indices = np.concatenate(
+        [
+            self_mz_order[l:h] for l, h in zip(
+                low_limits[other_rt_order],
+                high_limits[other_rt_order]
+            )
+        ]
+    )
+    other_indices = np.repeat(
+        np.arange(len(other_rt_order)),
+        high_limits[other_rt_order] - low_limits[other_rt_order]
+    )
+    selection = longest_increasing_subsequence(self_indices)
+    self_indices_mask = np.empty(len(selection) + 2, dtype=int)
+    self_indices_mask[0] = 0
+    self_indices_mask[1: -1] = self_indices[selection]
+    self_indices_mask[-1] = len(self_mzs) - 1
+    other_indices_mask = np.empty(len(selection) + 2, dtype=int)
+    other_indices_mask[0] = 0
+    other_indices_mask[1: -1] = other_indices[selection]
+    other_indices_mask[-1] = len(other_mzs) - 1
+    return self_indices_mask, other_indices_mask
+
+
+def calibrate_precursor_rt(self, other, ppm=10):
+    self_mzs = self.get_ion_coordinates("FRAGMENT_MZ")
+    other_mzs = other.get_ion_coordinates("FRAGMENT_MZ")
+    self_indices, other_indices = quick_align(self_mzs, other_mzs, ppm=10)
+    self_rts = self.get_ion_coordinates("PRECURSOR_RT")
+    other_rts = other.get_ion_coordinates("PRECURSOR_RT", indices=other_indices)
+    new_self_rts = []
+    for self_start_index, self_end_index, other_rt_start, other_rt_end in zip(
+        self_indices[:-1],
+        self_indices[1:],
+        other_rts[:-1],
+        other_rts[1:]
+    ):
+        self_rt_start = self_rts[self_start_index]
+        self_rt_end = self_rts[self_end_index]
+        if self_rt_start == self_rt_end:
+            new_rts = np.repeat(other_rt_start, self_end_index - self_start_index)
+        else:
+            slope = (other_rt_end - other_rt_start) / (self_rt_end - self_rt_start)
+            new_rts = other_rt_start + slope * (
+                self_rts[self_start_index: self_end_index] - self_rt_start
+            )
+        new_self_rts.append(new_rts)
+    new_self_rts.append([other_rts[-1]])
+    new_self_rts = np.concatenate(new_self_rts)
+    return new_self_rts
