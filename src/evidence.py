@@ -141,7 +141,7 @@ class Evidence(object):
             )
             evidence_group.attrs["creation_time"] = time.asctime()
             for parameter_key, parameter_value in parameters.items():
-                if parameter_key.startswith("max_alignment_deviation_"):
+                if parameter_key.startswith("max_alignment_absolute_error_"):
                     if parameter_key[24:] not in dimension_overlap:
                         continue
                 evidence_group.attrs[parameter_key] = parameter_value

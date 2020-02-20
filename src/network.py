@@ -167,16 +167,16 @@ class Network(object):
                 "FRAGMENT_LOGINT"
             ]
         ]
-        max_deviations = [
+        max_absolute_errors = [
             parameters[
-                f"max_edge_deviation_{dimension}"
+                f"max_edge_absolute_error_{dimension}"
             ] for dimension in dimensions
         ]
         indptr, indices = self.create_sparse_edges(
             self.get_ion_coordinates("PRECURSOR_RT"),
-            parameters[f"max_edge_deviation_PRECURSOR_RT"],
+            parameters[f"max_edge_absolute_error_PRECURSOR_RT"],
             tuple(self.get_ion_coordinates(dimensions)),
-            tuple(max_deviations)
+            tuple(max_absolute_errors)
         )
         edge_group.create_dataset(
             "indptr",
@@ -212,7 +212,7 @@ class Network(object):
         )
         network_file.attrs["original_file_name"] = self.file_name
         for parameter_key, parameter_value in parameters.items():
-            if parameter_key.startswith("max_edge_deviation"):
+            if parameter_key.startswith("max_edge_absolute_error"):
                 if parameter_key[19:] not in self.dimensions:
                     continue
             network_file.attrs[parameter_key] = parameter_value
@@ -301,9 +301,9 @@ class Network(object):
     def create_sparse_edges(
         self,
         rt_coordinate_array,
-        max_rt_deviation,
+        max_rt_absolute_error,
         coordinate_arrays,
-        max_deviations,
+        max_absolute_errors,
         symmetric=False
     ):
         # TODO: Docstring
@@ -314,12 +314,12 @@ class Network(object):
             else:
                 lower_limits = np.searchsorted(
                     rt_coordinate_array,
-                    rt_coordinate_array - max_rt_deviation,
+                    rt_coordinate_array - max_rt_absolute_error,
                     "left"
                 )
             upper_limits = np.searchsorted(
                 rt_coordinate_array,
-                rt_coordinate_array + max_rt_deviation,
+                rt_coordinate_array + max_rt_absolute_error,
                 "right"
             )
             neighbors = []
@@ -329,23 +329,23 @@ class Network(object):
                     upper_limits
                 )
             ):
-                small_deviations = np.repeat(True, high_limit - low_limit)
-                for max_deviation, coordinate_array in zip(
-                    max_deviations,
+                small_absolute_errors = np.repeat(True, high_limit - low_limit)
+                for max_absolute_error, coordinate_array in zip(
+                    max_absolute_errors,
                     coordinate_arrays
                 ):
                     neighbor_coordinates = coordinate_array[
                         low_limit: high_limit
                     ]
                     local_coordinate = coordinate_array[index]
-                    small_coordinate_deviations = np.abs(
+                    small_coordinate_absolute_errors = np.abs(
                         neighbor_coordinates - local_coordinate
-                    ) <= max_deviation
-                    small_deviations = np.logical_and(
-                        small_deviations,
-                        small_coordinate_deviations
+                    ) <= max_absolute_error
+                    small_absolute_errors = np.logical_and(
+                        small_absolute_errors,
+                        small_coordinate_absolute_errors
                     )
-                local_neighbors = low_limit + np.flatnonzero(small_deviations)
+                local_neighbors = low_limit + np.flatnonzero(small_absolute_errors)
                 neighbors.append(local_neighbors)
             return neighbors
         neighbors = numba_wrapper()
@@ -378,12 +378,12 @@ class Network(object):
                 other_mz_order
             ] for other_coordinate in other.get_ion_coordinates(dimensions)
         ]
-        max_deviations = [
+        max_absolute_errors = [
             parameters[
-                f"max_alignment_deviation_{dimension}"
+                f"max_alignment_absolute_error_{dimension}"
             ] for dimension in dimensions
         ]
-        ppm = parameters["ppm"]
+        ppm = parameters["max_alignment_ppm_FRAGMENT_MZ"]
         max_mz_diff = 1 + ppm * 10**-6
         if parameters["calibrate_PRECURSOR_RT"]:
             self_coordinates += [
@@ -396,12 +396,12 @@ class Network(object):
                     other_mz_order
                 ]
             ]
-            max_deviations += [
-                parameters["max_alignment_deviation_PRECURSOR_RT"]
+            max_absolute_errors += [
+                parameters["max_alignment_absolute_error_PRECURSOR_RT"]
             ]
         self_coordinates = tuple(self_coordinates)
         other_coordinates = tuple(other_coordinates)
-        max_deviations = tuple(max_deviations)
+        max_absolute_errors = tuple(max_absolute_errors)
         @numba.njit
         def numba_wrapper():
             low_limits = np.searchsorted(
@@ -421,9 +421,9 @@ class Network(object):
                     high_limits
                 )
             ):
-                small_deviations = np.repeat(True, high_limit - low_limit)
-                for max_deviation, self_coordinate, other_coordinate in zip(
-                    max_deviations,
+                small_absolute_errors = np.repeat(True, high_limit - low_limit)
+                for max_absolute_error, self_coordinate, other_coordinate in zip(
+                    max_absolute_errors,
                     self_coordinates,
                     other_coordinates
                 ):
@@ -431,15 +431,15 @@ class Network(object):
                     alignment_coordinates = other_coordinate[
                         low_limit: high_limit
                     ]
-                    small_coordinate_deviations = np.abs(
+                    small_coordinate_absolute_errors = np.abs(
                         alignment_coordinates - local_coordinate
-                    ) <= max_deviation
-                    small_deviations = np.logical_and(
-                        small_deviations,
-                        small_coordinate_deviations
+                    ) <= max_absolute_error
+                    small_absolute_errors = np.logical_and(
+                        small_absolute_errors,
+                        small_coordinate_absolute_errors
                     )
                 matches = other_mz_order[
-                    low_limit + np.flatnonzero(small_deviations)
+                    low_limit + np.flatnonzero(small_absolute_errors)
                 ]
                 results.append(matches)
             return results
@@ -505,7 +505,7 @@ class Network(object):
         )
         self_indices, other_indices = self.quick_align(
             other,
-            parameters["calibration_ppm"]
+            parameters["calibration_ppm_FRAGMENT_MZ"]
         )
         self_rts = self.get_ion_coordinates("PRECURSOR_RT")
         other_rts = other.get_ion_coordinates(
