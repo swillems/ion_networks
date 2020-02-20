@@ -5,5 +5,6 @@
     "max_alignment_deviation_PRECURSOR_RT": 0.5,
     "max_alignment_deviation_PRECURSOR_DT": 2.0,
     "max_alignment_deviation_PRECURSOR_MZ": 5.0,
-    "calibrate_PRECURSOR_RT": true
+    "calibrate_PRECURSOR_RT": true,
+    "calibration_ppm": 10.0
 }
