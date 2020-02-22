@@ -230,10 +230,10 @@ class GUI(object):
                 negative_counts = self.negative_edge_evidence[
                     selected_neighbors.data
                 ]
-                selection = positive_counts >= self.min_positive_threshold
-                selection &= positive_counts <= self.max_positive_threshold
-                selection &= negative_counts >= self.min_negative_threshold
-                selection &= negative_counts <= self.max_negative_threshold
+                selection = (positive_counts >= self.min_positive_threshold)
+                selection &= (positive_counts <= self.max_positive_threshold)
+                selection &= (negative_counts >= self.min_negative_threshold)
+                selection &= (negative_counts <= self.max_negative_threshold)
                 a = a[selection]
                 b = b[selection]
                 start_edges = list(zip(x_coordinates[a], y_coordinates[a]))

@@ -16,7 +16,8 @@ LIB_PATH = os.path.join(BASE_PATH, "lib")
 DEFAULT_PARAMETER_PATH = os.path.join(LIB_PATH, "default_parameters")
 DEFAULT_PARAMETER_FILES = {
     "create": "create_parameters.json",
-    "evidence": "evidence_parameters.json"
+    "evidence": "evidence_parameters.json",
+    "interface": "interface_parameters.json"
 }
 DATA_TYPE_FILE_EXTENSIONS = {
     "DDA": ".mgf",
@@ -26,7 +27,7 @@ DATA_TYPE_FILE_EXTENSIONS = {
 }
 
 
-def read_parameters_from_json_file(file_name=None, default=None):
+def read_parameters_from_json_file(file_name="", default=""):
     """
     Read a custom or default parameter file.
 
@@ -36,7 +37,8 @@ def read_parameters_from_json_file(file_name=None, default=None):
         The default parameters that should be loaded. Options are:
             "create"
             "evidence"
-            None
+            "interface"
+            ""
     file_name : str
         The name of a .json file that contains parameters defined by the user.
         These will override the default parameters.
@@ -46,8 +48,8 @@ def read_parameters_from_json_file(file_name=None, default=None):
     dict
         A dictionary with parameters.
     """
-    if default is None:
-        parameters = {"log_file_name": None}
+    if default == "":
+        parameters = {"log_file_name": ""}
     else:
         default_parameter_file_name = os.path.join(
             DEFAULT_PARAMETER_PATH,
@@ -55,7 +57,7 @@ def read_parameters_from_json_file(file_name=None, default=None):
         )
         with open(default_parameter_file_name, "r") as in_file:
             parameters = json.load(in_file)
-    if file_name is not None:
+    if file_name != "":
         with open(file_name, "r") as in_file:
             user_defined_parameters = json.load(in_file)
         parameters.update(user_defined_parameters)
@@ -347,6 +349,7 @@ class open_logger(object):
             If overwrite is True, the current log is not appended to the file
             name but overwrites it instead.
         """
+        # TODO: if logger already exists, do not update!
         logger = logging.getLogger('ion_network_log')
         formatter = logging.Formatter('%(asctime)s > %(message)s')
         logger.setLevel(log_level)
@@ -354,9 +357,9 @@ class open_logger(object):
         console_handler.setLevel(log_level)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
-        if log_file_name is None:
+        if log_file_name == "":
             log_file_name = parameters["log_file_name"]
-        if log_file_name is not None:
+        if log_file_name != "":
             directory = os.path.dirname(log_file_name)
             if not os.path.exists(directory):
                 os.makedirs(directory)

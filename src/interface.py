@@ -7,12 +7,13 @@ import network
 import evidence
 import gui
 import utils
+import user_interface
 
 
 def convert_data_formats_to_csvs(
     input_path,
-    output_directory,
     data_type,
+    output_directory,
     parameter_file_name,
     log_file_name
 ):
@@ -37,11 +38,17 @@ def convert_data_formats_to_csvs(
     log_file_name : str or None
         If provided, all logs will be written to this file.
     """
+    if parameter_file_name is None:
+        parameter_file_name = ""
+    if output_directory is None:
+        output_directory = ""
+    if log_file_name is None:
+        log_file_name = ""
     parameters = utils.read_parameters_from_json_file(
         file_name=parameter_file_name
     )
     with utils.open_logger(log_file_name, parameters=parameters) as logger:
-        if output_directory is not None:
+        if output_directory != "":
             if not os.path.exists(output_directory):
                 os.makedirs(output_directory)
         input_file_names = utils.get_file_names_with_extension(
@@ -55,7 +62,7 @@ def convert_data_formats_to_csvs(
             file_name_base = os.path.splitext(
                 os.path.basename(input_file_name)
             )[0]
-            if output_directory is None:
+            if output_directory == "":
                 output_path = os.path.dirname(input_file_name)
             else:
                 output_path = output_directory
@@ -86,6 +93,12 @@ def create_ion_networks(
     log_file_name : str or None
         If provided, all logs will be written to this file.
     """
+    if parameter_file_name is None:
+        parameter_file_name = ""
+    if output_directory is None:
+        output_directory = ""
+    if log_file_name is None:
+        log_file_name = ""
     parameters = utils.read_parameters_from_json_file(
         file_name=parameter_file_name,
         default="create"
@@ -99,7 +112,7 @@ def create_ion_networks(
         logger.info(f"Found {file_count} .inet.csv files to process.")
         for csv_file_name in input_file_names:
             local_file_name = os.path.basename(csv_file_name)
-            if output_directory is None:
+            if output_directory == "":
                 output_path = os.path.dirname(csv_file_name)
             else:
                 output_path = output_directory
@@ -135,6 +148,12 @@ def evidence_ion_networks(
     log_file_name : str or None
         If provided, all logs will be written to this file.
     """
+    if parameter_file_name is None:
+        parameter_file_name = ""
+    if output_directory is None:
+        output_directory = ""
+    if log_file_name is None:
+        log_file_name = ""
     parameters = utils.read_parameters_from_json_file(
         file_name=parameter_file_name,
         default="evidence"
@@ -152,7 +171,7 @@ def evidence_ion_networks(
         evidence_files = []
         for ion_network in ion_networks:
             local_file_name = os.path.basename(ion_network.file_name)
-            if output_directory is None:
+            if output_directory == "":
                 output_path = os.path.dirname(ion_network.file_name)
             else:
                 output_path = output_directory
@@ -185,6 +204,10 @@ def show_ion_network(
 ):
     # TODO: Docstring
     # TODO: Implement
+    if parameter_file_name is None:
+        parameter_file_name = ""
+    if log_file_name is None:
+        log_file_name = ""
     parameters = utils.read_parameters_from_json_file(
         file_name=parameter_file_name,
     )
@@ -205,5 +228,4 @@ def show_ion_network(
 
 def start_gui():
     # TODO: Docstring
-    # TODO: implement
-    raise NotImplementedError
+    user_interface.GUI()

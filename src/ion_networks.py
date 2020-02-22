@@ -41,7 +41,7 @@ def cli():
         "If no output directory is provided, each [input.inet.csv] file is "
         "placed in the same folder as its corresponding [input.*] file. "
         "WARNING: This overrides already existing files without confirmation.",
-    type=click.Path(file_okay=False)
+    type=click.Path(file_okay=False),
 )
 @click.option(
     '--data_type',
@@ -66,7 +66,7 @@ def cli():
     "-p",
     "parameter_file_name",
     help="A [parameters.json] file with optional parameters.",
-    type=click.Path(exists=True, dir_okay=False)
+    type=click.Path(exists=True, dir_okay=False),
 )
 @click.option(
     "--log_file",
@@ -75,7 +75,7 @@ def cli():
     help="Save the log to a [log.txt] file. "
         "This log file can also be supplied through a [parameters.json] file. "
         "If the log file already exists, the new log data is appended.",
-    type=click.Path(dir_okay=False)
+    type=click.Path(dir_okay=False),
 )
 def convert(
     input_path,
@@ -86,8 +86,8 @@ def convert(
 ):
     interface.convert_data_formats_to_csvs(
         input_path,
-        output_directory,
         data_type,
+        output_directory,
         parameter_file_name,
         log_file_name
     )
