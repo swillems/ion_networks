@@ -8,11 +8,11 @@ import matplotlib
 matplotlib.use('TkAgg')
 
 
-class GUI(object):
+class Browser(object):
     # TODO: Docstring
 
     def __init__(self, ion_network, evidence, logger):
-    # TODO: Docstring
+        # TODO: Docstring
         self.ion_network = ion_network
         self.evidence = evidence
         self.create_overview_window()
@@ -26,7 +26,7 @@ class GUI(object):
         self.plot_window.close()
 
     def create_overview_window(self):
-    # TODO: Docstring
+        # TODO: Docstring
         layout = []
         self.node_dimensions = {}
         for dimension in self.ion_network.dimensions:
@@ -156,7 +156,7 @@ class GUI(object):
         self.overview_window = sg.Window('Settings', layout)
 
     def create_plot_window(self):
-    # TODO: Docstring
+        # TODO: Docstring
         self.fig = plt.figure(1, figsize=(13, 9))
         self.aggregate_ax = self.fig.add_subplot(111)
         figure_x, figure_y, figure_w, figure_h = self.fig.bbox.bounds
@@ -177,7 +177,7 @@ class GUI(object):
         self.update_plot()
 
     def update_plot(self):
-    # TODO: Docstring
+        # TODO: Docstring
         nodes = np.flatnonzero(self.nodes == self.node_threshold)
         x_coordinates, y_coordinates = self.ion_network.get_ion_coordinates(
             [self.x_axis, self.y_axis],
@@ -246,7 +246,7 @@ class GUI(object):
         self.figure_canvas_agg.flush_events()
 
     def update_window(self, window):
-    # TODO: Docstring
+        # TODO: Docstring
         event, values = window.read(timeout=100)
         if event == sg.TIMEOUT_KEY:
             return
@@ -259,7 +259,7 @@ class GUI(object):
             self.perform_plot_action(event, values)
 
     def perform_overview_action(self, event, values):
-    # TODO: Docstring
+        # TODO: Docstring
         update = False
         if self.show_edges != values["show_edges"]:
             self.show_edges = values["show_edges"]
@@ -326,5 +326,5 @@ class GUI(object):
             self.update_plot()
 
     def perform_plot_action(self, event, values):
-    # TODO: Docstring
+        # TODO: Docstring
         print("plot", event, values)

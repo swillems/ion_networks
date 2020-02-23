@@ -265,7 +265,8 @@ def show(
     help="Graphical user interface to analyse ion-networks.",
 )
 def gui():
-    interface.start_gui()
+    with interface.GUI() as gui:
+        gui.run()
 
 
 if __name__ == "__main__":
