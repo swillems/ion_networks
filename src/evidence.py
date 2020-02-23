@@ -21,7 +21,7 @@ class Evidence(object):
         evidence_file_name,
         ion_network,
         parameters={},
-        logger=logging.getLogger('ion_network_log')
+        logger=logging.getLogger()
     ):
         # TODO: Docstring
         self.file_name = evidence_file_name
@@ -34,7 +34,6 @@ class Evidence(object):
         self,
         other,
         parameters={},
-        logger=logging.getLogger('ion_network_log')
     ):
         # TODO: Docstring
         directory = os.path.dirname(self.file_name)
@@ -46,7 +45,7 @@ class Evidence(object):
                 self.remove_evidence_from(other)
                 other.remove_evidence_from(self)
             else:
-                logger.info(
+                self.logger.info(
                     f"Evidence for {self.file_name} and {other.file_name} "
                     f"has already been collected"
                 )

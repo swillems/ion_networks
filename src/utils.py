@@ -27,6 +27,79 @@ DATA_TYPE_FILE_EXTENSIONS = {
 }
 
 
+class open_logger(object):
+    """
+    Create a logger to track all progress.
+    """
+
+    def __init__(
+        self,
+        log_file_name,
+        log_level=logging.INFO,
+        parameters={"log_file_name": ""}
+    ):
+        """
+        Create a logger to track all progress.
+
+        Parameters
+        ----------
+        log_file_name : str
+            If a log_file_name is provided, the current log is appended to this
+            file.
+        log_level : int
+            The level at which log messages are returned. By default this is
+            logging.INFO.
+        parameters : dict
+            A parameter dictionary with a default log_file_name. This is
+            updated if a log_file_name is provided.
+        """
+        logger = logging.getLogger()
+        if len(logger.handlers) == 0:
+            formatter = logging.Formatter('%(asctime)s > %(message)s')
+            logger.setLevel(log_level)
+            console_handler = logging.StreamHandler(stream=sys.stdout)
+            console_handler.setLevel(log_level)
+            console_handler.setFormatter(formatter)
+            logger.addHandler(console_handler)
+        if log_file_name == "":
+            log_file_name = parameters["log_file_name"]
+        if log_file_name != "":
+            directory = os.path.dirname(log_file_name)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            file_handler = logging.FileHandler(log_file_name, mode="a")
+            file_handler.setLevel(log_level)
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+            parameters["log_file_name"] = log_file_name
+        else:
+            parameters["log_file_name"] = ""
+        self.logger = logger
+        self.log_file_name = log_file_name
+
+    def __enter__(self):
+        self.logger.info("=" * 50)
+        self.logger.info(
+            "ion_networks.py " + " ".join(sys.argv[1:])
+        )
+        if self.log_file_name != "":
+            self.logger.info(
+                f"This log is being saved as: {self.log_file_name}."
+            )
+        self.logger.info("")
+        return self.logger
+
+    def __exit__(self, type, value, traceback):
+        if type is not None:
+            self.logger.exception("Errors occurred, execution incomplete!")
+            sys.exit()
+        else:
+            self.logger.info("Successfully finished execution.")
+        for handler in list(self.logger.handlers)[1:]:
+            handler.close()
+            self.logger.removeHandler(handler)
+
+
 def read_parameters_from_json_file(file_name="", default=""):
     """
     Read a custom or default parameter file.
@@ -101,7 +174,7 @@ def get_file_names_with_extension(input_path, extension=""):
 def read_data_from_file(
     data_type,
     file_name,
-    logger=logging.getLogger('ion_network_log')
+    logger=logging.getLogger()
 ):
     """
     Convert an [input_file.*] file to a pd.DataFrame with as columns the
@@ -139,7 +212,7 @@ def read_data_from_file(
 
 def read_data_from_mgf_file(
     file_name,
-    logger=logging.getLogger('ion_network_log')
+    logger=logging.getLogger()
 ):
     """
     Convert an [mgf_input.mgf] file to a pd.DataFrame with as columns the
@@ -187,7 +260,7 @@ def read_data_from_mgf_file(
 
 def read_data_from_sonar_file(
     file_name,
-    logger=logging.getLogger('ion_network_log')
+    logger=logging.getLogger()
 ):
     """
     Convert a [sonar_input.csv] file to a pd.DataFrame with as columns the
@@ -227,7 +300,7 @@ def read_data_from_sonar_file(
 
 def read_data_from_hdmse_file(
     file_name,
-    logger=logging.getLogger('ion_network_log')
+    logger=logging.getLogger()
 ):
     """
     Convert a [hdmse_input.csv] file to a pd.DataFrame with as columns the
@@ -266,7 +339,7 @@ def read_data_from_hdmse_file(
 
 def read_data_from_swimdia_file(
     file_name,
-    logger=logging.getLogger('ion_network_log')
+    logger=logging.getLogger()
 ):
     """
     Convert a [swimdia_input.csv] file to a pd.DataFrame with as columns the
@@ -305,7 +378,7 @@ def read_data_from_swimdia_file(
 def write_data_to_csv_file(
     data,
     out_file_name,
-    logger=logging.getLogger('ion_network_log')
+    logger=logging.getLogger()
 ):
     """
     Save a pandas dataframe with ion coordinates to a file.
@@ -321,73 +394,3 @@ def write_data_to_csv_file(
     """
     logger.info(f"Writing {out_file_name}")
     data.to_csv(out_file_name, index=False)
-
-
-class open_logger(object):
-    """
-    Create a logger to track all progress.
-    """
-
-    def __init__(
-        self,
-        log_file_name,
-        log_level=logging.DEBUG,
-        parameters={}
-    ):
-        """
-        Create a logger to track all progress.
-
-        Parameters
-        ----------
-        log_file_name : str
-            If a log_file_name is provided, the current log is appended to this
-            file.
-        log_level : int
-            The level at which log messages are returned. by default this is
-            logging.DEBUG.
-        overwrite : bool
-            If overwrite is True, the current log is not appended to the file
-            name but overwrites it instead.
-        """
-        # TODO: if logger already exists, do not update!
-        logger = logging.getLogger('ion_network_log')
-        formatter = logging.Formatter('%(asctime)s > %(message)s')
-        logger.setLevel(log_level)
-        console_handler = logging.StreamHandler(stream=sys.stdout)
-        console_handler.setLevel(log_level)
-        console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
-        if log_file_name == "":
-            log_file_name = parameters["log_file_name"]
-        if log_file_name != "":
-            directory = os.path.dirname(log_file_name)
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            file_handler = logging.FileHandler(log_file_name, mode="a")
-            file_handler.setLevel(log_level)
-            file_handler.setFormatter(formatter)
-            logger.addHandler(file_handler)
-            parameters["log_file_name"] = log_file_name
-        else:
-            parameters["log_file_name"] = ""
-        logger.info("=" * 50)
-        logger.info(
-            "Executing command: ion_networks.py " + " ".join(sys.argv[1:])
-        )
-        logger.info("")
-        self.logger = logger
-        self.log_file_name = log_file_name
-
-    def __enter__(self):
-        return self.logger
-
-    def __exit__(self, type, value, traceback):
-        if type is not None:
-            self.logger.exception("Errors occurred, execution incomplete!")
-            handlers = self.logger.handlers[:]
-            for handler in handlers:
-                handler.close()
-                self.logger.removeHandler(handler)
-            sys.exit()
-        else:
-            self.logger.info("Successfully finished execution.")

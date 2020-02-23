@@ -48,6 +48,8 @@ def convert_data_formats_to_csvs(
         file_name=parameter_file_name
     )
     with utils.open_logger(log_file_name, parameters=parameters) as logger:
+        # logger.info("Running command: ")
+        # logger.info("")
         if output_directory != "":
             if not os.path.exists(output_directory):
                 os.makedirs(output_directory)
@@ -228,4 +230,5 @@ def show_ion_network(
 
 def start_gui():
     # TODO: Docstring
-    user_interface.GUI()
+    with user_interface.GUI() as gui:
+        gui.run()

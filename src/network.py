@@ -1,8 +1,8 @@
 #!python
 
 # builtin
-import os
 import logging
+import os
 import time
 import math
 # external
@@ -25,7 +25,7 @@ class Network(object):
         network_file_name,
         centroided_csv_file_name=None,
         parameters={},
-        logger=logging.getLogger('ion_network_log')
+        logger=logging.getLogger()
     ):
         """
         Loads an ion-network. Alternatively, an ion-network is created if a
