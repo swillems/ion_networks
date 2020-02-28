@@ -1,11 +1,25 @@
 #!python
 
+# builtins
+import os
 # external
 import numpy as np
 import matplotlib.pyplot as plt
 import PySimpleGUI as sg
 import matplotlib
 matplotlib.use('TkAgg')
+# locals
+import utils
+
+
+BROWSER_IMAGES_PATH = os.path.join(
+    utils.LIB_PATH,
+    "browser_images"
+)
+LOADING_ANIMATION_FILE_NAME = os.path.join(
+    BROWSER_IMAGES_PATH,
+    "load_animation.gif"
+)
 
 
 class Browser(object):
@@ -15,11 +29,18 @@ class Browser(object):
         # TODO: Docstring
         self.ion_network = ion_network
         self.evidence = evidence
+        sg.PopupAnimated(
+            LOADING_ANIMATION_FILE_NAME,
+            message='Loading',
+            # time_between_frames=10
+            # non_blocking=True
+        )
         self.create_overview_window()
         self.create_plot_window()
         while True:
             if self.update_window(self.overview_window) is not None:
                 break
+            sg.PopupAnimated(None)
             # if self.update_window(self.plot_window) is not None:
             #     break
         self.overview_window.close()

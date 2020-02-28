@@ -365,7 +365,7 @@ class GUI(object):
 
     def evaluate_convert_window(self, event, values):
         # TODO: Docstring
-        if event == "Continue":
+        if event == "Submit":
             self.run_terminal_command(
                 convert_data_formats_to_csvs,
                 values["input_path"].split(";"),
@@ -377,7 +377,7 @@ class GUI(object):
 
     def evaluate_create_window(self, event, values):
         # TODO: Docstring
-        if event == "Continue":
+        if event == "Submit":
             self.run_terminal_command(
                 create_ion_networks,
                 values["input_path"].split(";"),
@@ -388,7 +388,7 @@ class GUI(object):
 
     def evaluate_evidence_window(self, event, values):
         # TODO: Docstring
-        if event == "Continue":
+        if event == "Submit":
             self.run_terminal_command(
                 evidence_ion_networks,
                 values["input_path"].split(";"),
@@ -400,13 +400,15 @@ class GUI(object):
     def evaluate_show_window(self, event, values):
         # TODO: Docstring,
         # TODO: implement
-        if event == "Continue":
+        if event == "Submit":
+            self.swap_active_window("")
             show_ion_network(
                 values["ion_network_file_name"],
                 values["evidence_file_name"],
                 "",
                 ""
             )
+            self.swap_active_window("Main")
 
     def add_input_path_to_layout(
         self,
@@ -489,7 +491,7 @@ class GUI(object):
                 sg.Button("Return to main menu", size=(self.widget_size, 1))
             )
         if continue_button:
-            row.append(sg.Button("Continue", size=(self.widget_size, 1)))
+            row.append(sg.Button("Submit", size=(self.widget_size, 1)))
         return row
 
     def run(self):
@@ -531,13 +533,15 @@ class GUI(object):
             disabled=False
         )
 
-    def swap_active_window(self, new_window_name):
+    def swap_active_window(self, new_window_name=""):
         # TODO: Docstring, implement
-        self.window[self.active_window_name].Hide()
-        if isinstance(self.window[new_window_name], list):
-            self.window[new_window_name] = sg.Window(
-                new_window_name,
-                self.window[new_window_name]
-            )
-        self.window[new_window_name].UnHide()
+        if self.active_window_name != "":
+            self.window[self.active_window_name].Hide()
+        if new_window_name != "":
+            if isinstance(self.window[new_window_name], list):
+                self.window[new_window_name] = sg.Window(
+                    new_window_name,
+                    self.window[new_window_name]
+                )
+            self.window[new_window_name].UnHide()
         self.active_window_name = new_window_name
