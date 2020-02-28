@@ -196,7 +196,6 @@ def evidence_ion_networks(
                 evidence_file.mutual_collect_evidence_from(
                     secondary_evidence_file,
                     parameters=parameters,
-                    logger=logger
                 )
 
 
@@ -331,6 +330,26 @@ class GUI(object):
         ]
         self.evaluate_window["Evidence"] = self.evaluate_evidence_window
 
+    def init_show_window(self):
+        # TODO: Docstring
+        # TODO: Implement
+        self.window["Show"] = [
+            self.add_input_path_to_layout(
+                file_types=(('Ion-network', '*.inet.hdf'),),
+                title="Ion-network",
+                key="ion_network_file_name",
+                multiple=False
+            ),
+            self.add_input_path_to_layout(
+                file_types=(('Evidence', '*.evidence.hdf'),),
+                title="Evidence",
+                key="evidence_file_name",
+                multiple=False
+            ),
+            self.add_main_menu_and_continue_buttons_to_layout(),
+        ]
+        self.evaluate_window["Show"] = self.evaluate_show_window
+
     def init_terminal_window(self):
         # TODO: Docstring
         self.window["Terminal"] = [
@@ -339,14 +358,6 @@ class GUI(object):
                 continue_button=False
             )
         ]
-
-    def init_show_window(self):
-        # TODO: Docstring
-        # TODO: Implement
-        self.window["Show"] = [
-            self.add_main_menu_and_continue_buttons_to_layout()
-        ]
-        self.evaluate_window["Show"] = self.evaluate_show_window
 
     def evaluate_main_window(self, event, values):
         # TODO: Docstring
@@ -390,27 +401,39 @@ class GUI(object):
         # TODO: Docstring,
         # TODO: implement
         if event == "Continue":
-            self.run_terminal_command(
-                show_ion_network,
-                [values["ion_network_file_name"]],
+            show_ion_network(
+                values["ion_network_file_name"],
                 values["evidence_file_name"],
-                values["parameter_file_name"],
-                values["log_file_name"]
+                "",
+                ""
             )
 
-    def add_input_path_to_layout(self, file_types=(('ALL Files', '*.*'),)):
+    def add_input_path_to_layout(
+        self,
+        file_types=(('ALL Files', '*.*'),),
+        title="Input path",
+        key="input_path",
+        multiple=True
+    ):
         # TODO: Docstring
         # TODO: Multiple and independent files?
-        row = [
-            sg.Text("Input path", size=(self.widget_size, 1)),
-            sg.Input(
-                key="input_path",
-                size=(self.widget_size * 2, 1)
-            ),
-            sg.FilesBrowse(
+        if multiple:
+            browse_button = sg.FilesBrowse(
                 size=(self.widget_size, 1),
                 file_types=file_types
+            )
+        else:
+            browse_button = sg.FileBrowse(
+                size=(self.widget_size, 1),
+                file_types=file_types
+            )
+        row = [
+            sg.Text(title, size=(self.widget_size, 1)),
+            sg.Input(
+                key=key,
+                size=(self.widget_size * 2, 1)
             ),
+            browse_button,
         ]
         return row
 
@@ -443,6 +466,7 @@ class GUI(object):
 
     def add_log_file_to_layout(self):
         # TODO: Docstring
+        # TODO: remove overwrite warning
         row = [
             sg.Text("Log file", size=(self.widget_size, 1)),
             sg.Input(

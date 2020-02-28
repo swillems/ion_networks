@@ -152,7 +152,18 @@ class Browser(object):
                 ),
             ]
         )
-        layout.append([sg.Button('Refresh')])
+        layout.append(
+            [
+                sg.Button('Refresh'),
+                sg.Button("Save"),
+                sg.InputText(
+                    "",
+                    key=f"file_name",
+                    size=(10, 1),
+                    # enable_events=True
+                )
+            ]
+        )
         self.overview_window = sg.Window('Settings', layout)
 
     def create_plot_window(self):
@@ -183,28 +194,12 @@ class Browser(object):
             [self.x_axis, self.y_axis],
             nodes
         )
-        # if not hasattr(self, "old_scatter"):
-        #     self.old_scatter = plt.scatter(
-        #         x_coordinates,
-        #         y_coordinates,
-        #         marker=".",
-        #         color="r"
-        #     )
-        # elif not hasattr(self, "new_scatter"):
-        #     self.new_scatter = plt.scatter(
-        #         x_coordinates,
-        #         y_coordinates,
-        #         marker=".",
-        #         color="g"
-        #     )
-        # else:
-        #     self.old_scatter.set_offsets(self.new_scatter.get_offsets())
-        #     self.new_scatter.set_offsets(np.c_[x_coordinates, y_coordinates])
         if not hasattr(self, "node_scatter"):
             self.node_scatter = self.aggregate_ax.scatter(
                 x_coordinates,
                 y_coordinates,
-                marker="."
+                marker=".",
+                c="lightgrey"
             )
         else:
             self.node_scatter.set_offsets(np.c_[x_coordinates, y_coordinates])
@@ -221,6 +216,14 @@ class Browser(object):
                 matplotlib.collections.LineCollection([], [])
             )
         else:
+            edge_color_mapper = matplotlib.cm.ScalarMappable(
+                norm=matplotlib.colors.Normalize(
+                    # vmin=-self.evidence.network_count,
+                    vmin=0,
+                    vmax=self.evidence.network_count
+                ),
+                cmap="RdYlGn"
+            )
             if self.show_edges:
                 selected_neighbors = self.edges[nodes].T.tocsr()[nodes]
                 a, b = selected_neighbors.nonzero()
@@ -238,10 +241,16 @@ class Browser(object):
                 b = b[selection]
                 start_edges = list(zip(x_coordinates[a], y_coordinates[a]))
                 end_edges = list(zip(x_coordinates[b], y_coordinates[b]))
+                colors = positive_counts[selection] - negative_counts[selection]
+                edges = np.array(list(zip(start_edges, end_edges)))
+                color_order = np.argsort(colors)
+                colors = colors[color_order]
+                edges = edges[color_order]
             else:
-                start_edges = []
-                end_edges = []
-            self.edge_collection.set_segments(list(zip(start_edges, end_edges)))
+                edges = []
+                colors = []
+            self.edge_collection.set_segments(edges)
+            self.edge_collection.set_color(edge_color_mapper.to_rgba(colors))
         self.figure_canvas_agg.draw()
         self.figure_canvas_agg.flush_events()
 
@@ -252,6 +261,8 @@ class Browser(object):
             return
         if event in (None, 'Exit'):
             return "exit"
+        if (event == "Save") and (values["file_name"] != ""):
+            plt.savefig(values["file_name"], dpi=1200)
         if window.Title == "Settings":
             # print(event, values)
             self.perform_overview_action(event, values)

@@ -54,9 +54,9 @@ class open_logger(object):
             updated if a log_file_name is provided.
         """
         logger = logging.getLogger()
+        formatter = logging.Formatter('%(asctime)s > %(message)s')
+        logger.setLevel(log_level)
         if len(logger.handlers) == 0:
-            formatter = logging.Formatter('%(asctime)s > %(message)s')
-            logger.setLevel(log_level)
             console_handler = logging.StreamHandler(stream=sys.stdout)
             console_handler.setLevel(log_level)
             console_handler.setFormatter(formatter)
