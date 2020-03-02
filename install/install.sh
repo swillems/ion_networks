@@ -43,5 +43,5 @@ if ! hash ion_networks.py 2>/dev/null; then
   # export ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'
 else
   echo "Ion-networks are already installed."
-  echo "Update with command 'bash ion_networks install/update.sh'."
+  echo "Update with command 'bash ion_networks/install/update.sh'."
 fi
