@@ -19,8 +19,7 @@ if ! hash conda 2>/dev/null; then
   conda init
   conda config --set auto_activate_base false
   echo "Installing conda notebook kernels."
-  conda install -c conda-forge nb_conda_kernels -y
-  conda deactivate
+  conda install -n root -c ipykernel conda-forge nb_conda_kernels-y
   echo "Adding conda_notebooks alias to ~/.bashrc."
   echo "alias conda_notebooks='conda activate && jupyter notebook && conda deactivate'" >> ~/.bashrc
   # export conda_notebooks='conda activate && jupyter notebook && conda deactivate'
