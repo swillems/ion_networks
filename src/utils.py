@@ -21,9 +21,9 @@ DEFAULT_PARAMETER_FILES = {
 }
 DATA_TYPE_FILE_EXTENSIONS = {
     "DDA": ".mgf",
-    "SONAR": ".csv",
-    "HDMSE": ".csv",
-    "SWIMDIA": ".csv",
+    "SONAR": "_Apex3DIons.csv",
+    "HDMSE": "_Apex3DIons.csv",
+    "SWIMDIA": "_Apex3DIons.csv",
 }
 
 

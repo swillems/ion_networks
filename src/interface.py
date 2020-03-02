@@ -63,9 +63,9 @@ def convert_data_formats_to_csvs(
         logger.info(f"Found {file_count} files to process.")
         for input_file_name in sorted(input_file_names):
             data = utils.read_data_from_file(data_type, input_file_name, logger)
-            file_name_base = os.path.splitext(
-                os.path.basename(input_file_name)
-            )[0]
+            file_name_base = os.path.basename(input_file_name)[
+                :-len(utils.DATA_TYPE_FILE_EXTENSIONS[data_type])
+            ]
             if output_directory == "":
                 output_path = os.path.dirname(input_file_name)
             else:
@@ -281,10 +281,7 @@ class GUI(object):
         self.window["Convert"] = [
             self.add_input_path_to_layout(
                 file_types=(
-                    ('HDMSE', '*.csv'),
-                    ('SONAR', '*.csv'),
-                    ('SWIMDIA', '*.csv'),
-                    ('DDA', '*.mgf'),
+                    (key, f"*{value}") for key, value in utils.DATA_TYPE_FILE_EXTENSIONS.items()
                 )
             ),
             self.add_output_directory_to_layout(),
