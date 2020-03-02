@@ -363,7 +363,7 @@ def read_data_from_swimdia_file(
         file_name,
         engine="c",
         dtype=np.float,
-        usecols=["Function", "m_z", "rt", "mobility", "area"]
+        usecols=["m_z", "rt", "mobility", "area"]
     ).values
     data[:, 2] = np.log(data[:, 2])
     dimensions = [
