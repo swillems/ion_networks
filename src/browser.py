@@ -239,8 +239,8 @@ class Browser(object):
         else:
             edge_color_mapper = matplotlib.cm.ScalarMappable(
                 norm=matplotlib.colors.Normalize(
-                    # vmin=-self.evidence.network_count,
-                    vmin=0,
+                    vmin=-self.evidence.network_count,
+                    # vmin=0,
                     vmax=self.evidence.network_count
                 ),
                 cmap="RdYlGn"
