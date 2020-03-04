@@ -113,7 +113,7 @@ class Evidence(object):
             positive = pairwise_alignment * other_edges * pairwise_alignment_T
             positive = (positive + positive.T).multiply(self_edges)
             positive_mask = (self_edges.astype(np.int8) + positive).data == 2
-            alignment_mask = np.diff(pairwise_alignment.indptr) > 0
+            alignment_mask = pairwise_alignment[:-1] != pairwise_alignment[1:]
             left_node_indices, right_node_indices = self_edges.nonzero()
             negative_mask = alignment_mask[
                 left_node_indices
