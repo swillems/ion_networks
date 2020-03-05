@@ -190,6 +190,12 @@ class Browser(object):
                     key=f"file_name",
                     size=(10, 1),
                     # enable_events=True
+                ),
+                sg.InputText(
+                    "1",
+                    key="dpi",
+                    size=(10, 1),
+                    # enable_events=True
                 )
             ]
         )
@@ -197,7 +203,8 @@ class Browser(object):
 
     def create_plot_window(self):
         # TODO: Docstring
-        self.fig = plt.figure(1, figsize=(13, 9))
+        # self.fig = plt.figure(1, figsize=(13, 9))
+        self.fig = plt.figure(1, figsize=(14.8 / 2, 21 / 2))
         self.aggregate_ax = self.fig.add_subplot(111)
         figure_x, figure_y, figure_w, figure_h = self.fig.bbox.bounds
         layout = [
@@ -296,7 +303,7 @@ class Browser(object):
         if event in (None, 'Exit'):
             return "exit"
         if (event == "Save") and (values["file_name"] != ""):
-            plt.savefig(values["file_name"], dpi=1200)
+            plt.savefig(values["file_name"], dpi=int(values["dpi"]))
         if window.Title == "Settings":
             # print(event, values)
             self.perform_overview_action(event, values)
