@@ -126,12 +126,20 @@ class Browser(object):
             ]
         )
         self.show_edges = False
+        self.c_map = "RdYlGn"
         layout.append(
             [
                 sg.Checkbox(
                     'Show edges',
                     default=self.show_edges,
                     key="show_edges"
+                ),
+                sg.Combo(
+                    sorted(matplotlib.cm.__dict__['datad']),
+                    size=(21, 1),
+                    default_value=self.c_map,
+                    key="c_map",
+                    # enable_events=True
                 )
             ]
         )
@@ -237,14 +245,6 @@ class Browser(object):
                 matplotlib.collections.LineCollection([], [])
             )
         else:
-            edge_color_mapper = matplotlib.cm.ScalarMappable(
-                norm=matplotlib.colors.Normalize(
-                    vmin=-self.evidence.network_count,
-                    # vmin=0,
-                    vmax=self.evidence.network_count
-                ),
-                cmap="RdYlGn"
-            )
             if self.show_edges:
                 selected_neighbors = self.edges[nodes].T.tocsr()[nodes]
                 a, b = selected_neighbors.nonzero()
@@ -265,13 +265,26 @@ class Browser(object):
                 colors = positive_counts[selection] - negative_counts[selection]
                 edges = np.array(list(zip(start_edges, end_edges)))
                 color_order = np.argsort(colors)
-                colors = colors[color_order]
+                self.colors = colors[color_order]
                 edges = edges[color_order]
             else:
                 edges = []
-                colors = []
+                self.colors = []
             self.edge_collection.set_segments(edges)
-            self.edge_collection.set_color(edge_color_mapper.to_rgba(colors))
+            self.update_edge_colors()
+        self.figure_canvas_agg.draw()
+        self.figure_canvas_agg.flush_events()
+
+    def update_edge_colors(self):
+        edge_color_mapper = matplotlib.cm.ScalarMappable(
+            norm=matplotlib.colors.Normalize(
+                vmin=-self.evidence.network_count,
+                # vmin=0,
+                vmax=self.evidence.network_count
+            ),
+            cmap=self.c_map
+        )
+        self.edge_collection.set_color(edge_color_mapper.to_rgba(self.colors))
         self.figure_canvas_agg.draw()
         self.figure_canvas_agg.flush_events()
 
@@ -356,6 +369,9 @@ class Browser(object):
         if update:
             # print(np.bincount(self.nodes == self.node_threshold))
             self.update_plot()
+        if self.c_map != values["c_map"]:
+            self.c_map = values["c_map"]
+            self.update_edge_colors()
 
     def perform_plot_action(self, event, values):
         # TODO: Docstring
