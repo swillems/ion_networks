@@ -13,227 +13,230 @@ import browser
 import utils
 
 
-def convert_data_formats_to_csvs(
-    input_path,
-    data_type,
-    output_directory,
-    parameter_file_name,
-    log_file_name
-):
-    """
-    Convert centroided MSMS data to a unified csv that can be read as an
-    ion-network.
+class Interface(object):
 
-    Parameters
-    ----------
-    input_path : iterable[str]
-        An iterable with file and/or folder names.
-    output_directory : str or None
-        If provided, all new files will be saved in this directory.
-    data_type : str
-        The data type of the input files. Options are:
-            'dda'
-            'sonar'
-            'hdmse'
-            'swimdia'
-    parameter_file_name : str or None
-        If provided, parameters will be read from this file.
-    log_file_name : str or None
-        If provided, all logs will be written to this file.
-    """
-    if parameter_file_name is None:
-        parameter_file_name = ""
-    if output_directory is None:
-        output_directory = ""
-    if log_file_name is None:
-        log_file_name = ""
-    parameters = utils.read_parameters_from_json_file(
-        file_name=parameter_file_name
-    )
-    with utils.open_logger(log_file_name, parameters=parameters) as logger:
-        # logger.info("Running command: ")
-        # logger.info("")
-        if output_directory != "":
-            if not os.path.exists(output_directory):
-                os.makedirs(output_directory)
-        input_file_names = utils.get_file_names_with_extension(
-            input_path,
-            extension=utils.DATA_TYPE_FILE_EXTENSIONS[data_type]
+    @staticmethod
+    def convert_data_formats_to_csvs(
+        input_path,
+        data_type,
+        output_directory,
+        parameter_file_name,
+        log_file_name
+    ):
+        """
+        Convert centroided MSMS data to a unified csv that can be read as an
+        ion-network.
+
+        Parameters
+        ----------
+        input_path : iterable[str]
+            An iterable with file and/or folder names.
+        output_directory : str or None
+            If provided, all new files will be saved in this directory.
+        data_type : str
+            The data type of the input files. Options are:
+                'dda'
+                'sonar'
+                'hdmse'
+                'swimdia'
+        parameter_file_name : str or None
+            If provided, parameters will be read from this file.
+        log_file_name : str or None
+            If provided, all logs will be written to this file.
+        """
+        if parameter_file_name is None:
+            parameter_file_name = ""
+        if output_directory is None:
+            output_directory = ""
+        if log_file_name is None:
+            log_file_name = ""
+        parameters = utils.read_parameters_from_json_file(
+            file_name=parameter_file_name
         )
-        file_count = len(input_file_names)
-        logger.info(f"Found {file_count} files to process.")
-        for input_file_name in sorted(input_file_names):
-            data = utils.read_data_from_file(data_type, input_file_name, logger)
-            file_name_base = os.path.basename(input_file_name)[
-                :-len(utils.DATA_TYPE_FILE_EXTENSIONS[data_type])
-            ]
-            if output_directory == "":
-                output_path = os.path.dirname(input_file_name)
-            else:
-                output_path = output_directory
-            output_file_name = os.path.join(
-                output_path,
-                f"{file_name_base}.inet.csv"
+        with utils.open_logger(log_file_name, parameters=parameters) as logger:
+            # logger.info("Running command: ")
+            # logger.info("")
+            if output_directory != "":
+                if not os.path.exists(output_directory):
+                    os.makedirs(output_directory)
+            input_file_names = utils.get_file_names_with_extension(
+                input_path,
+                extension=utils.DATA_TYPE_FILE_EXTENSIONS[data_type]
             )
-            utils.write_data_to_csv_file(data, output_file_name, logger)
+            file_count = len(input_file_names)
+            logger.info(f"Found {file_count} files to process.")
+            for input_file_name in sorted(input_file_names):
+                data = utils.read_data_from_file(data_type, input_file_name, logger)
+                file_name_base = os.path.basename(input_file_name)[
+                    :-len(utils.DATA_TYPE_FILE_EXTENSIONS[data_type])
+                ]
+                if output_directory == "":
+                    output_path = os.path.dirname(input_file_name)
+                else:
+                    output_path = output_directory
+                output_file_name = os.path.join(
+                    output_path,
+                    f"{file_name_base}.inet.csv"
+                )
+                utils.write_data_to_csv_file(data, output_file_name, logger)
 
+    @staticmethod
+    def create_ion_networks(
+        input_path,
+        output_directory,
+        parameter_file_name,
+        log_file_name
+    ):
+        """
+        Create ion-networks from unified csv files.
 
-def create_ion_networks(
-    input_path,
-    output_directory,
-    parameter_file_name,
-    log_file_name
-):
-    """
-    Create ion-networks from unified csv files.
-
-    Parameters
-    ----------
-    input_path : iterable[str]
-        An iterable with file and/or folder names.
-    output_directory : str or None
-        If provided, all new files will be saved in this directory.
-    parameter_file_name : str or None
-        If provided, parameters will be read from this file.
-    log_file_name : str or None
-        If provided, all logs will be written to this file.
-    """
-    if parameter_file_name is None:
-        parameter_file_name = ""
-    if output_directory is None:
-        output_directory = ""
-    if log_file_name is None:
-        log_file_name = ""
-    parameters = utils.read_parameters_from_json_file(
-        file_name=parameter_file_name,
-        default="create"
-    )
-    with utils.open_logger(log_file_name, parameters=parameters) as logger:
-        input_file_names = utils.get_file_names_with_extension(
-            input_path,
-            ".inet.csv"
+        Parameters
+        ----------
+        input_path : iterable[str]
+            An iterable with file and/or folder names.
+        output_directory : str or None
+            If provided, all new files will be saved in this directory.
+        parameter_file_name : str or None
+            If provided, parameters will be read from this file.
+        log_file_name : str or None
+            If provided, all logs will be written to this file.
+        """
+        if parameter_file_name is None:
+            parameter_file_name = ""
+        if output_directory is None:
+            output_directory = ""
+        if log_file_name is None:
+            log_file_name = ""
+        parameters = utils.read_parameters_from_json_file(
+            file_name=parameter_file_name,
+            default="create"
         )
-        file_count = len(input_file_names)
-        logger.info(f"Found {file_count} .inet.csv files to process.")
-        for csv_file_name in input_file_names:
-            local_file_name = os.path.basename(csv_file_name)
-            if output_directory == "":
-                output_path = os.path.dirname(csv_file_name)
-            else:
-                output_path = output_directory
-            ion_network_file_name = os.path.join(
-                output_path,
-                f"{local_file_name[:-9]}.inet.hdf"
+        with utils.open_logger(log_file_name, parameters=parameters) as logger:
+            input_file_names = utils.get_file_names_with_extension(
+                input_path,
+                ".inet.csv"
             )
-            network.Network(
-                network_file_name=ion_network_file_name,
-                centroided_csv_file_name=csv_file_name,
-                parameters=parameters,
-                logger=logger
-            )
-
-
-def evidence_ion_networks(
-    input_path,
-    output_directory,
-    parameter_file_name,
-    log_file_name
-):
-    """
-    Evidence ion-networks with each other.
-
-    Parameters
-    ----------
-    input_path : iterable[str]
-        An iterable with file and/or folder names.
-    output_directory : str or None
-        If provided, all new files will be saved in this directory.
-    parameter_file_name : str or None
-        If provided, parameters will be read from this file.
-    log_file_name : str or None
-        If provided, all logs will be written to this file.
-    """
-    if parameter_file_name is None:
-        parameter_file_name = ""
-    if output_directory is None:
-        output_directory = ""
-    if log_file_name is None:
-        log_file_name = ""
-    parameters = utils.read_parameters_from_json_file(
-        file_name=parameter_file_name,
-        default="evidence"
-    )
-    with utils.open_logger(log_file_name, parameters=parameters) as logger:
-        input_file_names = utils.get_file_names_with_extension(
-            input_path,
-            ".inet.hdf"
-        )
-        file_count = len(input_file_names)
-        logger.info(f"Found {file_count} .inet.hdf files to process.")
-        ion_networks = [
-            network.Network(file_name) for file_name in input_file_names
-        ]
-        evidence_files = []
-        for ion_network in ion_networks:
-            local_file_name = os.path.basename(ion_network.file_name)
-            if output_directory == "":
-                output_path = os.path.dirname(ion_network.file_name)
-            else:
-                output_path = output_directory
-            evidence_file_name = os.path.join(
-                output_path,
-                f"{local_file_name[:-9]}.evidence.hdf"
-            )
-            evidence_files.append(
-                evidence.Evidence(
-                    evidence_file_name=evidence_file_name,
-                    ion_network=ion_network,
+            file_count = len(input_file_names)
+            logger.info(f"Found {file_count} .inet.csv files to process.")
+            for csv_file_name in input_file_names:
+                local_file_name = os.path.basename(csv_file_name)
+                if output_directory == "":
+                    output_path = os.path.dirname(csv_file_name)
+                else:
+                    output_path = output_directory
+                ion_network_file_name = os.path.join(
+                    output_path,
+                    f"{local_file_name[:-9]}.inet.hdf"
+                )
+                network.Network(
+                    network_file_name=ion_network_file_name,
+                    centroided_csv_file_name=csv_file_name,
                     parameters=parameters,
                     logger=logger
                 )
+
+    @staticmethod
+    def evidence_ion_networks(
+        input_path,
+        output_directory,
+        parameter_file_name,
+        log_file_name
+    ):
+        """
+        Evidence ion-networks with each other.
+
+        Parameters
+        ----------
+        input_path : iterable[str]
+            An iterable with file and/or folder names.
+        output_directory : str or None
+            If provided, all new files will be saved in this directory.
+        parameter_file_name : str or None
+            If provided, parameters will be read from this file.
+        log_file_name : str or None
+            If provided, all logs will be written to this file.
+        """
+        if parameter_file_name is None:
+            parameter_file_name = ""
+        if output_directory is None:
+            output_directory = ""
+        if log_file_name is None:
+            log_file_name = ""
+        parameters = utils.read_parameters_from_json_file(
+            file_name=parameter_file_name,
+            default="evidence"
+        )
+        with utils.open_logger(log_file_name, parameters=parameters) as logger:
+            input_file_names = utils.get_file_names_with_extension(
+                input_path,
+                ".inet.hdf"
             )
-        for index, evidence_file in enumerate(evidence_files[:-1]):
-            for secondary_evidence_file in evidence_files[index + 1:]:
-                evidence_file.mutual_collect_evidence_from(
-                    secondary_evidence_file,
-                    parameters=parameters,
+            file_count = len(input_file_names)
+            logger.info(f"Found {file_count} .inet.hdf files to process.")
+            ion_networks = [
+                network.Network(file_name) for file_name in input_file_names
+            ]
+            evidence_files = []
+            for ion_network in ion_networks:
+                local_file_name = os.path.basename(ion_network.file_name)
+                if output_directory == "":
+                    output_path = os.path.dirname(ion_network.file_name)
+                else:
+                    output_path = output_directory
+                evidence_file_name = os.path.join(
+                    output_path,
+                    f"{local_file_name[:-9]}.evidence.hdf"
                 )
+                evidence_files.append(
+                    evidence.Evidence(
+                        evidence_file_name=evidence_file_name,
+                        ion_network=ion_network,
+                        parameters=parameters,
+                        logger=logger
+                    )
+                )
+            for index, evidence_file in enumerate(evidence_files[:-1]):
+                for secondary_evidence_file in evidence_files[index + 1:]:
+                    evidence_file.mutual_collect_evidence_from(
+                        secondary_evidence_file,
+                        parameters=parameters,
+                    )
 
-
-def show_ion_network(
-    ion_network_file_name,
-    evidence_file_name,
-    parameter_file_name,
-    log_file_name
-):
-    # TODO: Docstring
-    # TODO: Implement
-    if parameter_file_name is None:
-        parameter_file_name = ""
-    if log_file_name is None:
-        log_file_name = ""
-    parameters = utils.read_parameters_from_json_file(
-        file_name=parameter_file_name,
-    )
-    with utils.open_logger(log_file_name, parameters=parameters) as logger:
-        inet = network.Network(ion_network_file_name)
-        evi = evidence.Evidence(
-            evidence_file_name=evidence_file_name,
-            ion_network=inet,
-            parameters=parameters,
-            logger=logger
+    @staticmethod
+    def show_ion_network(
+        ion_network_file_name,
+        evidence_file_name,
+        parameter_file_name,
+        log_file_name
+    ):
+        # TODO: Docstring
+        # TODO: Implement
+        if parameter_file_name is None:
+            parameter_file_name = ""
+        if log_file_name is None:
+            log_file_name = ""
+        parameters = utils.read_parameters_from_json_file(
+            file_name=parameter_file_name,
         )
-        browser.Browser(
-            inet,
-            evi,
-            logger
-        )
+        with utils.open_logger(log_file_name, parameters=parameters) as logger:
+            inet = network.Network(ion_network_file_name)
+            evi = evidence.Evidence(
+                evidence_file_name=evidence_file_name,
+                ion_network=inet,
+                parameters=parameters,
+                logger=logger
+            )
+            browser.Browser(
+                inet,
+                evi,
+                logger
+            )
 
-
-def run_ion_network_gui():
-    # TODO: Docstring
-    with GUI() as gui:
-        gui.run()
+    @staticmethod
+    def run_ion_network_gui():
+        # TODO: Docstring
+        with GUI() as gui:
+            gui.run()
 
 
 class GUI(object):
@@ -365,7 +368,7 @@ class GUI(object):
         # TODO: Docstring
         if event == "Submit":
             self.run_terminal_command(
-                convert_data_formats_to_csvs,
+                Interface.convert_data_formats_to_csvs,
                 values["input_path"].split(";"),
                 values["data_type"],
                 values["output_directory"],
@@ -377,7 +380,7 @@ class GUI(object):
         # TODO: Docstring
         if event == "Submit":
             self.run_terminal_command(
-                create_ion_networks,
+                Interface.create_ion_networks,
                 values["input_path"].split(";"),
                 values["output_directory"],
                 values["parameter_file_name"],
@@ -388,7 +391,7 @@ class GUI(object):
         # TODO: Docstring
         if event == "Submit":
             self.run_terminal_command(
-                evidence_ion_networks,
+                Interface.evidence_ion_networks,
                 values["input_path"].split(";"),
                 values["output_directory"],
                 values["parameter_file_name"],
@@ -400,7 +403,7 @@ class GUI(object):
         # TODO: implement
         if event == "Submit":
             self.swap_active_window("")
-            show_ion_network(
+            Interface.show_ion_network(
                 values["ion_network_file_name"],
                 values["evidence_file_name"],
                 "",
@@ -633,7 +636,7 @@ class CLI(object):
         parameter_file_name,
         log_file_name
     ):
-        convert_data_formats_to_csvs(
+        Interface.convert_data_formats_to_csvs(
             input_path,
             data_type,
             output_directory,
@@ -694,7 +697,7 @@ class CLI(object):
         parameter_file_name,
         log_file_name
     ):
-        create_ion_networks(
+        Interface.create_ion_networks(
             input_path,
             output_directory,
             parameter_file_name,
@@ -750,7 +753,7 @@ class CLI(object):
         parameter_file_name,
         log_file_name
     ):
-        evidence_ion_networks(
+        Interface.evidence_ion_networks(
             input_path,
             output_directory,
             parameter_file_name,
@@ -801,7 +804,7 @@ class CLI(object):
         parameter_file_name,
         log_file_name
     ):
-        show_ion_network(
+        Interface.show_ion_network(
             ion_network_file_name,
             evidence_file_name,
             parameter_file_name,
@@ -814,4 +817,4 @@ class CLI(object):
         help="Graphical user interface to analyse ion-networks.",
     )
     def gui():
-        run_ion_network_gui()
+        Interface.run_ion_network_gui()
