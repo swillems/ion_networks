@@ -204,7 +204,10 @@ class Browser(object):
     def create_plot_window(self):
         # TODO: Docstring
         # self.fig = plt.figure(1, figsize=(13, 9))
-        self.fig = plt.figure(1, figsize=(14.8 / 2, 21 / 2))
+        # a4 1200ppi 9921 x 14032 (40% is cropped of)
+        # 35080 x 24802
+        self.fig = plt.figure(1, figsize=(35080 / 2400, 24802 / 2400))
+        # self.fig = plt.figure(1, figsize=(29.7 / 2.5, 21 / 2.5))
         self.aggregate_ax = self.fig.add_subplot(111)
         figure_x, figure_y, figure_w, figure_h = self.fig.bbox.bounds
         layout = [
