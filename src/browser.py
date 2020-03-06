@@ -206,7 +206,7 @@ class Browser(object):
         # self.fig = plt.figure(1, figsize=(13, 9))
         # a4 1200ppi 9921 x 14032 (40% is cropped of)
         # 35080 x 24802
-        self.fig = plt.figure(1, figsize=(35080 / 2400, 24802 / 2400))
+        self.fig = plt.figure(1, figsize=(23887 / 1200, 16535 / 1200))
         # self.fig = plt.figure(1, figsize=(29.7 / 2.5, 21 / 2.5))
         self.aggregate_ax = self.fig.add_subplot(111)
         figure_x, figure_y, figure_w, figure_h = self.fig.bbox.bounds
