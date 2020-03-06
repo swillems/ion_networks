@@ -205,8 +205,12 @@ class Browser(object):
         # TODO: Docstring
         # self.fig = plt.figure(1, figsize=(13, 9))
         # a4 1200ppi 9921 x 14032 (40% is cropped of)
-        # 35080 x 24802
-        self.fig = plt.figure(1, figsize=(23887 / 1200, 16535 / 1200))
+        self.fig = plt.figure(
+            1,
+            figsize=(
+                (14032 / 0.6) / 2400,
+                (9921 / 0.6) / 2400)
+        )
         # self.fig = plt.figure(1, figsize=(29.7 / 2.5, 21 / 2.5))
         self.aggregate_ax = self.fig.add_subplot(111)
         figure_x, figure_y, figure_w, figure_h = self.fig.bbox.bounds
@@ -306,7 +310,7 @@ class Browser(object):
         if event in (None, 'Exit'):
             return "exit"
         if (event == "Save") and (values["file_name"] != ""):
-            plt.savefig(values["file_name"], dpi=int(values["dpi"]))
+            plt.savefig(values["file_name"], dpi=2 * int(values["dpi"]))
         if window.Title == "Settings":
             # print(event, values)
             self.perform_overview_action(event, values)
