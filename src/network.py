@@ -307,6 +307,7 @@ class Network(object):
         symmetric=False
     ):
         # TODO: Docstring
+        # TODO: Move to seperate function and define type
         @numba.njit(fastmath=True)
         def numba_wrapper():
             if not symmetric:
@@ -402,6 +403,8 @@ class Network(object):
         self_coordinates = tuple(self_coordinates)
         other_coordinates = tuple(other_coordinates)
         max_absolute_errors = tuple(max_absolute_errors)
+        # TODO: Move to seperate function and define type
+        self.logger.info(f"Matching ion coordinates from {self.file_name} and {other.file_name}.")
         @numba.njit
         def numba_wrapper():
             low_limits = np.searchsorted(
@@ -457,7 +460,7 @@ class Network(object):
         return self_indices, other_indices
 
     def quick_align(self, other, ppm):
-        # TODO:
+        # TODO: poor all (except argsorts) in numba wrapper?
         self_mzs = self.get_ion_coordinates("FRAGMENT_MZ")
         other_mzs = other.get_ion_coordinates("FRAGMENT_MZ")
         self_mz_order = np.argsort(self_mzs)
@@ -720,7 +723,8 @@ class Network(object):
 
 @numba.njit(fastmath=True)
 def longest_increasing_subsequence(sequence):
-    # TODO:
+    # TODO:Docstring
+    # TODO: Simplify, or speed up by parsing sequence not at the same time?
     M = np.repeat(0, len(sequence) + 1)
     P = np.repeat(0, len(sequence))
     max_subsequence_length = 0

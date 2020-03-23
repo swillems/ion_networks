@@ -54,6 +54,7 @@ class Interface(object):
             file_name=parameter_file_name
         )
         with utils.open_logger(log_file_name, parameters=parameters) as logger:
+            # TODO: Improve logging
             # logger.info("Running command: ")
             # logger.info("")
             if output_directory != "":
@@ -112,6 +113,9 @@ class Interface(object):
             default="create"
         )
         with utils.open_logger(log_file_name, parameters=parameters) as logger:
+            # TODO: Improve logging
+            # logger.info("Running command: ")
+            # logger.info("")
             input_file_names = utils.get_file_names_with_extension(
                 input_path,
                 ".inet.csv"
@@ -167,6 +171,9 @@ class Interface(object):
             default="evidence"
         )
         with utils.open_logger(log_file_name, parameters=parameters) as logger:
+            # TODO: Improve logging
+            # logger.info("Running command: ")
+            # logger.info("")
             input_file_names = utils.get_file_names_with_extension(
                 input_path,
                 ".inet.hdf"
@@ -196,10 +203,12 @@ class Interface(object):
                     )
                 )
             for index, evidence_file in enumerate(evidence_files[:-1]):
+                edges = evidence_file.ion_network.get_edges()
                 for secondary_evidence_file in evidence_files[index + 1:]:
                     evidence_file.mutual_collect_evidence_from(
                         secondary_evidence_file,
                         parameters=parameters,
+                        edges=edges,
                     )
 
     @staticmethod
@@ -219,6 +228,9 @@ class Interface(object):
             file_name=parameter_file_name,
         )
         with utils.open_logger(log_file_name, parameters=parameters) as logger:
+            # TODO: Improve logging
+            # logger.info("Running command: ")
+            # logger.info("")
             inet = network.Network(ion_network_file_name)
             evi = evidence.Evidence(
                 evidence_file_name=evidence_file_name,

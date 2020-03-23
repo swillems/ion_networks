@@ -29,33 +29,28 @@ class Evidence(object):
         self.ion_network = ion_network
         self.file_name_base = self.ion_network.file_name_base
         ion_network.evidence = self
+        directory = os.path.dirname(self.file_name)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
     def mutual_collect_evidence_from(
         self,
         other,
         parameters={},
+        **kwargs,
     ):
         # TODO: Docstring
-        directory = os.path.dirname(self.file_name)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        if self.is_evidenced_with(other) or other.is_evidenced_with(self):
-            # TODO: Should always be mutual evidence
-            if parameters["force_overwrite"]:
-                self.remove_evidence_from(other)
-                other.remove_evidence_from(self)
-            else:
-                self.logger.info(
-                    f"Evidence for {self.file_name} and {other.file_name} "
-                    f"has already been collected"
-                )
-                return
+        if not self.need_to_set_evidence(other, parameters):
+            return
         pairwise_alignment = self.ion_network.align_nodes(
             other.ion_network,
             parameters
         )
         pairwise_alignment_T = pairwise_alignment.T.tocsr()
-        self_edges = self.ion_network.get_edges()
+        if "edges" in kwargs:
+            self_edges = kwargs["edges"]
+        else:
+            self_edges = self.ion_network.get_edges()
         other_edges = other.ion_network.get_edges()
         self_ion_indices, other_ion_indices = pairwise_alignment.nonzero()
         self.align_edges(
@@ -77,13 +72,26 @@ class Evidence(object):
             parameters
         )
 
+    def need_to_set_evidence(self, other, parameters):
+        # TODO: Docstring
+        if self.is_evidenced_with(other) or other.is_evidenced_with(self):
+            if parameters["force_overwrite"]:
+                self.remove_evidence_from(other)
+                other.remove_evidence_from(self)
+            else:
+                self.logger.info(
+                    f"Evidence for {self.file_name} and {other.file_name} "
+                    f"has already been collected."
+                )
+                return False
+        return True
+
     def is_evidenced_with(self, other):
         # TODO: Docstring
-        result = False
         with h5py.File(self.file_name, "a") as evidence_file:
             if other.ion_network.file_name_base in evidence_file:
-                result = True
-        return result
+                return True
+        return False
 
     def remove_evidence_from(self, other):
         # TODO: Docstring
@@ -113,7 +121,7 @@ class Evidence(object):
             positive = pairwise_alignment * other_edges * pairwise_alignment_T
             positive = (positive + positive.T).multiply(self_edges)
             positive_mask = (self_edges.astype(np.int8) + positive).data == 2
-            alignment_mask = pairwise_alignment[:-1] != pairwise_alignment[1:]
+            alignment_mask = pairwise_alignment.indptr[:-1] != pairwise_alignment.indptr[1:]
             left_node_indices, right_node_indices = self_edges.nonzero()
             negative_mask = alignment_mask[
                 left_node_indices

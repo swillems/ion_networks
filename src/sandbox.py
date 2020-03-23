@@ -58,3 +58,61 @@ def determine_isotopic_rt_difference(
     )
     isotope_count = np.cumsum(isotope_count)
     return isotope_rt_diffs, isotope_count
+
+
+def matrix_multiplication(a, b):
+    aa_indices, aa_values = a.nonzero()
+    bb_values, bb_indices = b.nonzero()
+    return matrix_multiplication_numba_wrapper(
+        aa_indices,
+        bb_indices,
+        aa_values,
+        bb_values,
+        np.argsort(aa_values),
+        np.argsort(bb_values),
+    )
+
+
+@numba.njit(
+    numba.i4[:,:](
+        numba.i4[:],
+        numba.i4[:],
+        numba.i4[:],
+        numba.i4[:],
+        numba.i8[:],
+        numba.i8[:]
+    )
+)
+def matrix_multiplication_numba_wrapper(
+    aa_indices,
+    bb_indices,
+    aa_values,
+    bb_values,
+    aa_order,
+    bb_order
+):
+    aa_indices = aa_indices[aa_order]
+    aa_values = aa_values[aa_order]
+    bb_indices = bb_indices[bb_order]
+    bb_values = bb_values[bb_order]
+    low_limits = np.searchsorted(
+        aa_values,
+        bb_values,
+        "left"
+    )
+    high_limits = np.searchsorted(
+        aa_values,
+        bb_values,
+        "right"
+    )
+    result = np.empty((2, np.sum(high_limits - low_limits)), np.int32)
+    result[1, :] = np.repeat(
+        bb_indices,
+        high_limits - low_limits
+    )
+    prev = 0
+    for l, h in zip(low_limits, high_limits):
+        d = h - l
+        result[0, prev: prev + d] = aa_indices[l:h]
+        prev += d
+    return result
