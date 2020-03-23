@@ -74,7 +74,7 @@ def matrix_multiplication(a, b):
 
 
 @numba.njit(
-    numba.i4[:,:](
+    numba.i4[:, :](
         numba.i4[:],
         numba.i4[:],
         numba.i4[:],
@@ -105,14 +105,13 @@ def matrix_multiplication_numba_wrapper(
         bb_values,
         "right"
     )
-    result = np.empty((2, np.sum(high_limits - low_limits)), np.int32)
+    diffs = high_limits - low_limits
+    ends = np.cumsum(diffs)
+    result = np.empty((2, ends[-1]), np.int32)
     result[1, :] = np.repeat(
         bb_indices,
         high_limits - low_limits
     )
-    prev = 0
-    for l, h in zip(low_limits, high_limits):
-        d = h - l
-        result[0, prev: prev + d] = aa_indices[l:h]
-        prev += d
+    for l, h, e, d in zip(low_limits, high_limits, ends, diffs):
+        result[0, e - d: e] = aa_indices[l: h]
     return result
