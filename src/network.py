@@ -367,13 +367,13 @@ class Network(object):
                 )
             local_neighbors = low_limit + np.flatnonzero(small_absolute_errors)
             neighbors.append(local_neighbors)
-        indptr = np.empty(len(neighbors) + 1, np.int32)
-        lens = np.empty(len(neighbors), np.int32)
+        indptr = np.empty(len(neighbors) + 1, np.int64)
+        lens = np.empty(len(neighbors), np.int64)
         for i, n in enumerate(neighbors):
             lens[i] = len(n)
         indptr[0] = 0
         indptr[1:] = np.cumsum(lens)
-        indices = np.empty(indptr[-1], np.int32)
+        indices = np.empty(indptr[-1], np.int64)
         for s, e, n in zip(indptr[:-1], indptr[1:], neighbors):
             indices[s: e] = n
         return indptr, indices
@@ -505,7 +505,7 @@ class Network(object):
         )[other_rt_order]
         diffs = high_limits - low_limits
         ends = np.cumsum(diffs)
-        self_indices = np.empty(ends[-1], np.int32)
+        self_indices = np.empty(ends[-1], np.int64)
         for l, h, e, d in zip(low_limits, high_limits, ends, diffs):
             self_indices[e - d: e] = self_mz_order[l: h]
         other_indices = np.repeat(
@@ -513,11 +513,11 @@ class Network(object):
             high_limits - low_limits
         )
         selection = longest_increasing_subsequence(self_indices)
-        self_indices_mask = np.empty(len(selection) + 2, np.int32)
+        self_indices_mask = np.empty(len(selection) + 2, np.int64)
         self_indices_mask[0] = 0
         self_indices_mask[1: -1] = self_indices[selection]
         self_indices_mask[-1] = len(self_mzs) - 1
-        other_indices_mask = np.empty(len(selection) + 2, np.int32)
+        other_indices_mask = np.empty(len(selection) + 2, np.int64)
         other_indices_mask[0] = 0
         other_indices_mask[1: -1] = other_indices[selection]
         other_indices_mask[-1] = len(other_mzs) - 1
@@ -788,8 +788,8 @@ class Network(object):
 @numba.njit(fastmath=True)
 def longest_increasing_subsequence(sequence):
     # TODO:Docstring
-    M = np.zeros(len(sequence) + 1, np.int32)
-    P = np.zeros(len(sequence), np.int32)
+    M = np.zeros(len(sequence) + 1, np.int64)
+    P = np.zeros(len(sequence), np.int64)
     max_subsequence_length = 0
     for current_index, current_element in enumerate(sequence):
         low_bound = 1
