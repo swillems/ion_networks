@@ -54,9 +54,13 @@ class Interface(object):
             file_name=parameter_file_name
         )
         with utils.open_logger(log_file_name, parameters=parameters) as logger:
-            # TODO: Improve logging
-            # logger.info("Running command: ")
-            # logger.info("")
+            logger.info(f"Command: convert.")
+            logger.info(f"input_path: {input_path}.")
+            logger.info(f"data_type: {data_type}.")
+            logger.info(f"output_directory: {output_directory}.")
+            logger.info(f"parameter_file_name: {parameter_file_name}.")
+            logger.info(f"log_file_name: {log_file_name}.")
+            logger.info("")
             if output_directory != "":
                 if not os.path.exists(output_directory):
                     os.makedirs(output_directory)
@@ -113,9 +117,12 @@ class Interface(object):
             default="create"
         )
         with utils.open_logger(log_file_name, parameters=parameters) as logger:
-            # TODO: Improve logging
-            # logger.info("Running command: ")
-            # logger.info("")
+            logger.info(f"Command: create.")
+            logger.info(f"input_path: {input_path}.")
+            logger.info(f"output_directory: {output_directory}.")
+            logger.info(f"parameter_file_name: {parameter_file_name}.")
+            logger.info(f"log_file_name: {log_file_name}.")
+            logger.info("")
             input_file_names = utils.get_file_names_with_extension(
                 input_path,
                 ".inet.csv"
@@ -171,9 +178,12 @@ class Interface(object):
             default="evidence"
         )
         with utils.open_logger(log_file_name, parameters=parameters) as logger:
-            # TODO: Improve logging
-            # logger.info("Running command: ")
-            # logger.info("")
+            logger.info(f"Command: evidence.")
+            logger.info(f"input_path: {input_path}.")
+            logger.info(f"output_directory: {output_directory}.")
+            logger.info(f"parameter_file_name: {parameter_file_name}.")
+            logger.info(f"log_file_name: {log_file_name}.")
+            logger.info("")
             input_file_names = utils.get_file_names_with_extension(
                 input_path,
                 ".inet.hdf"

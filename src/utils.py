@@ -1,10 +1,11 @@
 #!python
 
-# builtins
+# builtin
 import os
 import sys
 import logging
 import json
+import time
 # external
 import numpy as np
 import pandas as pd
@@ -53,6 +54,7 @@ class open_logger(object):
             A parameter dictionary with a default log_file_name. This is
             updated if a log_file_name is provided.
         """
+        self.start_time = time.time()
         logger = logging.getLogger()
         formatter = logging.Formatter('%(asctime)s > %(message)s')
         logger.setLevel(log_level)
@@ -94,7 +96,9 @@ class open_logger(object):
             self.logger.exception("Errors occurred, execution incomplete!")
             sys.exit()
         else:
+            self.logger.info("")
             self.logger.info("Successfully finished execution.")
+            self.logger.info("Time taken: {time.time() - self.start_time}.")
         for handler in list(self.logger.handlers)[1:]:
             handler.close()
             self.logger.removeHandler(handler)

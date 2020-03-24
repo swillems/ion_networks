@@ -1,6 +1,6 @@
 #!python
 
-# builtins
+# builtin
 import os
 # external
 import numpy as np
@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import PySimpleGUI as sg
 import matplotlib
 matplotlib.use('TkAgg')
-# locals
+# local
 import utils
 
 

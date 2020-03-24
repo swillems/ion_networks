@@ -60,7 +60,7 @@ class Network(object):
         parameters
     ):
         """
-        Read a centroided .csv file and return as a pd.DataFrame
+        Read a centroided .csv file and return this as a pd.DataFrame.
 
         Parameters
         ----------
@@ -148,7 +148,7 @@ class Network(object):
         """
         Creates and saves all edges of an ion-network. They are saved in an
         .hdf file as indptr and indices of a scipy.sparse.csr matrix in an
-        'edge' group.
+        'edge' group. Edges are always saved such that rt1 <= rt2.
 
         Parameters
         ----------
@@ -160,13 +160,11 @@ class Network(object):
         """
         self.logger.info(f"Writing edges of ion-network {self.file_name}.")
         edge_group = network_file.create_group("edges")
-        dimensions = [
-            dimension for dimension in self.dimensions if dimension not in [
-                "PRECURSOR_RT",
-                "FRAGMENT_MZ",
-                "FRAGMENT_LOGINT"
-            ]
-        ]
+        dimensions = self.get_dimensions(
+            remove_fragment_mz=True,
+            remove_fragment_logint=True,
+            remove_precursor_rt=True
+        )
         max_absolute_errors = [
             parameters[
                 f"max_edge_absolute_error_{dimension}"
@@ -298,62 +296,86 @@ class Network(object):
             )
             return second_indices, indices
 
+    @staticmethod
+    @numba.njit()
     def create_sparse_edges(
-        self,
         rt_coordinate_array,
         max_rt_absolute_error,
         coordinate_arrays,
         max_absolute_errors,
         symmetric=False
     ):
-        # TODO: Docstring
-        # TODO: Move to seperate function and define type
-        @numba.njit(fastmath=True)
-        def numba_wrapper():
-            if not symmetric:
-                lower_limits = np.arange(len(rt_coordinate_array)) + 1
-            else:
-                lower_limits = np.searchsorted(
-                    rt_coordinate_array,
-                    rt_coordinate_array - max_rt_absolute_error,
-                    "left"
-                )
-            upper_limits = np.searchsorted(
+        """
+        Create all edges of an ion-network and return as indpt and indices of
+        a sparse matrix.
+
+        Parameters
+        ----------
+        rt_coordinate_array : np.ndarray
+            An array with the individual rt coordinates of each ion.
+        max_rt_absolute_error : float
+            The maximum allowed rt error between two ions.
+        coordinate_arrays : tuple[np.ndarray]
+            A tuple with the individual coordinates of each ion per dimension.
+        max_absolute_errors : typle[float]
+            A tuple with the maximum allowed errors for each dimension.
+        symmetric : bool
+            If False, only create edges in one direction so that they satisfy
+            rt1 <= rt2.
+
+        Returns
+        -------
+        tuple[np.ndarray]
+            A tuple with as first element the indptr and as second
+            element the indices, equal to those of a scipy.csr.matrix.
+        """
+        if not symmetric:
+            lower_limits = np.arange(len(rt_coordinate_array)) + 1
+        else:
+            lower_limits = np.searchsorted(
                 rt_coordinate_array,
-                rt_coordinate_array + max_rt_absolute_error,
-                "right"
+                rt_coordinate_array - max_rt_absolute_error,
+                "left"
             )
-            neighbors = []
-            for index, (low_limit, high_limit) in enumerate(
-                zip(
-                    lower_limits,
-                    upper_limits
-                )
+        upper_limits = np.searchsorted(
+            rt_coordinate_array,
+            rt_coordinate_array + max_rt_absolute_error,
+            "right"
+        )
+        neighbors = []
+        for index, (low_limit, high_limit) in enumerate(
+            zip(
+                lower_limits,
+                upper_limits
+            )
+        ):
+            small_absolute_errors = np.repeat(True, high_limit - low_limit)
+            for max_absolute_error, coordinate_array in zip(
+                max_absolute_errors,
+                coordinate_arrays
             ):
-                small_absolute_errors = np.repeat(True, high_limit - low_limit)
-                for max_absolute_error, coordinate_array in zip(
-                    max_absolute_errors,
-                    coordinate_arrays
-                ):
-                    neighbor_coordinates = coordinate_array[
-                        low_limit: high_limit
-                    ]
-                    local_coordinate = coordinate_array[index]
-                    small_coordinate_absolute_errors = np.abs(
-                        neighbor_coordinates - local_coordinate
-                    ) <= max_absolute_error
-                    small_absolute_errors = np.logical_and(
-                        small_absolute_errors,
-                        small_coordinate_absolute_errors
-                    )
-                local_neighbors = low_limit + np.flatnonzero(small_absolute_errors)
-                neighbors.append(local_neighbors)
-            return neighbors
-        neighbors = numba_wrapper()
-        indptr = np.empty(len(neighbors) + 1, dtype=np.int)
+                neighbor_coordinates = coordinate_array[
+                    low_limit: high_limit
+                ]
+                local_coordinate = coordinate_array[index]
+                small_coordinate_absolute_errors = np.abs(
+                    neighbor_coordinates - local_coordinate
+                ) <= max_absolute_error
+                small_absolute_errors = np.logical_and(
+                    small_absolute_errors,
+                    small_coordinate_absolute_errors
+                )
+            local_neighbors = low_limit + np.flatnonzero(small_absolute_errors)
+            neighbors.append(local_neighbors)
+        indptr = np.empty(len(neighbors) + 1, np.int32)
+        lens = np.empty(len(neighbors), np.int32)
+        for i, n in enumerate(neighbors):
+            lens[i] = len(n)
         indptr[0] = 0
-        indptr[1:] = np.cumsum([len(n) for n in neighbors])
-        indices = np.concatenate(neighbors)
+        indptr[1:] = np.cumsum(lens)
+        indices = np.empty(indptr[-1], np.int32)
+        for s, e, n in zip(indptr[:-1], indptr[1:], neighbors):
+            indices[s: e] = n
         return indptr, indices
 
     def align_nodes(self, other, parameters, return_as_scipy_csr=True):
@@ -459,55 +481,65 @@ class Network(object):
             )
         return self_indices, other_indices
 
-    def quick_align(self, other, ppm):
-        # TODO: poor all (except argsorts) in numba wrapper?
-        self_mzs = self.get_ion_coordinates("FRAGMENT_MZ")
-        other_mzs = other.get_ion_coordinates("FRAGMENT_MZ")
-        self_mz_order = np.argsort(self_mzs)
-        other_mz_order = np.argsort(other_mzs)
+    @staticmethod
+    @numba.njit
+    def quick_align(
+        self_mzs,
+        other_mzs,
+        self_mz_order,
+        other_mz_order,
+        other_rt_order,
+        ppm
+    ):
+        # TODO: Docstring
         max_mz_diff = 1 + ppm * 10**-6
         low_limits = np.searchsorted(
             self_mzs[self_mz_order],
             other_mzs[other_mz_order] / max_mz_diff,
             "left"
-        )
+        )[other_rt_order]
         high_limits = np.searchsorted(
             self_mzs[self_mz_order],
             other_mzs[other_mz_order] * max_mz_diff,
             "right"
-        )
-        other_rt_order = np.argsort(other_mz_order)
-        self_indices = np.concatenate(
-            [
-                self_mz_order[l:h] for l, h in zip(
-                    low_limits[other_rt_order],
-                    high_limits[other_rt_order]
-                )
-            ]
-        )
+        )[other_rt_order]
+        diffs = high_limits - low_limits
+        ends = np.cumsum(diffs)
+        self_indices = np.empty(ends[-1], np.int32)
+        for l, h, e, d in zip(low_limits, high_limits, ends, diffs):
+            self_indices[e - d: e] = self_mz_order[l: h]
         other_indices = np.repeat(
             np.arange(len(other_rt_order)),
-            high_limits[other_rt_order] - low_limits[other_rt_order]
+            high_limits - low_limits
         )
         selection = longest_increasing_subsequence(self_indices)
-        self_indices_mask = np.empty(len(selection) + 2, dtype=int)
+        self_indices_mask = np.empty(len(selection) + 2, np.int32)
         self_indices_mask[0] = 0
         self_indices_mask[1: -1] = self_indices[selection]
         self_indices_mask[-1] = len(self_mzs) - 1
-        other_indices_mask = np.empty(len(selection) + 2, dtype=int)
+        other_indices_mask = np.empty(len(selection) + 2, np.int32)
         other_indices_mask[0] = 0
         other_indices_mask[1: -1] = other_indices[selection]
         other_indices_mask[-1] = len(other_mzs) - 1
         return self_indices_mask, other_indices_mask
 
     def calibrate_precursor_rt(self, other, parameters):
-        # TODO:
+        # TODO: Docstring
         self.logger.info(
             f"Calibrating PRECURSOR_RT of {self.file_name} with "
             f"{other.file_name}."
         )
+        self_mzs = self.get_ion_coordinates("FRAGMENT_MZ")
+        other_mzs = other.get_ion_coordinates("FRAGMENT_MZ")
+        self_mz_order = np.argsort(self_mzs)
+        other_mz_order = np.argsort(other_mzs)
+        other_rt_order = np.argsort(other_mz_order)
         self_indices, other_indices = self.quick_align(
-            other,
+            self_mzs,
+            other_mzs,
+            self_mz_order,
+            other_mz_order,
+            other_rt_order,
             parameters["calibration_ppm_FRAGMENT_MZ"]
         )
         self_rts = self.get_ion_coordinates("PRECURSOR_RT")
@@ -535,6 +567,38 @@ class Network(object):
         calibrated_self_rts.append([other_rts[-1]])
         calibrated_self_rts = np.concatenate(calibrated_self_rts)
         return calibrated_self_rts
+
+    def get_dimensions(
+        self,
+        remove_fragment_mz=False,
+        remove_fragment_logint=False,
+        remove_precursor_rt=False
+    ):
+        """
+        Get the dimensions of this ion-network.
+
+        Parameters
+        ----------
+        remove_fragment_mz : bool
+            If True, remove 'FRAGMENT_MZ' from the dimensions.
+        remove_fragment_logint : bool
+            If True, remove 'FRAGMENT_LOGINT' from the dimensions.
+        remove_precursor_rt : bool
+            If True, remove 'PRECURSOR_RT' from the dimensions.
+
+        Returns
+        -------
+        list[str]
+            A sorted list with all the dimensions.
+        """
+        dimensions = set(self.dimensions)
+        if remove_fragment_mz:
+            dimensions.remove("FRAGMENT_MZ")
+        if remove_fragment_logint:
+            dimensions.remove("FRAGMENT_LOGINT")
+        if remove_precursor_rt:
+            dimensions.remove("PRECURSOR_RT")
+        return sorted(dimensions)
 
     def dimension_overlap(
         self,
@@ -598,7 +662,7 @@ class Network(object):
             A sorted list with the names of all dimensions ion-network.
         """
         with h5py.File(self.file_name, "r") as network_file:
-            dimensions = list(network_file["nodes"])
+            dimensions = sorted(network_file["nodes"])
         return dimensions
 
     @property
@@ -724,9 +788,8 @@ class Network(object):
 @numba.njit(fastmath=True)
 def longest_increasing_subsequence(sequence):
     # TODO:Docstring
-    # TODO: Simplify, or speed up by parsing sequence not at the same time?
-    M = np.repeat(0, len(sequence) + 1)
-    P = np.repeat(0, len(sequence))
+    M = np.zeros(len(sequence) + 1, np.int32)
+    P = np.zeros(len(sequence), np.int32)
     max_subsequence_length = 0
     for current_index, current_element in enumerate(sequence):
         low_bound = 1
@@ -747,7 +810,4 @@ def longest_increasing_subsequence(sequence):
     for current_index in range(max_subsequence_length - 1, -1, -1):
         longest_increasing_subsequence[current_index] = index
         index = P[index]
-    # good = np.repeat(True, max_subsequence_length)
-    # good[1:] = sequence[longest_increasing_subsequence[:-1]] != sequence[longest_increasing_subsequence[1:]]
-    # return longest_increasing_subsequence[good]
     return longest_increasing_subsequence
