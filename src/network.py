@@ -534,6 +534,7 @@ class Network(object):
         self_mz_order = np.argsort(self_mzs)
         other_mz_order = np.argsort(other_mzs)
         other_rt_order = np.argsort(other_mz_order)
+        # TODO index rts (ordered 0-1, allow e.g. 0.1 distance)?
         self_indices, other_indices = self.quick_align(
             self_mzs,
             other_mzs,

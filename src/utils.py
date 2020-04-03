@@ -9,6 +9,7 @@ import time
 # external
 import numpy as np
 import pandas as pd
+import h5py
 from pyteomics import mgf
 
 
@@ -25,6 +26,7 @@ DATA_TYPE_FILE_EXTENSIONS = {
     "SONAR": "_Apex3DIons.csv",
     "HDMSE": "_Apex3DIons.csv",
     "SWIMDIA": "_Apex3DIons.csv",
+    "DIAPASEF": "_centroids.hdf",
 }
 
 
@@ -98,7 +100,7 @@ class open_logger(object):
         else:
             self.logger.info("")
             self.logger.info("Successfully finished execution.")
-            self.logger.info("Time taken: {time.time() - self.start_time}.")
+            self.logger.info(f"Time taken: {time.time() - self.start_time}.")
         for handler in list(self.logger.handlers)[1:]:
             handler.close()
             self.logger.removeHandler(handler)
@@ -178,6 +180,7 @@ def get_file_names_with_extension(input_path, extension=""):
 def read_data_from_file(
     data_type,
     file_name,
+    log_transform_intensity=True,
     logger=logging.getLogger()
 ):
     """
@@ -192,8 +195,11 @@ def read_data_from_file(
             'SONAR'
             'HDMSE'
             'SWIMDIA'
+            'DIAPASEF'
     file_name : str
-        The file name of the DDA .mgf file (generated with ms-convert).
+        The file name containing centroided ions.
+    log_transform_intensity : bool
+        Transform the intensities to logarithmic values.
     logger : logging.logger
         The logger that indicates all progress.
 
@@ -204,18 +210,26 @@ def read_data_from_file(
         FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
     """
     if data_type == "DDA":
-        data = read_data_from_mgf_file(file_name, logger)
+        read_function = read_data_from_mgf_file
     elif data_type == "SONAR":
-        data = read_data_from_sonar_file(file_name, logger)
+        read_function = read_data_from_sonar_file
     elif data_type == "HDMSE":
-        data = read_data_from_hdmse_file(file_name, logger)
+        read_function = read_data_from_hdmse_file
     elif data_type == "SWIMDIA":
-        data = read_data_from_swimdia_file(file_name, logger)
+        read_function = read_data_from_swimdia_file
+    elif data_type == "DIAPASEF":
+        read_function = read_data_from_diapasef_file
+    data = read_function(
+        file_name,
+        log_transform_intensity=log_transform_intensity,
+        logger=logger
+    )
     return data
 
 
 def read_data_from_mgf_file(
     file_name,
+    log_transform_intensity=True,
     logger=logging.getLogger()
 ):
     """
@@ -226,6 +240,8 @@ def read_data_from_mgf_file(
     ----------
     file_name : str
         The file name of the DDA .mgf file (generated with ms-convert).
+    log_transform_intensity : bool
+        Transform the intensities to logarithmic values.
     logger : logging.logger
         The logger that indicates all progress.
 
@@ -251,7 +267,9 @@ def read_data_from_mgf_file(
     mz1s = np.concatenate(mz1s)
     mz2s = np.concatenate(mz2s)
     rts = np.concatenate(rts)
-    ints = np.log(np.concatenate(ints))
+    ints = np.concatenate(ints)
+    if log_transform_intensity:
+        ints = np.log2(ints)
     dimensions = [
         "FRAGMENT_MZ",
         "PRECURSOR_RT",
@@ -264,6 +282,7 @@ def read_data_from_mgf_file(
 
 def read_data_from_sonar_file(
     file_name,
+    log_transform_intensity=True,
     logger=logging.getLogger()
 ):
     """
@@ -274,6 +293,8 @@ def read_data_from_sonar_file(
     ----------
     file_name : str
         The file name of the SONAR .csv file (generated with Waters' Apex3d).
+    log_transform_intensity : bool
+        Transform the intensities to logarithmic values.
     logger : logging.logger
         The logger that indicates all progress.
 
@@ -291,7 +312,8 @@ def read_data_from_sonar_file(
         usecols=["Function", "m_z", "rt", "mobility", "area"]
     ).values
     data = data[np.searchsorted(data[:, 0], 2):, 1:]
-    data[:, 2] = np.log(data[:, 2])
+    if log_transform_intensity:
+        data[:, 2] = np.log2(data[:, 2])
     data[:, 3] = 400 + data[:, 3] * (900 - 400) / 200
     dimensions = [
         "FRAGMENT_MZ",
@@ -304,6 +326,7 @@ def read_data_from_sonar_file(
 
 def read_data_from_hdmse_file(
     file_name,
+    log_transform_intensity=True,
     logger=logging.getLogger()
 ):
     """
@@ -314,6 +337,8 @@ def read_data_from_hdmse_file(
     ----------
     file_name : str
         The file name of the HDMSE .csv file (generated with Waters' Apex3d).
+    log_transform_intensity : bool
+        Transform the intensities to logarithmic values.
     logger : logging.logger
         The logger that indicates all progress.
 
@@ -331,7 +356,8 @@ def read_data_from_hdmse_file(
         usecols=["Function", "m_z", "rt", "mobility", "area"]
     ).values
     data = data[np.searchsorted(data[:, 0], 2):, 1:]
-    data[:, 2] = np.log(data[:, 2])
+    if log_transform_intensity:
+        data[:, 2] = np.log2(data[:, 2])
     dimensions = [
         "FRAGMENT_MZ",
         "PRECURSOR_RT",
@@ -343,6 +369,7 @@ def read_data_from_hdmse_file(
 
 def read_data_from_swimdia_file(
     file_name,
+    log_transform_intensity=True,
     logger=logging.getLogger()
 ):
     """
@@ -353,6 +380,8 @@ def read_data_from_swimdia_file(
     ----------
     file_name : str
         The file name of the SWIM-DIA .csv file (generated with Waters' Apex3d).
+    log_transform_intensity : bool
+        Transform the intensities to logarithmic values.
     logger : logging.logger
         The logger that indicates all progress.
 
@@ -369,7 +398,8 @@ def read_data_from_swimdia_file(
         dtype=np.float,
         usecols=["m_z", "rt", "mobility", "area"]
     ).values
-    data[:, 2] = np.log(data[:, 2])
+    if log_transform_intensity:
+        data[:, 2] = np.log2(data[:, 2])
     dimensions = [
         "FRAGMENT_MZ",
         "PRECURSOR_RT",
@@ -377,6 +407,73 @@ def read_data_from_swimdia_file(
         "PRECURSOR_DT"
     ]
     return pd.DataFrame(data, columns=dimensions)
+
+
+def read_data_from_diapasef_file(
+    file_name,
+    min_intensity=1000,
+    min_cluster_size=10,
+    log_transform_intensity=True,
+    logger=logging.getLogger()
+):
+    """
+    Convert a [diapasef_input_centroids.hdf] file to a pd.DataFrame with as columns
+    the PRECURSOR_RT, PRECURSOR_DT, FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
+
+    Parameters
+    ----------
+    file_name : str
+        The file name of the DIAPASEF _centroids.hdf file (generated with
+        diapasef.py).
+    min_intensity : float
+        The minimimum intensity of an ion to retain it.
+    min_cluster_size : int
+        The minimimum cluster size of an ion to retain it.
+    log_transform_intensity : bool
+        Transform the intensities to logarithmic values.
+    logger : logging.logger
+        The logger that indicates all progress.
+
+    Returns
+    -------
+    pd.DataFrame
+        A pd.DataFrame with as columns the PRECURSOR_RT, PRECURSOR_DT,
+        PRECURSOR_MZ, FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
+    """
+    logger.info(f"Reading {file_name}")
+    with h5py.File(file_name, "r") as hdf_file:
+        centroided_fragment_mzs = hdf_file["fragment_mz_values"][...]
+        centroided_fragment_intensities = hdf_file["fragment_intensity_values"][...]
+        centroided_precursor_mzs = hdf_file["precursor_mz_values"][...]
+        centroided_precursor_dts = hdf_file["precursor_dt_values"][...]
+        centroided_precursor_rts = hdf_file["precursor_rt_values"][...]
+        cluster_sizes = hdf_file["cluster_sizes"][...]
+    selection = (cluster_sizes > min_cluster_size)
+    if min_intensity > 0:
+        selection &= (centroided_fragment_intensities > min_intensity)
+    selection = np.flatnonzero(selection)
+    if log_transform_intensity:
+        centroided_fragment_intensities = np.log2(
+            centroided_fragment_intensities
+        )
+    return pd.DataFrame(
+        np.stack(
+            [
+                centroided_fragment_mzs[selection],
+                centroided_fragment_intensities[selection],
+                centroided_precursor_mzs[selection],
+                centroided_precursor_dts[selection],
+                centroided_precursor_rts[selection] / 60,
+            ]
+        ).T,
+        columns=[
+            "FRAGMENT_MZ",
+            "FRAGMENT_LOGINT",
+            "PRECURSOR_MZ",
+            "PRECURSOR_DT",
+            "PRECURSOR_RT",
+        ]
+    )
 
 
 def write_data_to_csv_file(

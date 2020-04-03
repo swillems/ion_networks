@@ -35,10 +35,11 @@ class Interface(object):
             If provided, all new files will be saved in this directory.
         data_type : str
             The data type of the input files. Options are:
-                'dda'
-                'sonar'
-                'hdmse'
-                'swimdia'
+                'DDA'
+                'SONAR'
+                'HDMSE'
+                'SWIMDIA'
+                'DIAPASEF'
         parameter_file_name : str or None
             If provided, parameters will be read from this file.
         log_file_name : str or None
@@ -55,11 +56,11 @@ class Interface(object):
         )
         with utils.open_logger(log_file_name, parameters=parameters) as logger:
             logger.info(f"Command: convert.")
-            logger.info(f"input_path: {input_path}.")
-            logger.info(f"data_type: {data_type}.")
-            logger.info(f"output_directory: {output_directory}.")
-            logger.info(f"parameter_file_name: {parameter_file_name}.")
-            logger.info(f"log_file_name: {log_file_name}.")
+            logger.info(f"input_path: {input_path}")
+            logger.info(f"data_type: {data_type}")
+            logger.info(f"output_directory: {output_directory}")
+            logger.info(f"parameter_file_name: {parameter_file_name}")
+            logger.info(f"log_file_name: {log_file_name}")
             logger.info("")
             if output_directory != "":
                 if not os.path.exists(output_directory):
@@ -71,7 +72,11 @@ class Interface(object):
             file_count = len(input_file_names)
             logger.info(f"Found {file_count} files to process.")
             for input_file_name in sorted(input_file_names):
-                data = utils.read_data_from_file(data_type, input_file_name, logger)
+                data = utils.read_data_from_file(
+                    data_type,
+                    input_file_name,
+                    logger
+                )
                 file_name_base = os.path.basename(input_file_name)[
                     :-len(utils.DATA_TYPE_FILE_EXTENSIONS[data_type])
                 ]
@@ -118,10 +123,10 @@ class Interface(object):
         )
         with utils.open_logger(log_file_name, parameters=parameters) as logger:
             logger.info(f"Command: create.")
-            logger.info(f"input_path: {input_path}.")
-            logger.info(f"output_directory: {output_directory}.")
-            logger.info(f"parameter_file_name: {parameter_file_name}.")
-            logger.info(f"log_file_name: {log_file_name}.")
+            logger.info(f"input_path: {input_path}")
+            logger.info(f"output_directory: {output_directory}")
+            logger.info(f"parameter_file_name: {parameter_file_name}")
+            logger.info(f"log_file_name: {log_file_name}")
             logger.info("")
             input_file_names = utils.get_file_names_with_extension(
                 input_path,
@@ -179,10 +184,10 @@ class Interface(object):
         )
         with utils.open_logger(log_file_name, parameters=parameters) as logger:
             logger.info(f"Command: evidence.")
-            logger.info(f"input_path: {input_path}.")
-            logger.info(f"output_directory: {output_directory}.")
-            logger.info(f"parameter_file_name: {parameter_file_name}.")
-            logger.info(f"log_file_name: {log_file_name}.")
+            logger.info(f"input_path: {input_path}")
+            logger.info(f"output_directory: {output_directory}")
+            logger.info(f"parameter_file_name: {parameter_file_name}")
+            logger.info(f"log_file_name: {log_file_name}")
             logger.info("")
             input_file_names = utils.get_file_names_with_extension(
                 input_path,
@@ -307,14 +312,17 @@ class GUI(object):
         self.window["Convert"] = [
             self.add_input_path_to_layout(
                 file_types=(
-                    (key, f"*{value}") for key, value in utils.DATA_TYPE_FILE_EXTENSIONS.items()
+                    (
+                        key,
+                        f"*{value}"
+                    ) for key, value in utils.DATA_TYPE_FILE_EXTENSIONS.items()
                 )
             ),
             self.add_output_directory_to_layout(),
             [
                 sg.Text('Data type', size=(self.widget_size, 1)),
                 sg.Combo(
-                    ['DDA', 'HDMSE', "SONAR", "SWIMDIA"],
+                    sorted(utils.DATA_TYPE_FILE_EXTENSIONS),
                     default_value='HDMSE',
                     key="data_type",
                     size=(self.widget_size * 2, 1)
@@ -614,24 +622,28 @@ class CLI(object):
         help="For each [input.*] file, an [input.inet.csv] file is created. "
             "If no output directory is provided, each [input.inet.csv] file is "
             "placed in the same folder as its corresponding [input.*] file. "
-            "WARNING: This overrides already existing files without confirmation.",
+            "WARNING: This overrides already existing files without "
+            "confirmation.",
         type=click.Path(file_okay=False),
     )
     @click.option(
         '--data_type',
         '-d',
-        help="The data type of the [input.*] file. If this is DDA, an .mgf file "
-        "that was centroided with ms-convert is expected with the field "
+        help="The data type of the [input.*] file. If this is DDA, an ''.mgf' "
+        "file that was centroided with ms-convert is expected with the field "
         "RTINSECONDS as LC coordinate. "
-        "For HDMSE, SONAR and SWIM-DIA, a .csv generated with Waters' Apex3d is "
-        "expected, typically generated as follows 'Apex3D64.exe -pRawDirName "
-        "sample.raw -outputDirName peak_picked_sample_folder -lockMassZ2 785.8426 "
+        "For HDMSE, SONAR and SWIM-DIA, an '_Apex3DIons.csv' generated with "
+        "Waters' Apex3d is expected, typically generated as follows "
+        "'Apex3D64.exe -pRawDirName sample.raw -outputDirName "
+        "peak_picked_sample_folder -lockMassZ2 785.8426 "
         "-lockmassToleranceAMU 0.25 -bCSVOutput 1 -writeFuncCsvFiles 0 "
         "-leThresholdCounts 1 -heThresholdCounts 1 -apexTrackSNRThreshold 1 "
-        "-bEnableCentroids 0'.",
+        "-bEnableCentroids 0'. "
+        "For DIAPASEF, a '_centroided.hdf' file generated with diapasef.py "
+        "(https://github.com/swillems/diapasef) is expected.",
         required=True,
         type=click.Choice(
-            ['DDA', 'HDMSE', "SONAR", "SWIMDIA"],
+            ['DDA', 'HDMSE', "SONAR", "SWIMDIA", "DIAPASEF"],
             case_sensitive=True
         )
     )
@@ -647,7 +659,8 @@ class CLI(object):
         "-l",
         "log_file_name",
         help="Save the log to a [log.txt] file. "
-            "This log file can also be supplied through a [parameters.json] file. "
+            "This log file can also be supplied through a [parameters.json] "
+            "file. "
             "If the log file already exists, the new log data is appended.",
         type=click.Path(dir_okay=False),
     )
@@ -693,8 +706,10 @@ class CLI(object):
         help="For each [input.inet.csv] file, an [input.inet.hdf] ion-network "
             "file is created. "
             "If no output directory is provided, each [input.inet.hdf] file is "
-            "placed in the same folder as its corresponding [input.inet.csv] file. "
-            "WARNING: This overrides already existing files without confirmation.",
+            "placed in the same folder as its corresponding [input.inet.csv] "
+            "file. "
+            "WARNING: This overrides already existing files without "
+            "confirmation.",
         type=click.Path(file_okay=False)
     )
     @click.option(
@@ -709,7 +724,8 @@ class CLI(object):
         "-l",
         "log_file_name",
         help="Save the log to a [log.txt] file. "
-            "This log file can also be supplied through a [parameters.json] file. "
+            "This log file can also be supplied through a [parameters.json] "
+            "file. "
             "If the log file already exists, the new log data is appended.",
         type=click.Path(dir_okay=False)
     )
@@ -729,8 +745,8 @@ class CLI(object):
     @staticmethod
     @click.command(
         "evidence",
-        help="Collect pairwise evidence for [input.inet.hdf] ion-network files as "
-            "[input.evidence.hdf] evidence files.",
+        help="Collect pairwise evidence for [input.inet.hdf] ion-network files "
+            "as [input.evidence.hdf] evidence files.",
         short_help="Collect evidence for ion-networks."
     )
     @click.option(
@@ -748,9 +764,11 @@ class CLI(object):
         "-o",
         help="For each [input.inet.hdf] file, an [input.evidence.hdf] evidence "
             "file is created. "
-            "If no output directory is provided, each [input.evidence.hdf] file is "
-            "placed in the same folder as its corresponding [input.inet.hdf] file. "
-            "WARNING: This overrides already existing files without confirmation.",
+            "If no output directory is provided, each [input.evidence.hdf] "
+            "file is placed in the same folder as its corresponding "
+            "[input.inet.hdf] file. "
+            "WARNING: This overrides already existing files without "
+            "confirmation.",
         type=click.Path(file_okay=False)
     )
     @click.option(
@@ -765,7 +783,8 @@ class CLI(object):
         "-l",
         "log_file_name",
         help="Save the log to a [log.txt] file. "
-            "This log file can also be supplied through a [parameters.json] file. "
+            "This log file can also be supplied through a [parameters.json] "
+            "file. "
             "If the log file already exists, the new log data is appended.",
         type=click.Path(dir_okay=False)
     )
@@ -816,7 +835,8 @@ class CLI(object):
         "-l",
         "log_file_name",
         help="Save the log to a [log.txt] file. "
-            "This log file can also be supplied through a [parameters.json] file. "
+            "This log file can also be supplied through a [parameters.json] "
+            "file. "
             "If the log file already exists, the new log data is appended.",
         type=click.Path(dir_okay=False)
     )
