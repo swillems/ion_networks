@@ -19,7 +19,7 @@ wget https://raw.githubusercontent.com/swillems/ion_networks/master/install/inst
 If the ion-networks repository needs to be updated, [download](https://github.com/swillems/ion_networks/tree/master/install/update.sh) and/or run the ```update.sh``` bash script contained in the [install](https://github.com/swillems/ion_networks/tree/master/install) folder of the ion-networks repository.
 
 ## Usage
-Five basic modules have been implemented for analysis of ion-networks:
+Four basic modules have been implemented for the analysis of ion-networks:
 
 1. Convert
 2. Create
@@ -29,12 +29,12 @@ Five basic modules have been implemented for analysis of ion-networks:
 These modules can be run either with a [GUI](https://en.wikipedia.org/wiki/Graphical_user_interface) or through a [CLI](https://en.wikipedia.org/wiki/Command-line_interface).
 
 ### Windows 10
-For Windows users, a (desktop) shortcut can be created in Windows that automatically runs the ion-networks GUI within the WSL and MobaXterm. This can be done by opening MobaXterm and pressing the *session* button on the top left. Select the rightmost tab *WSL* and set the Linux distribution to Ubuntu in the *Basic WSL settings* tab. Click the *Advanced WSL settings* tab and copy ```ion_networks.py gui``` to the *Execute the following commands at startup* window. Finally, click the *Bookmark settings* tab and change the *Session name* to e.g. *ion_network_gui*. Click the *Create a desktop shortcut to this session* button and select both options *Hide terminal on startup* and *Close MobaXterm on exit* before pressing *OK* in this popup. Confirm the session settings with *OK*. A pop-up with the GUI running should have appeared in your taskbar, allowing you to test the installation. For subsequent use, double-clicking the Windows desktop icon suffices to run the ion-networks GUI.
+For Windows users, a (desktop) shortcut can be created in Windows that automatically runs the ion-networks GUI within the MobaXterm WSL. This can be done by opening MobaXterm and pressing the *session* button on the top left. Select the rightmost tab *WSL* and set the Linux distribution to Ubuntu in the *Basic WSL settings* tab. Click the *Advanced WSL settings* tab and copy ```ion_networks.py gui``` to the *Execute the following commands at startup* window. Finally, click the *Bookmark settings* tab and change the *Session name* to e.g. *ion_network_gui*. Click the *Create a desktop shortcut to this session* button and select both options *Hide terminal on startup* and *Close MobaXterm on exit* before pressing *OK* in this popup. Confirm the session settings with *OK*. A pop-up with the GUI running should have appeared in your taskbar, allowing you to test the installation. For subsequent use, double-clicking the Windows desktop icon suffices to run the ion-networks GUI as a stand-alone program.
 
 ### Ubuntu 18.04
 The ion-networks software can be run within a terminal with the command ```ion_networks.py``` (this alias is set by default during installation). Possible commands are:
 
-```bash
+```
 Usage: ion_networks.py [OPTIONS] COMMAND [ARGS]...
 
   Analysis of LC-[...]-MSMS data with ion-networks.
