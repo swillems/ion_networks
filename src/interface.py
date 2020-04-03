@@ -693,9 +693,10 @@ class CLI(object):
             "Columns with headers PRECURSOR_RT, FRAGMENT_MZ and "
             "FRAGMENT_LOGINT always need to be present. "
             "All column whose header starts with # are not interpreted as ion "
-            "coordinates (they are e.g. annotations), and are ignored. "
+            "coordinates and van be e.g. prior annotations. "
             "All other columns (e.g. PRECURSOR_MZ or PRECURSOR_DT) are "
-            "automatically interpreted as precursor dimensions. "
+            "automatically interpreted as dimensions with ion coordinates. "
+            "All PRECURSOR_* dimensions are used to connect ions. "
             "Individual files can be provided, as well as folders."
             "This flag can be set multiple times.",
         multiple=True,

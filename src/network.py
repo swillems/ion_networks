@@ -87,7 +87,7 @@ class Network(object):
         data = pd.read_csv(
             centroided_csv_file_name,
             engine="c",
-            dtype=np.float,
+            # dtype=np.float,
         )
         if "PRECURSOR_RT" not in data:
             raise KeyError("No PRECURSOR_RT column present")
@@ -139,12 +139,20 @@ class Network(object):
         node_group = network_file.create_group("nodes")
         for column in data.columns:
             if column.startswith("#"):
-                continue
+                if "comments" not in network_file:
+                    comment_group = network_file.create_group("comments")
+                comment_group.create_dataset(
+                    column[1:],
+                    data=data[column],
+                    compression="lzf",
+                    dtype=h5py.string_dtype()
+                )
             else:
                 node_group.create_dataset(
                     column,
                     data=data[column],
-                    compression="lzf"
+                    compression="lzf",
+                    dtype=np.float
                 )
 
     def write_edges(self, network_file, parameters):
@@ -163,9 +171,7 @@ class Network(object):
         """
         self.logger.info(f"Writing edges of ion-network {self.file_name}.")
         edge_group = network_file.create_group("edges")
-        dimensions = self.get_dimensions(
-            remove_fragment_mz=True,
-            remove_fragment_logint=True,
+        dimensions = self.get_precursor_dimensions(
             remove_precursor_rt=True
         )
         max_absolute_errors = [
@@ -600,6 +606,32 @@ class Network(object):
             dimensions.remove("FRAGMENT_MZ")
         if remove_fragment_logint:
             dimensions.remove("FRAGMENT_LOGINT")
+        if remove_precursor_rt:
+            dimensions.remove("PRECURSOR_RT")
+        return sorted(dimensions)
+
+    def get_precursor_dimensions(
+        self,
+        remove_precursor_rt=False
+    ):
+        """
+        Get the precursor dimensions of this ion-network.
+
+        Parameters
+        ----------
+        remove_precursor_rt : bool
+            If True, remove 'PRECURSOR_RT' from the dimensions.
+
+        Returns
+        -------
+        list[str]
+            A sorted list with all the dimensions.
+        """
+        dimensions = set(
+            [
+                dim for dim in self.dimensions if dim.startswith("PRECURSOR")
+            ]
+        )
         if remove_precursor_rt:
             dimensions.remove("PRECURSOR_RT")
         return sorted(dimensions)
