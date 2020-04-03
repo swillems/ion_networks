@@ -138,11 +138,14 @@ class Network(object):
         self.logger.info(f"Writing nodes of ion-network {self.file_name}.")
         node_group = network_file.create_group("nodes")
         for column in data.columns:
-            node_group.create_dataset(
-                column,
-                data=data[column],
-                compression="lzf"
-            )
+            if column.startswith("#"):
+                continue
+            else:
+                node_group.create_dataset(
+                    column,
+                    data=data[column],
+                    compression="lzf"
+                )
 
     def write_edges(self, network_file, parameters):
         """

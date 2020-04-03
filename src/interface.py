@@ -690,8 +690,10 @@ class CLI(object):
         "--input_path",
         "-i",
         help="A unified [input.inet.csv] file with centroided ion peaks. "
-            "The columns PRECURSOR_RT, FRAGMENT_MZ and FRAGMENT_LOGINT always "
-            "need to be present. "
+            "Columns with headers PRECURSOR_RT, FRAGMENT_MZ and "
+            "FRAGMENT_LOGINT always need to be present. "
+            "All column whose header starts with # are not interpreted as ion "
+            "coordinates (they are e.g. annotations), and are ignored. "
             "All other columns (e.g. PRECURSOR_MZ or PRECURSOR_DT) are "
             "automatically interpreted as precursor dimensions. "
             "Individual files can be provided, as well as folders."
