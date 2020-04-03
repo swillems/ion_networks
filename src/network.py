@@ -268,6 +268,51 @@ class Network(object):
         else:
             return arrays
 
+    def get_ion_comments(self, dimensions=None, indices=...):
+        """
+        Get an array with ion comments from the ion-network.
+
+        Parameters
+        ----------
+        dimensions : str, iterable[str] or None
+            The comment dimension(s) to retrieve from the ion-network. If this
+            is None, a sorted list with all the available comment dimensions is
+            returned.
+        indices : ellipsis, slice, int, iterable[int] or iterable[bool]
+            The indices that should be selected from the array. This is most
+            performant when this is an ellipsis or slice, but fancy indexing
+            with a mask, list or np.ndarray are also supported.
+
+        Returns
+        -------
+        np.ndarray or list[np.ndarray]
+            A (list of) numpy array(s) with the ion comments from the
+            requested comment dimension(s). If dimensions is None, a sorted list
+            with all the available comment dimensions is returned.
+        """
+        if dimensions is None:
+            dimensions = self.comment_dimensions
+        single_dimension = isinstance(dimensions, str)
+        if single_dimension:
+            dimensions = [dimensions]
+        arrays = []
+        try:
+            iter(indices)
+            fancy_indices = True
+        except TypeError:
+            fancy_indices = False
+        with h5py.File(self.file_name, "r") as network_file:
+            for dimension in dimensions:
+                array = network_file["comments"][dimension]
+                if fancy_indices:
+                    array = array[...]
+                array = array[indices]
+                arrays.append(array)
+        if single_dimension:
+            return arrays[0]
+        else:
+            return arrays
+
     def get_edges(
         self,
         return_as_scipy_csr=True,
@@ -625,7 +670,7 @@ class Network(object):
         Returns
         -------
         list[str]
-            A sorted list with all the dimensions.
+            A sorted list with all the precursor dimensions.
         """
         dimensions = set(
             [
@@ -699,6 +744,24 @@ class Network(object):
         """
         with h5py.File(self.file_name, "r") as network_file:
             dimensions = sorted(network_file["nodes"])
+        return dimensions
+
+    @property
+    def comment_dimensions(self):
+        """
+        Get a sorted list with all the dimensions of the nodes in the
+        ion-network.
+
+        Returns
+        -------
+        list[str]
+            A sorted list with the names of all dimensions ion-network.
+        """
+        with h5py.File(self.file_name, "r") as network_file:
+            if "comments" in network_file:
+                dimensions = sorted(network_file["comments"])
+            else:
+                dimensions = []
         return dimensions
 
     @property
