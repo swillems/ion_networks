@@ -47,16 +47,26 @@ class Interface(object):
         """
         if parameter_file_name is None:
             parameter_file_name = ""
+        if parameter_file_name != "":
+            parameter_file_name = os.path.abspath(parameter_file_name)
         if output_directory is None:
             output_directory = ""
-        if log_file_name is None:
-            log_file_name = ""
+        if output_directory != "":
+            output_directory = os.path.abspath(output_directory)
         parameters = utils.read_parameters_from_json_file(
             file_name=parameter_file_name
         )
-        with utils.open_logger(log_file_name, parameters=parameters) as logger:
+        if (log_file_name is None) or (log_file_name == ""):
+            log_file_name = parameters["log_file_name"]
+        if log_file_name != "":
+            log_file_name = os.path.abspath(log_file_name)
+        with utils.open_logger(log_file_name) as logger:
             logger.info(f"Command: convert.")
-            logger.info(f"input_path: {input_path}")
+            input_file_names = utils.get_file_names_with_extension(
+                input_path,
+                extension=utils.DATA_TYPE_FILE_EXTENSIONS[data_type]
+            )
+            logger.info(f"input_file_names: {input_file_names}")
             logger.info(f"data_type: {data_type}")
             logger.info(f"output_directory: {output_directory}")
             logger.info(f"parameter_file_name: {parameter_file_name}")
@@ -65,12 +75,11 @@ class Interface(object):
             if output_directory != "":
                 if not os.path.exists(output_directory):
                     os.makedirs(output_directory)
-            input_file_names = utils.get_file_names_with_extension(
-                input_path,
-                extension=utils.DATA_TYPE_FILE_EXTENSIONS[data_type]
-            )
             file_count = len(input_file_names)
-            logger.info(f"Found {file_count} files to process.")
+            logger.info(
+                f"Found {file_count} file{'s' if file_count != 1 else ''} "
+                "to process."
+            )
             for input_file_name in sorted(input_file_names):
                 data = utils.read_data_from_file(
                     data_type,
@@ -113,27 +122,36 @@ class Interface(object):
         """
         if parameter_file_name is None:
             parameter_file_name = ""
+        if parameter_file_name != "":
+            parameter_file_name = os.path.abspath(parameter_file_name)
         if output_directory is None:
             output_directory = ""
-        if log_file_name is None:
-            log_file_name = ""
+        if output_directory != "":
+            output_directory = os.path.abspath(output_directory)
         parameters = utils.read_parameters_from_json_file(
             file_name=parameter_file_name,
             default="create"
         )
-        with utils.open_logger(log_file_name, parameters=parameters) as logger:
+        if (log_file_name is None) or (log_file_name == ""):
+            log_file_name = parameters["log_file_name"]
+        if log_file_name != "":
+            log_file_name = os.path.abspath(log_file_name)
+        with utils.open_logger(log_file_name) as logger:
             logger.info(f"Command: create.")
-            logger.info(f"input_path: {input_path}")
-            logger.info(f"output_directory: {output_directory}")
-            logger.info(f"parameter_file_name: {parameter_file_name}")
-            logger.info(f"log_file_name: {log_file_name}")
-            logger.info("")
             input_file_names = utils.get_file_names_with_extension(
                 input_path,
                 ".inet.csv"
             )
+            logger.info(f"input_file_names: {input_file_names}")
+            logger.info(f"output_directory: {output_directory}")
+            logger.info(f"parameter_file_name: {parameter_file_name}")
+            logger.info(f"log_file_name: {log_file_name}")
+            logger.info("")
             file_count = len(input_file_names)
-            logger.info(f"Found {file_count} .inet.csv files to process.")
+            logger.info(
+                f"Found {file_count} .inet.csv file"
+                f"{'s' if file_count != 1 else ''} to process."
+            )
             for csv_file_name in input_file_names:
                 local_file_name = os.path.basename(csv_file_name)
                 if output_directory == "":
@@ -174,27 +192,36 @@ class Interface(object):
         """
         if parameter_file_name is None:
             parameter_file_name = ""
+        if parameter_file_name != "":
+            parameter_file_name = os.path.abspath(parameter_file_name)
         if output_directory is None:
             output_directory = ""
-        if log_file_name is None:
-            log_file_name = ""
+        if output_directory != "":
+            output_directory = os.path.abspath(output_directory)
         parameters = utils.read_parameters_from_json_file(
             file_name=parameter_file_name,
             default="evidence"
         )
-        with utils.open_logger(log_file_name, parameters=parameters) as logger:
+        if (log_file_name is None) or (log_file_name == ""):
+            log_file_name = parameters["log_file_name"]
+        if log_file_name != "":
+            log_file_name = os.path.abspath(log_file_name)
+        with utils.open_logger(log_file_name) as logger:
             logger.info(f"Command: evidence.")
-            logger.info(f"input_path: {input_path}")
-            logger.info(f"output_directory: {output_directory}")
-            logger.info(f"parameter_file_name: {parameter_file_name}")
-            logger.info(f"log_file_name: {log_file_name}")
-            logger.info("")
             input_file_names = utils.get_file_names_with_extension(
                 input_path,
                 ".inet.hdf"
             )
+            logger.info(f"input_file_names: {input_file_names}")
+            logger.info(f"output_directory: {output_directory}")
+            logger.info(f"parameter_file_name: {parameter_file_name}")
+            logger.info(f"log_file_name: {log_file_name}")
+            logger.info("")
             file_count = len(input_file_names)
-            logger.info(f"Found {file_count} .inet.hdf files to process.")
+            logger.info(
+                f"Found {file_count} .inet.hdf file"
+                "{'s' if file_count != 1 else ''} to process."
+            )
             ion_networks = [
                 network.Network(file_name) for file_name in input_file_names
             ]
@@ -237,12 +264,16 @@ class Interface(object):
         # TODO: Implement
         if parameter_file_name is None:
             parameter_file_name = ""
-        if log_file_name is None:
-            log_file_name = ""
+        if parameter_file_name != "":
+            parameter_file_name = os.path.abspath(parameter_file_name)
         parameters = utils.read_parameters_from_json_file(
             file_name=parameter_file_name,
         )
-        with utils.open_logger(log_file_name, parameters=parameters) as logger:
+        if (log_file_name is None) or (log_file_name == ""):
+            log_file_name = parameters["log_file_name"]
+        if log_file_name != "":
+            log_file_name = os.path.abspath(log_file_name)
+        with utils.open_logger(log_file_name) as logger:
             # TODO: Improve logging
             # logger.info("Running command: ")
             # logger.info("")
@@ -354,7 +385,6 @@ class GUI(object):
             self.add_input_path_to_layout(
                 file_types=(('Ion-networks', '*.inet.hdf'),)
             ),
-            self.add_output_directory_to_layout(),
             self.add_parameter_file_to_layout(),
             self.add_log_file_to_layout(),
             self.add_main_menu_and_continue_buttons_to_layout(),
@@ -423,7 +453,7 @@ class GUI(object):
             self.run_terminal_command(
                 Interface.evidence_ion_networks,
                 values["input_path"].split(";"),
-                values["output_directory"],
+                None,
                 values["parameter_file_name"],
                 values["log_file_name"]
             )
@@ -622,6 +652,8 @@ class CLI(object):
         help="For each [input.*] file, an [input.inet.csv] file is created. "
             "If no output directory is provided, each [input.inet.csv] file is "
             "placed in the same folder as its corresponding [input.*] file. "
+            "This output directory can also be supplied through a "
+            "[parameters.json] file. "
             "WARNING: This overrides already existing files without "
             "confirmation.",
         type=click.Path(file_okay=False),
@@ -659,8 +691,9 @@ class CLI(object):
         "-l",
         "log_file_name",
         help="Save the log to a [log.txt] file. "
+            "By default this is written to 'log.txt' in the current directory. "
             "This log file can also be supplied through a [parameters.json] "
-            "file. "
+            "file. It can be turned of by providing the argument \"\". "
             "If the log file already exists, the new log data is appended.",
         type=click.Path(dir_okay=False),
     )
@@ -693,7 +726,7 @@ class CLI(object):
             "Columns with headers PRECURSOR_RT, FRAGMENT_MZ and "
             "FRAGMENT_LOGINT always need to be present. "
             "All column whose header starts with # are not interpreted as ion "
-            "coordinates and van be e.g. prior annotations. "
+            "coordinates and can be e.g. prior annotations. "
             "All other columns (e.g. PRECURSOR_MZ or PRECURSOR_DT) are "
             "automatically interpreted as dimensions with ion coordinates. "
             "All PRECURSOR_* dimensions are used to connect ions. "
@@ -711,6 +744,8 @@ class CLI(object):
             "If no output directory is provided, each [input.inet.hdf] file is "
             "placed in the same folder as its corresponding [input.inet.csv] "
             "file. "
+            "This output directory can also be supplied through a "
+            "[parameters.json] file. "
             "WARNING: This overrides already existing files without "
             "confirmation.",
         type=click.Path(file_okay=False)
@@ -727,8 +762,9 @@ class CLI(object):
         "-l",
         "log_file_name",
         help="Save the log to a [log.txt] file. "
+            "By default this is written to 'log.txt' in the current directory. "
             "This log file can also be supplied through a [parameters.json] "
-            "file. "
+            "file. It can be turned of by providing the argument \"\". "
             "If the log file already exists, the new log data is appended.",
         type=click.Path(dir_okay=False)
     )
@@ -763,18 +799,6 @@ class CLI(object):
         type=click.Path(exists=True)
     )
     @click.option(
-        "--output_directory",
-        "-o",
-        help="For each [input.inet.hdf] file, an [input.evidence.hdf] evidence "
-            "file is created. "
-            "If no output directory is provided, each [input.evidence.hdf] "
-            "file is placed in the same folder as its corresponding "
-            "[input.inet.hdf] file. "
-            "WARNING: This overrides already existing files without "
-            "confirmation.",
-        type=click.Path(file_okay=False)
-    )
-    @click.option(
         "--parameter_file",
         "-p",
         "parameter_file_name",
@@ -786,20 +810,20 @@ class CLI(object):
         "-l",
         "log_file_name",
         help="Save the log to a [log.txt] file. "
+            "By default this is written to 'log.txt' in the current directory. "
             "This log file can also be supplied through a [parameters.json] "
-            "file. "
+            "file. It can be turned of by providing the argument \"\". "
             "If the log file already exists, the new log data is appended.",
         type=click.Path(dir_okay=False)
     )
     def evidence(
         input_path,
-        output_directory,
         parameter_file_name,
         log_file_name
     ):
         Interface.evidence_ion_networks(
             input_path,
-            output_directory,
+            None,
             parameter_file_name,
             log_file_name
         )
@@ -838,8 +862,9 @@ class CLI(object):
         "-l",
         "log_file_name",
         help="Save the log to a [log.txt] file. "
+            "By default this is written to 'log.txt' in the current directory. "
             "This log file can also be supplied through a [parameters.json] "
-            "file. "
+            "file. It can be turned of by providing the argument \"\". "
             "If the log file already exists, the new log data is appended.",
         type=click.Path(dir_okay=False)
     )

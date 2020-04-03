@@ -1,3 +1,4 @@
 {
-    "log_file_name": ""
+    "log_file_name": "log.txt",
+    "output_directory": ""
 }

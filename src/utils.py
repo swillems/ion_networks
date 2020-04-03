@@ -39,7 +39,6 @@ class open_logger(object):
         self,
         log_file_name,
         log_level=logging.INFO,
-        parameters={"log_file_name": ""}
     ):
         """
         Create a logger to track all progress.
@@ -52,9 +51,6 @@ class open_logger(object):
         log_level : int
             The level at which log messages are returned. By default this is
             logging.INFO.
-        parameters : dict
-            A parameter dictionary with a default log_file_name. This is
-            updated if a log_file_name is provided.
         """
         self.start_time = time.time()
         logger = logging.getLogger()
@@ -65,8 +61,6 @@ class open_logger(object):
             console_handler.setLevel(log_level)
             console_handler.setFormatter(formatter)
             logger.addHandler(console_handler)
-        if log_file_name == "":
-            log_file_name = parameters["log_file_name"]
         if log_file_name != "":
             directory = os.path.dirname(log_file_name)
             if not os.path.exists(directory):
@@ -75,9 +69,6 @@ class open_logger(object):
             file_handler.setLevel(log_level)
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
-            parameters["log_file_name"] = log_file_name
-        else:
-            parameters["log_file_name"] = ""
         self.logger = logger
         self.log_file_name = log_file_name
 
@@ -174,7 +165,7 @@ def get_file_names_with_extension(input_path, extension=""):
                         current_file_name
                     )
                     input_files.add(file_name)
-    return sorted(input_files)
+    return sorted([os.path.abspath(file_name) for file_name in input_files])
 
 
 def read_data_from_file(
