@@ -8,6 +8,8 @@ import time
 import h5py
 import numpy as np
 import scipy
+# local
+import network
 
 
 class Evidence(object):
@@ -18,20 +20,30 @@ class Evidence(object):
 
     def __init__(
         self,
-        evidence_file_name,
-        ion_network,
+        evidence_file_name=None,
+        ion_network=None,
         parameters={},
         logger=logging.getLogger()
     ):
         # TODO: Docstring
-        self.file_name = evidence_file_name
         self.logger = logger
-        self.ion_network = ion_network
-        self.file_name_base = self.ion_network.file_name_base
-        ion_network.evidence = self
-        directory = os.path.dirname(self.file_name)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        if ion_network is not None:
+            self.ion_network = ion_network
+            self.file_name = os.path.join(
+                ion_network.file_name_path,
+                ion_network.file_name_base
+            ) + ".evidence.hdf"
+        elif evidence_file_name is not None:
+            self.file_name = evidence_file_name
+            self.ion_network = network.Network(
+                os.path.join(
+                    self.file_name_path,
+                    self.file_name_base
+                ) + ".inet.hdf"
+            )
+        else:
+            raise ValueError("Evidence file needs a corresponding ion-network.")
+        self.ion_network.evidence = self
 
     def mutual_collect_evidence_from(
         self,
@@ -233,6 +245,7 @@ class Evidence(object):
     def network_keys(self):
         """
         Get a sorted list with all the ion-network keys providing evidence.
+
         Returns
         -------
         list[str]
@@ -243,12 +256,37 @@ class Evidence(object):
         return ion_networks
 
     @property
-    def network_count(self):
+    def evidence_count(self):
         """
         Get the number of ion-network providing evidence.
+
         Returns
         -------
         int
             The number of ion-network providing evidence.
         """
         return len(self.network_keys)
+
+    @property
+    def file_name_base(self):
+        """
+        Get the file name base of the evidence.
+
+        Returns
+        -------
+        str
+            The file name base of the evidence as a string.
+        """
+        return os.path.basename(self.file_name)[:-13]
+
+    @property
+    def file_name_path(self):
+        """
+        Get the file name path of the evidence.
+
+        Returns
+        -------
+        str
+            The file name path of the evidence as a string.
+        """
+        return os.path.dirname(self.file_name)

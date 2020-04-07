@@ -54,8 +54,10 @@ class Interface(object):
         if output_directory != "":
             output_directory = os.path.abspath(output_directory)
         parameters = utils.read_parameters_from_json_file(
-            file_name=parameter_file_name
+            file_name=parameter_file_name,
+            default="convert"
         )
+        # TODO: Proper parsing of empty log...?
         if (log_file_name is None) or (log_file_name == ""):
             log_file_name = parameters["log_file_name"]
         if log_file_name != "":
@@ -66,7 +68,11 @@ class Interface(object):
                 input_path,
                 extension=utils.DATA_TYPE_FILE_EXTENSIONS[data_type]
             )
-            logger.info(f"input_file_names: {input_file_names}")
+            file_count = len(input_file_names)
+            logger.info(
+                f"{file_count} input_file_name{'s' if file_count != 1 else ''}"
+                f": {input_file_names}"
+            )
             logger.info(f"data_type: {data_type}")
             logger.info(f"output_directory: {output_directory}")
             logger.info(f"parameter_file_name: {parameter_file_name}")
@@ -75,11 +81,6 @@ class Interface(object):
             if output_directory != "":
                 if not os.path.exists(output_directory):
                     os.makedirs(output_directory)
-            file_count = len(input_file_names)
-            logger.info(
-                f"Found {file_count} file{'s' if file_count != 1 else ''} "
-                "to process."
-            )
             for input_file_name in sorted(input_file_names):
                 data = utils.read_data_from_file(
                     data_type,
@@ -132,6 +133,7 @@ class Interface(object):
             file_name=parameter_file_name,
             default="create"
         )
+        # TODO: Proper parsing of empty log...?
         if (log_file_name is None) or (log_file_name == ""):
             log_file_name = parameters["log_file_name"]
         if log_file_name != "":
@@ -142,16 +144,15 @@ class Interface(object):
                 input_path,
                 ".inet.csv"
             )
-            logger.info(f"input_file_names: {input_file_names}")
+            file_count = len(input_file_names)
+            logger.info(
+                f"{file_count} input_file_name{'s' if file_count != 1 else ''}"
+                f": {input_file_names}"
+            )
             logger.info(f"output_directory: {output_directory}")
             logger.info(f"parameter_file_name: {parameter_file_name}")
             logger.info(f"log_file_name: {log_file_name}")
             logger.info("")
-            file_count = len(input_file_names)
-            logger.info(
-                f"Found {file_count} .inet.csv file"
-                f"{'s' if file_count != 1 else ''} to process."
-            )
             for csv_file_name in input_file_names:
                 local_file_name = os.path.basename(csv_file_name)
                 if output_directory == "":
@@ -172,7 +173,6 @@ class Interface(object):
     @staticmethod
     def evidence_ion_networks(
         input_path,
-        output_directory,
         parameter_file_name,
         log_file_name
     ):
@@ -183,8 +183,6 @@ class Interface(object):
         ----------
         input_path : iterable[str]
             An iterable with file and/or folder names.
-        output_directory : str or None
-            If provided, all new files will be saved in this directory.
         parameter_file_name : str or None
             If provided, parameters will be read from this file.
         log_file_name : str or None
@@ -194,14 +192,11 @@ class Interface(object):
             parameter_file_name = ""
         if parameter_file_name != "":
             parameter_file_name = os.path.abspath(parameter_file_name)
-        if output_directory is None:
-            output_directory = ""
-        if output_directory != "":
-            output_directory = os.path.abspath(output_directory)
         parameters = utils.read_parameters_from_json_file(
             file_name=parameter_file_name,
             default="evidence"
         )
+        # TODO: Proper parsing of empty log...?
         if (log_file_name is None) or (log_file_name == ""):
             log_file_name = parameters["log_file_name"]
         if log_file_name != "":
@@ -212,38 +207,21 @@ class Interface(object):
                 input_path,
                 ".inet.hdf"
             )
-            logger.info(f"input_file_names: {input_file_names}")
-            logger.info(f"output_directory: {output_directory}")
+            file_count = len(input_file_names)
+            logger.info(
+                f"{file_count} input_file_name{'s' if file_count != 1 else ''}"
+                f": {input_file_names}"
+            )
             logger.info(f"parameter_file_name: {parameter_file_name}")
             logger.info(f"log_file_name: {log_file_name}")
             logger.info("")
-            file_count = len(input_file_names)
-            logger.info(
-                f"Found {file_count} .inet.hdf file"
-                "{'s' if file_count != 1 else ''} to process."
-            )
-            ion_networks = [
-                network.Network(file_name) for file_name in input_file_names
+            evidence_files = [
+                evidence.Evidence(
+                    ion_network=network.Network(file_name),
+                    parameters=parameters,
+                    logger=logger
+                ) for file_name in input_file_names
             ]
-            evidence_files = []
-            for ion_network in ion_networks:
-                local_file_name = os.path.basename(ion_network.file_name)
-                if output_directory == "":
-                    output_path = os.path.dirname(ion_network.file_name)
-                else:
-                    output_path = output_directory
-                evidence_file_name = os.path.join(
-                    output_path,
-                    f"{local_file_name[:-9]}.evidence.hdf"
-                )
-                evidence_files.append(
-                    evidence.Evidence(
-                        evidence_file_name=evidence_file_name,
-                        ion_network=ion_network,
-                        parameters=parameters,
-                        logger=logger
-                    )
-                )
             for index, evidence_file in enumerate(evidence_files[:-1]):
                 edges = evidence_file.ion_network.get_edges()
                 for secondary_evidence_file in evidence_files[index + 1:]:
@@ -255,7 +233,6 @@ class Interface(object):
 
     @staticmethod
     def show_ion_network(
-        ion_network_file_name,
         evidence_file_name,
         parameter_file_name,
         log_file_name
@@ -269,6 +246,7 @@ class Interface(object):
         parameters = utils.read_parameters_from_json_file(
             file_name=parameter_file_name,
         )
+        # TODO: Proper parsing of empty log...?
         if (log_file_name is None) or (log_file_name == ""):
             log_file_name = parameters["log_file_name"]
         if log_file_name != "":
@@ -277,15 +255,12 @@ class Interface(object):
             # TODO: Improve logging
             # logger.info("Running command: ")
             # logger.info("")
-            inet = network.Network(ion_network_file_name)
             evi = evidence.Evidence(
                 evidence_file_name=evidence_file_name,
-                ion_network=inet,
                 parameters=parameters,
                 logger=logger
             )
             browser.Browser(
-                inet,
                 evi,
                 logger
             )
@@ -340,26 +315,30 @@ class GUI(object):
 
     def init_convert_window(self):
         # TODO: Docstring
+        default_data_type = "HDMSE"
         self.window["Convert"] = [
-            self.add_input_path_to_layout(
-                file_types=(
-                    (
-                        key,
-                        f"*{value}"
-                    ) for key, value in utils.DATA_TYPE_FILE_EXTENSIONS.items()
-                )
-            ),
-            self.add_output_directory_to_layout(),
             [
                 sg.Text('Data type', size=(self.widget_size, 1)),
                 sg.Combo(
                     sorted(utils.DATA_TYPE_FILE_EXTENSIONS),
-                    default_value='HDMSE',
+                    default_value=default_data_type,
                     key="data_type",
                     size=(self.widget_size * 2, 1)
                     # enable_events=True
                 )
             ],
+            self.add_input_path_to_layout(
+                file_types=(
+                    (
+                        key,
+                        f"*{value}"
+                    ) for key, value in sorted(
+                        utils.DATA_TYPE_FILE_EXTENSIONS.items()
+                    )
+                ),
+                # TODO: default_value=default_data_type,
+            ),
+            self.add_output_directory_to_layout(),
             self.add_parameter_file_to_layout(),
             self.add_log_file_to_layout(),
             self.add_main_menu_and_continue_buttons_to_layout()
@@ -395,12 +374,6 @@ class GUI(object):
         # TODO: Docstring
         # TODO: Implement
         self.window["Show"] = [
-            self.add_input_path_to_layout(
-                file_types=(('Ion-network', '*.inet.hdf'),),
-                title="Ion-network",
-                key="ion_network_file_name",
-                multiple=False
-            ),
             self.add_input_path_to_layout(
                 file_types=(('Evidence', '*.evidence.hdf'),),
                 title="Evidence",
@@ -453,7 +426,6 @@ class GUI(object):
             self.run_terminal_command(
                 Interface.evidence_ion_networks,
                 values["input_path"].split(";"),
-                None,
                 values["parameter_file_name"],
                 values["log_file_name"]
             )
@@ -464,7 +436,6 @@ class GUI(object):
         if event == "Submit":
             self.swap_active_window("")
             Interface.show_ion_network(
-                values["ion_network_file_name"],
                 values["evidence_file_name"],
                 "",
                 ""
@@ -476,7 +447,8 @@ class GUI(object):
         file_types=(('ALL Files', '*.*'),),
         title="Input path",
         key="input_path",
-        multiple=True
+        multiple=True,
+        default_value=None,
     ):
         # TODO: Docstring
         # TODO: Multiple and independent files?
@@ -488,7 +460,8 @@ class GUI(object):
         else:
             browse_button = sg.FileBrowse(
                 size=(self.widget_size, 1),
-                file_types=file_types
+                file_types=file_types,
+                # TODO: default file_type?
             )
         row = [
             sg.Text(title, size=(self.widget_size, 1)),
@@ -512,13 +485,14 @@ class GUI(object):
         ]
         return row
 
-    def add_parameter_file_to_layout(self):
+    def add_parameter_file_to_layout(self, default=""):
         # TODO: Docstring
         row = [
             sg.Text("Parameter file", size=(self.widget_size, 1)),
             sg.Input(
                 key="parameter_file_name",
                 size=(self.widget_size * 2, 1),
+                default_text=default
             ),
             sg.FileBrowse(
                 size=(self.widget_size, 1),
@@ -527,14 +501,16 @@ class GUI(object):
         ]
         return row
 
-    def add_log_file_to_layout(self):
+    def add_log_file_to_layout(self, default=""):
         # TODO: Docstring
         # TODO: remove overwrite warning
+        # TODO: default log / empty log not parsed properly
         row = [
             sg.Text("Log file", size=(self.widget_size, 1)),
             sg.Input(
                 key="log_file_name",
                 size=(self.widget_size * 2, 1),
+                default_text=default
             ),
             sg.FileSaveAs(size=(self.widget_size, 1)),
         ]
@@ -640,11 +616,32 @@ class CLI(object):
         "-i",
         help="An [input.*] file with centroided ion peaks that needs to be "
             "converted to a unified [input.inet.csv] file. "
-            "Individual files can be provided, as well as folders."
+            "Individual files can be provided, as well as folders. "
             "This flag can be set multiple times.",
         multiple=True,
         required=True,
         type=click.Path(exists=True)
+    )
+    @click.option(
+        '--data_type',
+        '-d',
+        help="The data type of the [input.*] file. If this is DDA, a [*.mgf] "
+        "file that was centroided with ms-convert is expected with the field "
+        "RTINSECONDS as LC coordinate. "
+        "For HDMSE, SONAR and SWIM-DIA, a [*_Apex3DIons.csv] generated with "
+        "Waters' Apex3d is expected, typically generated as follows "
+        "'Apex3D64.exe -pRawDirName sample.raw -outputDirName "
+        "peak_picked_sample_folder -lockMassZ2 785.8426 "
+        "-lockmassToleranceAMU 0.25 -bCSVOutput 1 -writeFuncCsvFiles 0 "
+        "-leThresholdCounts 1 -heThresholdCounts 1 -apexTrackSNRThreshold 1 "
+        "-bEnableCentroids 0'. "
+        "For DIAPASEF, a [*_centroided.hdf] file generated with diapasef.py "
+        "(https://github.com/swillems/diapasef) is expected.",
+        required=True,
+        type=click.Choice(
+            ['DDA', 'HDMSE', "SONAR", "SWIMDIA", "DIAPASEF"],
+            case_sensitive=True
+        )
     )
     @click.option(
         "--output_directory",
@@ -659,27 +656,6 @@ class CLI(object):
         type=click.Path(file_okay=False),
     )
     @click.option(
-        '--data_type',
-        '-d',
-        help="The data type of the [input.*] file. If this is DDA, an ''.mgf' "
-        "file that was centroided with ms-convert is expected with the field "
-        "RTINSECONDS as LC coordinate. "
-        "For HDMSE, SONAR and SWIM-DIA, an '_Apex3DIons.csv' generated with "
-        "Waters' Apex3d is expected, typically generated as follows "
-        "'Apex3D64.exe -pRawDirName sample.raw -outputDirName "
-        "peak_picked_sample_folder -lockMassZ2 785.8426 "
-        "-lockmassToleranceAMU 0.25 -bCSVOutput 1 -writeFuncCsvFiles 0 "
-        "-leThresholdCounts 1 -heThresholdCounts 1 -apexTrackSNRThreshold 1 "
-        "-bEnableCentroids 0'. "
-        "For DIAPASEF, a '_centroided.hdf' file generated with diapasef.py "
-        "(https://github.com/swillems/diapasef) is expected.",
-        required=True,
-        type=click.Choice(
-            ['DDA', 'HDMSE', "SONAR", "SWIMDIA", "DIAPASEF"],
-            case_sensitive=True
-        )
-    )
-    @click.option(
         "--parameter_file",
         "-p",
         "parameter_file_name",
@@ -691,9 +667,9 @@ class CLI(object):
         "-l",
         "log_file_name",
         help="Save the log to a [log.txt] file. "
-            "By default this is written to 'log.txt' in the current directory. "
+            "By default this is written to the current directory. "
             "This log file can also be supplied through a [parameters.json] "
-            "file. It can be turned of by providing the argument \"\". "
+            "file. It can be turned off by providing an empty path (i.e. ''). "
             "If the log file already exists, the new log data is appended.",
         type=click.Path(dir_okay=False),
     )
@@ -725,12 +701,12 @@ class CLI(object):
         help="A unified [input.inet.csv] file with centroided ion peaks. "
             "Columns with headers PRECURSOR_RT, FRAGMENT_MZ and "
             "FRAGMENT_LOGINT always need to be present. "
-            "All column whose header starts with # are not interpreted as ion "
-            "coordinates and can be e.g. prior annotations. "
+            "All columns whose header start with # are not interpreted as ion "
+            "coordinates but as comments such as e.g. prior annotations. "
             "All other columns (e.g. PRECURSOR_MZ or PRECURSOR_DT) are "
             "automatically interpreted as dimensions with ion coordinates. "
-            "All PRECURSOR_* dimensions are used to connect ions. "
-            "Individual files can be provided, as well as folders."
+            "All PRECURSOR_* dimensions are used to create edges between ions. "
+            "Individual files can be provided, as well as folders. "
             "This flag can be set multiple times.",
         multiple=True,
         required=True,
@@ -762,9 +738,9 @@ class CLI(object):
         "-l",
         "log_file_name",
         help="Save the log to a [log.txt] file. "
-            "By default this is written to 'log.txt' in the current directory. "
+            "By default this is written to the current directory. "
             "This log file can also be supplied through a [parameters.json] "
-            "file. It can be turned of by providing the argument \"\". "
+            "file. It can be turned off by providing an empty path (i.e. ''). "
             "If the log file already exists, the new log data is appended.",
         type=click.Path(dir_okay=False)
     )
@@ -792,7 +768,7 @@ class CLI(object):
         "--input_path",
         "-i",
         help="An [input.inet.hdf] ion-network file."
-            "Individual files can be provided, as well as folders."
+            "Individual files can be provided, as well as folders. "
             "This flag can be set multiple times.",
         required=True,
         multiple=True,
@@ -810,9 +786,9 @@ class CLI(object):
         "-l",
         "log_file_name",
         help="Save the log to a [log.txt] file. "
-            "By default this is written to 'log.txt' in the current directory. "
+            "By default this is written to the current directory. "
             "This log file can also be supplied through a [parameters.json] "
-            "file. It can be turned of by providing the argument \"\". "
+            "file. It can be turned off by providing an empty path (i.e. ''). "
             "If the log file already exists, the new log data is appended.",
         type=click.Path(dir_okay=False)
     )
@@ -823,7 +799,6 @@ class CLI(object):
     ):
         Interface.evidence_ion_networks(
             input_path,
-            None,
             parameter_file_name,
             log_file_name
         )
@@ -836,19 +811,11 @@ class CLI(object):
         short_help="Show and browse ion-networks."
     )
     @click.option(
-        "--input_path",
-        "-i",
-        "ion_network_file_name",
-        help="The ion-network file (.inet.hdf) to show.",
-        required=True,
-        type=click.Path(exists=True)
-    )
-    @click.option(
         "--evidence_file",
         "-e",
         "evidence_file_name",
         help="The corresponding evidence file (.evidence.hdf).",
-        type=click.Path(exists=True)
+        type=click.Path(exists=True, dir_okay=False)
     )
     @click.option(
         "--parameter_file",
@@ -862,20 +829,18 @@ class CLI(object):
         "-l",
         "log_file_name",
         help="Save the log to a [log.txt] file. "
-            "By default this is written to 'log.txt' in the current directory. "
+            "By default this is written to the current directory. "
             "This log file can also be supplied through a [parameters.json] "
-            "file. It can be turned of by providing the argument \"\". "
+            "file. It can be turned off by providing an empty path (i.e. ''). "
             "If the log file already exists, the new log data is appended.",
         type=click.Path(dir_okay=False)
     )
     def show(
-        ion_network_file_name,
         evidence_file_name,
         parameter_file_name,
         log_file_name
     ):
         Interface.show_ion_network(
-            ion_network_file_name,
             evidence_file_name,
             parameter_file_name,
             log_file_name
@@ -888,3 +853,7 @@ class CLI(object):
     )
     def gui():
         Interface.run_ion_network_gui()
+
+# TODO: Rename "unified" and "peaks" referring to .inet.csv files?
+# TODO: Define help text in separate json files?
+# TODO: Show help text popups in GUI

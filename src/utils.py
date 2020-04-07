@@ -10,13 +10,14 @@ import time
 import numpy as np
 import pandas as pd
 import h5py
-from pyteomics import mgf
+import pyteomics.mgf
 
 
 BASE_PATH = os.path.dirname(os.path.dirname(__file__))
 LIB_PATH = os.path.join(BASE_PATH, "lib")
 DEFAULT_PARAMETER_PATH = os.path.join(LIB_PATH, "default_parameters")
 DEFAULT_PARAMETER_FILES = {
+    "convert": "convert_parameters.json",
     "create": "create_parameters.json",
     "evidence": "evidence_parameters.json",
     "interface": "interface_parameters.json"
@@ -247,7 +248,7 @@ def read_data_from_mgf_file(
     mz2s = []
     rts = []
     ints = []
-    for spectrum in mgf.read(file_name):
+    for spectrum in pyteomics.mgf.read(file_name):
         peak_count = len(spectrum["intensity array"])
         ints.append(spectrum["intensity array"])
         mz2s.append(spectrum["m/z array"])

@@ -25,10 +25,10 @@ LOADING_ANIMATION_FILE_NAME = os.path.join(
 class Browser(object):
     # TODO: Docstring
 
-    def __init__(self, ion_network, evidence, logger):
+    def __init__(self, evidence, logger):
         # TODO: Docstring
-        self.ion_network = ion_network
         self.evidence = evidence
+        self.ion_network = self.evidence.ion_network
         sg.PopupAnimated(
             LOADING_ANIMATION_FILE_NAME,
             message='Loading',
@@ -71,7 +71,7 @@ class Browser(object):
                 ),
             ]
             layout.append(row)
-        max_node_count = float(self.evidence.network_count)
+        max_node_count = float(self.evidence.evidence_count)
         self.node_dimensions["node_evidence"] = [max_node_count, max_node_count]
         self.node_threshold = 2 * len(self.node_dimensions)
         self.nodes = np.repeat(self.node_threshold, self.ion_network.node_count)
@@ -292,9 +292,9 @@ class Browser(object):
     def update_edge_colors(self):
         edge_color_mapper = matplotlib.cm.ScalarMappable(
             norm=matplotlib.colors.Normalize(
-                vmin=-self.evidence.network_count,
+                vmin=-self.evidence.evidence_count,
                 # vmin=0,
-                vmax=self.evidence.network_count
+                vmax=self.evidence.evidence_count
             ),
             cmap=self.c_map
         )
