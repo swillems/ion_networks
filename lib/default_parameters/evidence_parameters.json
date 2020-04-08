@@ -7,5 +7,6 @@
     "max_alignment_absolute_error_PRECURSOR_DT": 2.0,
     "max_alignment_absolute_error_PRECURSOR_MZ": 5.0,
     "calibrate_PRECURSOR_RT": true,
-    "calibration_ppm_FRAGMENT_MZ": 10.0
+    "calibration_ppm_FRAGMENT_MZ": 1.0,
+    "calibration_ions": 50000
 }

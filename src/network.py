@@ -95,7 +95,10 @@ class Network(object):
             raise KeyError("No FRAGMENT_MZ column present")
         if "FRAGMENT_LOGINT" not in data:
             raise KeyError("No FRAGMENT_LOGINT column present")
-        data = data.sort_values(by=["PRECURSOR_RT", "FRAGMENT_MZ"])
+        data.sort_values(
+            by=["PRECURSOR_RT", "FRAGMENT_MZ"],
+            inplace=True
+        )
         return data
 
     def create_from_data(self, data, parameters):
