@@ -482,7 +482,6 @@ class Network(object):
         self_coordinates = tuple(self_coordinates)
         other_coordinates = tuple(other_coordinates)
         max_absolute_errors = tuple(max_absolute_errors)
-        print(len(self_coordinates), len(other_coordinates), len(max_absolute_errors))
         # TODO: Move to seperate function and define type
         self.logger.info(f"Matching ion coordinates from {self.file_name} and {other.file_name}.")
         @numba.njit

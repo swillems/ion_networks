@@ -132,6 +132,8 @@ def read_parameters_from_json_file(file_name="", default=""):
         with open(file_name, "r") as in_file:
             user_defined_parameters = json.load(in_file)
         parameters.update(user_defined_parameters)
+    # TODO: Numba expects proper floats or integers, not a mixture
+    # TODO: e.g. DT_error = 2.0, instead of DT_error = 2
     return parameters
 
 
