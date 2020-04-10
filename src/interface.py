@@ -918,3 +918,6 @@ class CLI(object):
 # TODO: Rename "unified" and "peaks" referring to .inet.csv files?
 # TODO: Define help text in separate json files?
 # TODO: Show help text popups in GUI
+# TODO: Database CLI
+# TODO: Database GUI
+# TODO: Database interface

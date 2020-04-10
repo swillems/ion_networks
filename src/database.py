@@ -10,6 +10,8 @@ import ms2pip.retention_time
 import pyteomics.parser
 import pyteomics.fasta
 import h5py
+# local
+import utils
 
 
 class Database(object):
@@ -390,3 +392,11 @@ class Database(object):
                     local_ptms[i].append("")
         for ptm_combination in Database.generate_ptm_combinations_recursively(local_ptms):
             yield ptm_combination
+
+    def get_fragment_coordinates(self, dimensions=None, indices=...):
+        # TODO: Docstring
+        return utils.read_hdf_coordinates(self, "fragments", dimensions, indices)
+
+    def get_peptide_coordinates(self, dimensions=None, indices=...):
+        # TODO: Docstring
+        return utils.read_hdf_coordinates(self, "peptides", dimensions, indices)

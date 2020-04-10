@@ -23,7 +23,7 @@
     "create_targets": true,
     "create_decoys": true,
     "decoy_prefix": "DECOY_",
-    "decoy_suffix": "",
+    "decoy_suffix": "_REVERSED",
     "charges": [1, 2, 3],
     "cpu_count": 8,
     "batch_size": 100000

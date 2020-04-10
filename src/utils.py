@@ -490,3 +490,59 @@ def write_data_to_csv_file(
     """
     logger.info(f"Writing {out_file_name}")
     data.to_csv(out_file_name, index=False)
+
+
+def read_hdf_coordinates(
+    hdf_wrapper_object,
+    base_folder,
+    dimensions,
+    indices
+):
+    """
+    Read coordinates from an HDF wrapper object.
+
+    Parameters
+    ----------
+    hdf_wrapper_object : object
+        An object that is an HDF wrapper, i.e. has a file_name that refers
+        to a readable HDF file.
+    base_folder : str
+        The folder that contains the dimensions of interest.
+    dimensions : str, iterable[str] or None
+        The dimension(s) to retrieve from the HDF wrapper object. If this is
+        None, a sorted list with all the available dimensions is returned.
+    indices : ellipsis, slice, int, iterable[int] or iterable[bool]
+        The indices that should be selected from the array. This is most
+        performant when this is an ellipsis or slice, but fancy indexing
+        with a mask, list or np.ndarray are also supported.
+
+    Returns
+    -------
+    np.ndarray or list[np.ndarray]
+        A (list of) numpy array(s) with the coordinates from the
+        requested dimension(s). If dimensions is None, a sorted list with
+        all the available dimensions is returned.
+    """
+    if dimensions is None:
+        with h5py.File(hdf_wrapper_object.file_name, "r") as hdf_file:
+            dimensions = sorted(hdf_file[base_folder])
+    single_dimension = isinstance(dimensions, str)
+    if single_dimension:
+        dimensions = [dimensions]
+    arrays = []
+    try:
+        iter(indices)
+        fancy_indices = True
+    except TypeError:
+        fancy_indices = False
+    with h5py.File(hdf_wrapper_object.file_name, "r") as hdf_file:
+        for dimension in dimensions:
+            array = hdf_file[base_folder][dimension]
+            if fancy_indices:
+                array = array[...]
+            array = array[indices]
+            arrays.append(array)
+    if single_dimension:
+        return arrays[0]
+    else:
+        return arrays

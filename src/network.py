@@ -314,6 +314,7 @@ class Network(object):
             return arrays[0]
         else:
             return arrays
+        # TODO make generic factory function with wrappers?
 
     def get_edges(
         self,
