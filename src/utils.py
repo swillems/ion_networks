@@ -20,7 +20,8 @@ DEFAULT_PARAMETER_FILES = {
     "convert": "convert_parameters.json",
     "create": "create_parameters.json",
     "evidence": "evidence_parameters.json",
-    "interface": "interface_parameters.json"
+    "interface": "interface_parameters.json",
+    "database": "database_parameters.json",
 }
 DATA_TYPE_FILE_EXTENSIONS = {
     "DDA": ".mgf",

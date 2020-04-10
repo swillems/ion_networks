@@ -9,6 +9,7 @@ import click
 # local
 import network
 import evidence
+import database
 import browser
 import utils
 
@@ -238,7 +239,7 @@ class Interface(object):
         log_file_name
     ):
         # TODO: Docstring
-        # TODO: Implement
+        # TODO: Implementation updates
         if parameter_file_name is None:
             parameter_file_name = ""
         if parameter_file_name != "":
@@ -252,9 +253,6 @@ class Interface(object):
         if log_file_name != "":
             log_file_name = os.path.abspath(log_file_name)
         with utils.open_logger(log_file_name) as logger:
-            # TODO: Improve logging
-            # logger.info("Running command: ")
-            # logger.info("")
             evi = evidence.Evidence(
                 evidence_file_name=evidence_file_name,
                 parameters=parameters,
@@ -270,6 +268,69 @@ class Interface(object):
         # TODO: Docstring
         with GUI() as gui:
             gui.run()
+
+    @staticmethod
+    def create_database(
+        input_path,
+        output_directory,
+        parameter_file_name,
+        log_file_name
+    ):
+        # TODO: Docstring
+        if parameter_file_name is None:
+            parameter_file_name = ""
+        if parameter_file_name != "":
+            parameter_file_name = os.path.abspath(parameter_file_name)
+        if output_directory is None:
+            output_directory = ""
+        if output_directory != "":
+            output_directory = os.path.abspath(output_directory)
+        parameters = utils.read_parameters_from_json_file(
+            file_name=parameter_file_name,
+            default="database"
+        )
+        # TODO: Proper parsing of empty log...?
+        if (log_file_name is None) or (log_file_name == ""):
+            log_file_name = parameters["log_file_name"]
+        if log_file_name != "":
+            log_file_name = os.path.abspath(log_file_name)
+        # TODO: turn off ms2pip logger?
+        with utils.open_logger(log_file_name) as logger:
+            logger.info(f"Command: database.")
+            input_file_names = utils.get_file_names_with_extension(
+                input_path,
+                extension=".fasta"
+            )
+            file_count = len(input_file_names)
+            logger.info(
+                f"{file_count} input_file_name{'s' if file_count != 1 else ''}"
+                f": {input_file_names}"
+            )
+            logger.info(f"output_directory: {output_directory}")
+            logger.info(f"parameter_file_name: {parameter_file_name}")
+            logger.info(f"log_file_name: {log_file_name}")
+            logger.info("")
+            base_name = "_".join(
+                [
+                    ".".join(
+                        os.path.basename(fasta_file_name).split(".")[:-1]
+                    ) for fasta_file_name in input_file_names
+                ]
+            )
+            database_file_name = os.path.join(output_directory, base_name)
+            if parameters["create_targets"]:
+                if parameters["create_decoys"]:
+                    database_file_name = f"{database_file_name}_concatenated_decoy.hdf"
+                else:
+                    database_file_name = f"{database_file_name}.hdf"
+            else:
+                database_file_name = f"{database_file_name}_decoy.hdf"
+            database.Database(
+                database_file_name,
+                fasta_file_names=input_file_names,
+                parameters=parameters,
+                logger=logger,
+            )
 
 
 class GUI(object):

@@ -1,0 +1,30 @@
+{
+    "log_file_name": "log.txt",
+    "output_directory": "",
+    "variable_ptms": {
+        "M": ["M_ox"]
+    },
+    "fixed_ptms": {
+        "C": ["C_cam"]
+    },
+    "ptm_dict": {
+        "Q_deam": ["Deamidation" , 0.984016, "opt", "Q"],
+        "N_deam": ["Deamidation" , 0.984016, "opt", "N"],
+        "M_ox": ["Oxidation" , 15.994915, "opt", "M"],
+        "C_cam": ["Carbamidomethyl" , 57.021464, "opt", "C"],
+        "N_ac": ["Acetyl" , 42.010565, "opt", "N-term"]
+    },
+    "model": "HCD",
+    "protease": "trypsin",
+    "missed_cleavages": 1,
+    "min_peptide_length": 5,
+    "max_peptide_length": 30,
+    "standard_amino_acids": true,
+    "create_targets": true,
+    "create_decoys": true,
+    "decoy_prefix": "DECOY_",
+    "decoy_suffix": "",
+    "charges": [1, 2, 3],
+    "cpu_count": 8,
+    "batch_size": 100000
+}

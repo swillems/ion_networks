@@ -4,7 +4,6 @@
 import logging
 import os
 import time
-import math
 # external
 import h5py
 import scipy
@@ -854,7 +853,7 @@ class Network(object):
     def __hash__(self):
         node_count = self.node_count
         edge_count = self.edge_count
-        offset = math.ceil(math.log10(node_count + 1))
+        offset = np.ceil(np.log10(node_count + 1))
         return int(edge_count * 10**offset + node_count)
 
     def __cmp__(self, other):
