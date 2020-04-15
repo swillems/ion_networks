@@ -22,6 +22,7 @@ DEFAULT_PARAMETER_FILES = {
     "evidence": "evidence_parameters.json",
     "interface": "interface_parameters.json",
     "database": "database_parameters.json",
+    "annotation": "annotation_parameters.json",
 }
 DATA_TYPE_FILE_EXTENSIONS = {
     "DDA": ".mgf",
@@ -546,3 +547,175 @@ def read_hdf_coordinates(
         return arrays[0]
     else:
         return arrays
+
+
+class HDFFile(object):
+    # TODO: Docstring
+
+    def __init__(
+        self,
+        file_name,
+        new_file=False,
+        is_read_only=True,
+        logger=None,
+    ):
+        # TODO: Docstring
+        self.__file_name = os.path.abspath(file_name)
+        if new_file:
+            is_read_only = False
+            if not os.path.exists(self.directory):
+                os.makedirs(self.directory)
+            with h5py.File(self.file_name, "w") as hdf_file:
+                hdf_file.attrs["creation_time"] = time.asctime()
+                # hdf_file.attrs["creation_version"] = ion_networks.__version__
+                hdf_file.attrs["original_file_name"] = self.__file_name
+                hdf_file.attrs["last_updated"] = time.asctime()
+        else:
+            with h5py.File(self.file_name, "r") as hdf_file:
+                pass
+        self.__is_read_only = is_read_only
+        if logger is None:
+            logger = logging.getLogger()
+        self.__logger = logger
+
+    @property
+    def directory(self):
+        return os.path.dirname(self.file_name)
+
+    @property
+    def file_name(self):
+        return self.__file_name
+
+    @property
+    def original_file_name(self):
+        return self.get_attr("original_file_name")
+
+    @property
+    def creation_time(self):
+        return self.get_attr("creation_time")
+
+    @property
+    def is_read_only(self):
+        return self.__is_read_only
+
+    @property
+    def logger(self):
+        return self.__logger
+
+    def __eq__(self, other):
+        return self.file_name == other.file_name
+
+    def __hash__(self):
+        return hash(self.file_name)
+
+    def __get_parent_group(self, hdf_file, parent_group_name):
+        # TODO: Docstring
+        if parent_group_name == "":
+            parent_group = hdf_file
+        else:
+            parent_group = hdf_file[parent_group_name]
+        return parent_group
+
+    def get_dataset(self, dataset_name, parent_group_name="", indices=Ellipsis):
+        # TODO: Docstring
+        try:
+            iter(indices)
+        except TypeError:
+            fancy_indices = False
+        else:
+            fancy_indices = True
+        with h5py.File(self.file_name, "r") as hdf_file:
+            parent_group = self.__get_parent_group(hdf_file, parent_group_name)
+            array = parent_group[dataset_name]
+            if fancy_indices:
+                array = array[...]
+            array = array[indices]
+        return array
+
+    def get_attr(self, attr_key, parent_group_name=""):
+        # TODO: Docstring
+        with h5py.File(self.file_name, "r") as hdf_file:
+            parent_group = self.__get_parent_group(hdf_file, parent_group_name)
+            attr_value = parent_group.attrs[attr_key]
+        return attr_value
+
+    def get_group_list(self, parent_group_name=""):
+        # TODO: Docstring
+        with h5py.File(self.file_name, "r") as hdf_file:
+            parent_group = self.__get_parent_group(hdf_file, parent_group_name)
+            groups = sorted(parent_group)
+        return groups
+
+    def get_attr_list(self, parent_group_name=""):
+        # TODO: Docstring
+        with h5py.File(self.file_name, "r") as hdf_file:
+            parent_group = self.__get_parent_group(hdf_file, parent_group_name)
+            attrs = sorted(parent_group.attrs)
+        return attrs
+
+    def create_group(self, group_name, parent_group_name="", overwrite=False):
+        # TODO: Docstring
+        if self.is_read_only:
+            raise IOError("HDF file is opened as read only")
+        with h5py.File(self.file_name, "a") as hdf_file:
+            parent_group = self.__get_parent_group(hdf_file, parent_group_name)
+            if group_name not in parent_group:
+                hdf_group = parent_group.create_group(group_name)
+            elif overwrite:
+                del parent_group[group_name]
+                hdf_group = parent_group.create_group(group_name)
+            else:
+                return
+            hdf_group.attrs["creation_time"] = time.asctime()
+            hdf_file.attrs["last_updated"] = time.asctime()
+
+    def create_attr(self, attr_key, attr_value, parent_group_name=""):
+        # TODO: Docstring
+        if self.is_read_only:
+            raise IOError("HDF file is opened as read only")
+        with h5py.File(self.file_name, "a") as hdf_file:
+            parent_group = self.__get_parent_group(hdf_file, parent_group_name)
+            if isinstance(attr_value, str):
+                parent_group.attrs[attr_key] = attr_value
+            else:
+                try:
+                    iter(attr_value)
+                except TypeError:
+                    parent_group.attrs[attr_key] = attr_value
+                else:
+                    parent_group.attrs[attr_key] = str(attr_value)
+            hdf_file.attrs["last_updated"] = time.asctime()
+
+    def create_dataset(
+        self,
+        dataset_name,
+        dataset,
+        parent_group_name="",
+        overwrite=True,
+        compression="lzf"
+    ):
+        # TODO: Docstring
+        if self.is_read_only:
+            raise IOError("HDF file is opened as read only")
+        with h5py.File(self.file_name, "a") as hdf_file:
+            parent_group = self.__get_parent_group(hdf_file, parent_group_name)
+            if overwrite and (dataset_name in parent_group):
+                del parent_group[dataset_name]
+            if dataset_name not in parent_group:
+                if dataset.dtype.type == np.str_:
+                    dataset = dataset.astype(np.dtype('O'))
+                if dataset.dtype == np.dtype('O'):
+                    hdf_dataset = parent_group.create_dataset(
+                        dataset_name,
+                        data=dataset,
+                        compression=compression,
+                        dtype=h5py.string_dtype()
+                    )
+                else:
+                    hdf_dataset = parent_group.create_dataset(
+                        dataset_name,
+                        data=dataset,
+                        compression=compression,
+                    )
+                hdf_dataset.attrs["creation_time"] = time.asctime()
+                hdf_file.attrs["last_updated"] = time.asctime()

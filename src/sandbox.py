@@ -2,6 +2,7 @@
 
 import numpy as np
 import numba
+import multiprocessing as mp
 
 
 @numba.njit
@@ -115,3 +116,111 @@ def matrix_multiplication_numba_wrapper(
     for l, h, e, d in zip(low_limits, high_limits, ends, diffs):
         result[0, e - d: e] = aa_indices[l: h]
     return result
+
+
+def parallelizedGenerator(
+    process_count,
+    function,
+    iterable,
+    *args,
+    **kwargs
+):
+    in_queue = mp.Queue()
+    out_queue = mp.Queue()
+
+    def _parallel_function():
+        while True:
+            element = in_queue.get()
+            if element is None:
+                out_queue.put(None)
+                return
+            result = function(
+                element,
+                *args,
+                **kwargs
+            )
+            out_queue.put(result)
+
+    for element in iterable:
+        in_queue.put(element)
+    processes = []
+    for process_index in range(process_count):
+        process = mp.Process(
+            target=_parallel_function,
+        )
+        in_queue.put(None)
+        process.start()
+        processes.append(process)
+    running_processes = process_count
+    while running_processes != 0:
+        result = out_queue.get()
+        if result is None:
+            running_processes -= 1
+        else:
+            yield result
+    in_queue.close()
+    out_queue.close()
+    in_queue.join_thread()
+    out_queue.join_thread()
+    while processes:
+        process = processes.pop()
+        process.join()
+
+
+import functools
+import time
+import multiprocessing as mp
+
+
+def generate_in_parallel(cpu_count=0):
+    max_cpu_count = mp.cpu_count()
+    if cpu_count > max_cpu_count:
+        cpu_count = max_cpu_count
+    elif cpu_count <= 0:
+        if cpu_count + max_cpu_count <= 0:
+            cpu_count = 1
+        else:
+            cpu_count += max_cpu_count
+    def decorator_repeat(func):
+        @functools.wraps(func)
+        def wrapper_generate_in_parallel(*args, **kwargs):
+            in_queue = mp.Queue()
+            out_queue = mp.Queue()
+            def _parallel_function():
+                while True:
+                    element = in_queue.get()
+                    if element is None:
+                        out_queue.put(None)
+                        return
+                    result = func(
+                        element,
+                        *args[1:],
+                        **kwargs
+                    )
+                    out_queue.put(result)
+            for element in args[0]:
+                in_queue.put(element)
+            processes = []
+            for process_index in range(cpu_count):
+                process = mp.Process(
+                    target=_parallel_function,
+                )
+                in_queue.put(None)
+                process.start()
+                processes.append(process)
+            running_processes = cpu_count
+            while running_processes != 0:
+                result = out_queue.get()
+                if result is None:
+                    running_processes -= 1
+                else:
+                    yield result
+            in_queue.close()
+            out_queue.close()
+            in_queue.join_thread()
+            out_queue.join_thread()
+            while processes:
+                process = processes.pop()
+                process.join()
+        return wrapper_generate_in_parallel
+    return decorator_repeat

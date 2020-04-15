@@ -213,6 +213,7 @@ class Browser(object):
         )
         # self.fig = plt.figure(1, figsize=(29.7 / 2.5, 21 / 2.5))
         self.aggregate_ax = self.fig.add_subplot(111)
+        self.aggregate_ax.set_facecolor('black')
         figure_x, figure_y, figure_w, figure_h = self.fig.bbox.bounds
         layout = [
             [sg.Canvas(size=(figure_w, figure_h), key='canvas')]
@@ -292,7 +293,8 @@ class Browser(object):
     def update_edge_colors(self):
         edge_color_mapper = matplotlib.cm.ScalarMappable(
             norm=matplotlib.colors.Normalize(
-                vmin=-self.evidence.evidence_count,
+                # vmin=-self.evidence.evidence_count,
+                vmin=-self.evidence.evidence_count - 1,
                 # vmin=0,
                 vmax=self.evidence.evidence_count
             ),

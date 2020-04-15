@@ -320,11 +320,15 @@ class Network(object):
         self,
         return_as_scipy_csr=True,
         symmetric=False,
-        data_as_index=False
+        data_as_index=False,
+        indptr_and_indices=False,
     ):
+        # TODO: Docstring
         with h5py.File(self.file_name, "r") as network_file:
             indptr = network_file["edges"]["indptr"][...]
             indices = network_file["edges"]["indices"][...]
+        if indptr_and_indices:
+            return indptr, indices
         if return_as_scipy_csr or symmetric:
             matrix = scipy.sparse.csr_matrix(
                 (

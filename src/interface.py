@@ -10,6 +10,7 @@ import click
 import network
 import evidence
 import database
+import annotation
 import browser
 import utils
 
@@ -331,6 +332,50 @@ class Interface(object):
                 parameters=parameters,
                 logger=logger,
             )
+
+    @staticmethod
+    def annotate_ion_network(
+        input_path,
+        database_file_name,
+        parameter_file_name,
+        log_file_name
+    ):
+        # TODO: Docstring
+        if parameter_file_name is None:
+            parameter_file_name = ""
+        if parameter_file_name != "":
+            parameter_file_name = os.path.abspath(parameter_file_name)
+        parameters = utils.read_parameters_from_json_file(
+            file_name=parameter_file_name,
+            default="annotation"
+        )
+        # TODO: Proper parsing of empty log...?
+        if (log_file_name is None) or (log_file_name == ""):
+            log_file_name = parameters["log_file_name"]
+        if log_file_name != "":
+            log_file_name = os.path.abspath(log_file_name)
+        with utils.open_logger(log_file_name) as logger:
+            logger.info(f"Command: annotate.")
+            input_file_names = utils.get_file_names_with_extension(
+                input_path,
+                extension=".evidence.hdf"
+            )
+            file_count = len(input_file_names)
+            logger.info(
+                f"{file_count} input_file_name{'s' if file_count != 1 else ''}"
+                f": {input_file_names}"
+            )
+            logger.info(f"database_file_name: {database_file_name}")
+            logger.info(f"parameter_file_name: {parameter_file_name}")
+            logger.info(f"log_file_name: {log_file_name}")
+            logger.info("")
+            for file_name in input_file_names:
+                annotation.Annotation(
+                    evidence=evidence.Evidence(file_name),
+                    database=database_file_name,
+                    parameters=parameters,
+                    logger=logger
+                )
 
 
 class GUI(object):
