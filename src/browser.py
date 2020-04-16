@@ -143,6 +143,18 @@ class Browser(object):
                 )
             ]
         )
+        self.bg_color = "white"
+        layout.append(
+            [
+                sg.Combo(
+                    sorted(matplotlib.colors),
+                    size=(21, 1),
+                    default_value=self.bg_color,
+                    key="bg_color",
+                    # enable_events=True
+                )
+            ]
+        )
         self.min_positive_threshold = max_node_count
         self.max_positive_threshold = max_node_count
         layout.append(
@@ -213,7 +225,7 @@ class Browser(object):
         )
         # self.fig = plt.figure(1, figsize=(29.7 / 2.5, 21 / 2.5))
         self.aggregate_ax = self.fig.add_subplot(111)
-        self.aggregate_ax.set_facecolor('black')
+        self.aggregate_ax.set_facecolor('white')
         figure_x, figure_y, figure_w, figure_h = self.fig.bbox.bounds
         layout = [
             [sg.Canvas(size=(figure_w, figure_h), key='canvas')]
@@ -388,6 +400,10 @@ class Browser(object):
         if self.c_map != values["c_map"]:
             self.c_map = values["c_map"]
             self.update_edge_colors()
+        if self.bg_color != values["bg_color"]:
+            self.bg_color = values["bg_color"]
+            self.aggregate_ax.set_facecolor(self.bg_color)
+
 
     def perform_plot_action(self, event, values):
         # TODO: Docstring

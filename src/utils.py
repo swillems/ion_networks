@@ -608,6 +608,12 @@ class HDFFile(object):
     def __hash__(self):
         return hash(self.file_name)
 
+    def __str__(self):
+        return self.file_name
+
+    def __repr__(self):
+        return self.file_name
+
     def __get_parent_group(self, hdf_file, parent_group_name):
         # TODO: Docstring
         if parent_group_name == "":
