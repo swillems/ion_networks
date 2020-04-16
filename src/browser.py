@@ -147,7 +147,7 @@ class Browser(object):
         layout.append(
             [
                 sg.Combo(
-                    sorted(matplotlib.colors),
+                    sorted(matplotlib.colors.__dict__['CSS4_COLORS']),
                     size=(21, 1),
                     default_value=self.bg_color,
                     key="bg_color",
