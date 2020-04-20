@@ -60,14 +60,14 @@ def open_logger(log_file_name, log_level=logging.INFO):
     )
     if log_file_name != "":
         logger.info(
-            f"This log is being saved as: {log_file_name}."
+            f"This log is being saved as: {log_file_name}"
         )
     logger.info("")
     try:
         yield logger
         logger.info("")
-        logger.info("Successfully finished execution.")
-        logger.info(f"Time taken: {time.time() - start_time}.")
+        logger.info("Successfully finished execution")
+        logger.info(f"Time taken: {time.time() - start_time}")
     except:
         logger.exception("Something went wrong, execution incomplete!")
     finally:
@@ -230,7 +230,7 @@ def read_data_from_mgf_file(
         A pd.DataFrame with as columns the PRECURSOR_RT, PRECURSOR_MZ,
         FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
     """
-    logger.info(f"Reading {file_name}")
+    logger.info(f"Reading mgf file {file_name}")
     mz1s = []
     mz2s = []
     rts = []
@@ -283,7 +283,7 @@ def read_data_from_sonar_file(
         A pd.DataFrame with as columns the PRECURSOR_RT, PRECURSOR_MZ,
         FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
     """
-    logger.info(f"Reading {file_name}")
+    logger.info(f"Reading sonar file {file_name}")
     data = pd.read_csv(
         file_name,
         engine="c",
@@ -327,7 +327,7 @@ def read_data_from_hdmse_file(
         A pd.DataFrame with as columns the PRECURSOR_RT, PRECURSOR_DT,
         FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
     """
-    logger.info(f"Reading {file_name}")
+    logger.info(f"Reading hdmse file {file_name}")
     data = pd.read_csv(
         file_name,
         engine="c",
@@ -370,7 +370,7 @@ def read_data_from_swimdia_file(
         A pd.DataFrame with as columns the PRECURSOR_RT, PRECURSOR_DT,
         FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
     """
-    logger.info(f"Reading {file_name}")
+    logger.info(f"Reading swimdia dile {file_name}")
     data = pd.read_csv(
         file_name,
         engine="c",
@@ -420,7 +420,7 @@ def read_data_from_diapasef_file(
         A pd.DataFrame with as columns the PRECURSOR_RT, PRECURSOR_DT,
         PRECURSOR_MZ, FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
     """
-    logger.info(f"Reading {file_name}")
+    logger.info(f"Reading diapasef file {file_name}")
     with h5py.File(file_name, "r") as hdf_file:
         centroided_fragment_mzs = hdf_file["fragment_mz_values"][...]
         centroided_fragment_intensities = hdf_file[
@@ -458,6 +458,51 @@ def read_data_from_diapasef_file(
     )
 
 
+def read_centroided_csv_file(
+    centroided_csv_file_name,
+    parameters,
+    logger=logging.getLogger()
+):
+    """
+    Read a centroided .csv file and return this as a pd.DataFrame.
+
+    Parameters
+    ----------
+    centroided_csv_file_name : str
+        The name of a .csv file with centroided ion peaks.
+    parameters : dict
+        A dictionary with optional parameters for the creation of an
+        ion-network.
+
+    Returns
+    -------
+    pd.Dataframe
+        A pd.Dataframe with centroided ion peaks.
+
+    Raises
+    -------
+    KeyError
+        If the PRECURSOR_RT, FRAGMENT_MZ or FRAGMENT_LOGINT column is
+        missing.
+    """
+    logger.info(f"Reading centroided csv file {centroided_csv_file_name}")
+    data = pd.read_csv(
+        centroided_csv_file_name,
+        engine="c",
+    )
+    if "PRECURSOR_RT" not in data:
+        raise KeyError("No PRECURSOR_RT column present")
+    if "FRAGMENT_MZ" not in data:
+        raise KeyError("No FRAGMENT_MZ column present")
+    if "FRAGMENT_LOGINT" not in data:
+        raise KeyError("No FRAGMENT_LOGINT column present")
+    data.sort_values(
+        by=["PRECURSOR_RT", "FRAGMENT_MZ"],
+        inplace=True
+    )
+    return data
+
+
 def write_data_to_csv_file(
     data,
     out_file_name,
@@ -475,64 +520,8 @@ def write_data_to_csv_file(
     logger : logging.logger
         The logger that indicates all progress.
     """
-    logger.info(f"Writing {out_file_name}")
+    logger.info(f"Writing to centroided csv file {out_file_name}")
     data.to_csv(out_file_name, index=False)
-
-
-def read_hdf_coordinates(
-    hdf_wrapper_object,
-    base_folder,
-    dimensions,
-    indices
-):
-    """
-    Read coordinates from an HDF wrapper object.
-
-    Parameters
-    ----------
-    hdf_wrapper_object : object
-        An object that is an HDF wrapper, i.e. has a file_name that refers
-        to a readable HDF file.
-    base_folder : str
-        The folder that contains the dimensions of interest.
-    dimensions : str, iterable[str] or None
-        The dimension(s) to retrieve from the HDF wrapper object. If this is
-        None, a sorted list with all the available dimensions is returned.
-    indices : ellipsis, slice, int, iterable[int] or iterable[bool]
-        The indices that should be selected from the array. This is most
-        performant when this is an ellipsis or slice, but fancy indexing
-        with a mask, list or np.ndarray are also supported.
-
-    Returns
-    -------
-    np.ndarray or list[np.ndarray]
-        A (list of) numpy array(s) with the coordinates from the
-        requested dimension(s). If dimensions is None, a sorted list with
-        all the available dimensions is returned.
-    """
-    if dimensions is None:
-        with h5py.File(hdf_wrapper_object.file_name, "r") as hdf_file:
-            dimensions = sorted(hdf_file[base_folder])
-    single_dimension = isinstance(dimensions, str)
-    if single_dimension:
-        dimensions = [dimensions]
-    arrays = []
-    try:
-        iter(indices)
-        fancy_indices = True
-    except TypeError:
-        fancy_indices = False
-    with h5py.File(hdf_wrapper_object.file_name, "r") as hdf_file:
-        for dimension in dimensions:
-            array = hdf_file[base_folder][dimension]
-            if fancy_indices:
-                array = array[...]
-            array = array[indices]
-            arrays.append(array)
-    if single_dimension:
-        return arrays[0]
-    else:
-        return arrays
 
 
 class HDF_File(object):
@@ -725,33 +714,3 @@ class HDF_File(object):
                         )
                     hdf_dataset.attrs["creation_time"] = time.asctime()
                     hdf_file.attrs["last_updated"] = time.asctime()
-
-
-class HDF_MS_Run_File(HDF_File):
-    # TODO: Docstring
-
-    @staticmethod
-    def convert_reference_to_trimmed_file_name(reference):
-        # TODO: Docstring
-        if not isinstance(reference, str):
-            try:
-                reference = reference.file_name
-            except AttributeError:
-                raise ValueError("Invalid reference for HDF file.")
-        reference_components = reference.split(".")
-        if not (
-            (
-                len(reference_components) >= 3
-            ) and (
-                reference_components[-1] == "hdf"
-            ) and (
-                reference_components[-2] in ["inet", "evidence", "annotation"]
-            )
-        ):
-            raise ValueError("Invalid reference for HDF file.")
-        return ".".join(reference_components[:-2])
-
-    @property
-    def run_name(self):
-        # TODO: Docstring
-        return ".".join(os.path.basename(self.file_name).split(".")[:-2])

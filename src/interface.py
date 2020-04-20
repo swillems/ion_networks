@@ -7,12 +7,10 @@ import threading
 import PySimpleGUI as sg
 import click
 # local
-import network
-import evidence
-import database
-import annotation
+import ms_run_files
+import ms_database
+import ms_utils
 import browser
-import utils
 
 
 class Interface(object):
@@ -55,7 +53,7 @@ class Interface(object):
             output_directory = ""
         if output_directory != "":
             output_directory = os.path.abspath(output_directory)
-        parameters = utils.read_parameters_from_json_file(
+        parameters = ms_utils.read_parameters_from_json_file(
             file_name=parameter_file_name,
             default="convert"
         )
@@ -64,11 +62,11 @@ class Interface(object):
             log_file_name = parameters["log_file_name"]
         if log_file_name != "":
             log_file_name = os.path.abspath(log_file_name)
-        with utils.open_logger(log_file_name) as logger:
-            logger.info(f"Command: convert.")
-            input_file_names = utils.get_file_names_with_extension(
+        with ms_utils.open_logger(log_file_name) as logger:
+            logger.info(f"Command: convert")
+            input_file_names = ms_utils.get_file_names_with_extension(
                 input_path,
-                extension=utils.DATA_TYPE_FILE_EXTENSIONS[data_type]
+                extension=ms_utils.DATA_TYPE_FILE_EXTENSIONS[data_type]
             )
             file_count = len(input_file_names)
             logger.info(
@@ -84,13 +82,13 @@ class Interface(object):
                 if not os.path.exists(output_directory):
                     os.makedirs(output_directory)
             for input_file_name in sorted(input_file_names):
-                data = utils.read_data_from_file(
+                data = ms_utils.read_data_from_file(
                     data_type,
                     input_file_name,
-                    logger
+                    logger=logger
                 )
                 file_name_base = os.path.basename(input_file_name)[
-                    :-len(utils.DATA_TYPE_FILE_EXTENSIONS[data_type])
+                    :-len(ms_utils.DATA_TYPE_FILE_EXTENSIONS[data_type])
                 ]
                 if output_directory == "":
                     output_path = os.path.dirname(input_file_name)
@@ -100,7 +98,7 @@ class Interface(object):
                     output_path,
                     f"{file_name_base}.inet.csv"
                 )
-                utils.write_data_to_csv_file(data, output_file_name, logger)
+                ms_utils.write_data_to_csv_file(data, output_file_name, logger)
 
     @staticmethod
     def create_ion_networks(
@@ -131,7 +129,7 @@ class Interface(object):
             output_directory = ""
         if output_directory != "":
             output_directory = os.path.abspath(output_directory)
-        parameters = utils.read_parameters_from_json_file(
+        parameters = ms_utils.read_parameters_from_json_file(
             file_name=parameter_file_name,
             default="create"
         )
@@ -140,9 +138,9 @@ class Interface(object):
             log_file_name = parameters["log_file_name"]
         if log_file_name != "":
             log_file_name = os.path.abspath(log_file_name)
-        with utils.open_logger(log_file_name) as logger:
-            logger.info(f"Command: create.")
-            input_file_names = utils.get_file_names_with_extension(
+        with ms_utils.open_logger(log_file_name) as logger:
+            logger.info(f"Command: create")
+            input_file_names = ms_utils.get_file_names_with_extension(
                 input_path,
                 ".inet.csv"
             )
@@ -165,12 +163,17 @@ class Interface(object):
                     output_path,
                     f"{local_file_name[:-9]}.inet.hdf"
                 )
-                network.Network(
-                    network_file_name=ion_network_file_name,
-                    centroided_csv_file_name=csv_file_name,
-                    parameters=parameters,
+                network = ms_run_files.Network(
+                    ion_network_file_name,
+                    new_file=True,
                     logger=logger
                 )
+                data = ms_utils.read_centroided_csv_file(
+                    csv_file_name,
+                    parameters,
+                    logger=logger
+                )
+                network.create_from_data(data, parameters)
 
     @staticmethod
     def evidence_ion_networks(
@@ -194,7 +197,7 @@ class Interface(object):
             parameter_file_name = ""
         if parameter_file_name != "":
             parameter_file_name = os.path.abspath(parameter_file_name)
-        parameters = utils.read_parameters_from_json_file(
+        parameters = ms_utils.read_parameters_from_json_file(
             file_name=parameter_file_name,
             default="evidence"
         )
@@ -203,9 +206,9 @@ class Interface(object):
             log_file_name = parameters["log_file_name"]
         if log_file_name != "":
             log_file_name = os.path.abspath(log_file_name)
-        with utils.open_logger(log_file_name) as logger:
-            logger.info(f"Command: evidence.")
-            input_file_names = utils.get_file_names_with_extension(
+        with ms_utils.open_logger(log_file_name) as logger:
+            logger.info(f"Command: evidence")
+            input_file_names = ms_utils.get_file_names_with_extension(
                 input_path,
                 ".inet.hdf"
             )
@@ -218,7 +221,7 @@ class Interface(object):
             logger.info(f"log_file_name: {log_file_name}")
             logger.info("")
             evidence_files = [
-                evidence.Evidence(
+                ms_run_files.Evidence(
                     file_name,
                     new_file=True,
                     logger=logger
@@ -245,7 +248,7 @@ class Interface(object):
             parameter_file_name = ""
         if parameter_file_name != "":
             parameter_file_name = os.path.abspath(parameter_file_name)
-        parameters = utils.read_parameters_from_json_file(
+        parameters = ms_utils.read_parameters_from_json_file(
             file_name=parameter_file_name,
         )
         # TODO: Proper parsing of empty log...?
@@ -253,8 +256,8 @@ class Interface(object):
             log_file_name = parameters["log_file_name"]
         if log_file_name != "":
             log_file_name = os.path.abspath(log_file_name)
-        with utils.open_logger(log_file_name) as logger:
-            evi = evidence.Evidence(evidence_file_name)
+        with ms_utils.open_logger(log_file_name) as logger:
+            evi = ms_run_files.Evidence(evidence_file_name)
             browser.Browser(
                 evi,
                 logger
@@ -282,7 +285,7 @@ class Interface(object):
             output_directory = ""
         if output_directory != "":
             output_directory = os.path.abspath(output_directory)
-        parameters = utils.read_parameters_from_json_file(
+        parameters = ms_utils.read_parameters_from_json_file(
             file_name=parameter_file_name,
             default="database"
         )
@@ -292,9 +295,9 @@ class Interface(object):
         if log_file_name != "":
             log_file_name = os.path.abspath(log_file_name)
         # TODO: turn off ms2pip logger?
-        with utils.open_logger(log_file_name) as logger:
-            logger.info(f"Command: database.")
-            input_file_names = utils.get_file_names_with_extension(
+        with ms_utils.open_logger(log_file_name) as logger:
+            logger.info(f"Command: database")
+            input_file_names = ms_utils.get_file_names_with_extension(
                 input_path,
                 extension=".fasta"
             )
@@ -322,7 +325,7 @@ class Interface(object):
                     database_file_name = f"{database_file_name}.hdf"
             else:
                 database_file_name = f"{database_file_name}_decoy.hdf"
-            db = database.Database(
+            db = ms_database.Database(
                 database_file_name,
                 new_file=True,
                 logger=logger,
@@ -341,7 +344,7 @@ class Interface(object):
             parameter_file_name = ""
         if parameter_file_name != "":
             parameter_file_name = os.path.abspath(parameter_file_name)
-        parameters = utils.read_parameters_from_json_file(
+        parameters = ms_utils.read_parameters_from_json_file(
             file_name=parameter_file_name,
             default="annotation"
         )
@@ -350,9 +353,9 @@ class Interface(object):
             log_file_name = parameters["log_file_name"]
         if log_file_name != "":
             log_file_name = os.path.abspath(log_file_name)
-        with utils.open_logger(log_file_name) as logger:
-            logger.info(f"Command: annotate.")
-            input_file_names = utils.get_file_names_with_extension(
+        with ms_utils.open_logger(log_file_name) as logger:
+            logger.info(f"Command: annotate")
+            input_file_names = ms_utils.get_file_names_with_extension(
                 input_path,
                 extension=[".inet.hdf", ".evidence.hdf", "annotation.hdf"]
             )
@@ -366,7 +369,7 @@ class Interface(object):
             logger.info(f"log_file_name: {log_file_name}")
             logger.info("")
             for file_name in input_file_names:
-                ani = annotation.Annotation(
+                ani = ms_run_files.Annotation(
                     file_name,
                     new_file=True,
                     logger=logger
@@ -422,7 +425,7 @@ class GUI(object):
             [
                 sg.Text('Data type', size=(self.widget_size, 1)),
                 sg.Combo(
-                    sorted(utils.DATA_TYPE_FILE_EXTENSIONS),
+                    sorted(ms_utils.DATA_TYPE_FILE_EXTENSIONS),
                     default_value=default_data_type,
                     key="data_type",
                     size=(self.widget_size * 2, 1)
@@ -435,7 +438,7 @@ class GUI(object):
                         key,
                         f"*{value}"
                     ) for key, value in sorted(
-                        utils.DATA_TYPE_FILE_EXTENSIONS.items()
+                        ms_utils.DATA_TYPE_FILE_EXTENSIONS.items()
                     )
                 ),
                 # TODO: default_value=default_data_type,
@@ -696,6 +699,7 @@ class CLI(object):
         self.main.add_command(CLI.evidence)
         self.main.add_command(CLI.show)
         self.main.add_command(CLI.gui)
+        self.main.add_command(CLI.database)
         self.main()
 
     @staticmethod
@@ -955,6 +959,65 @@ class CLI(object):
     )
     def gui():
         Interface.run_ion_network_gui()
+
+    @staticmethod
+    @click.command(
+        "database",
+        help="Create a [database.hdf] from fasta files.",
+        short_help="Create database from fasta files."
+    )
+    @click.option(
+        "--input_path",
+        "-i",
+        help="A fasta file with protein sequences. "
+            "Individual files can be provided, as well as folders. "
+            "This flag can be set multiple times.",
+        multiple=True,
+        required=True,
+        type=click.Path(exists=True)
+    )
+    @click.option(
+        "--output_directory",
+        "-o",
+        help="The output directory fot the database. The file name is "
+            "automatically set as a concatenation of the input fasta files, "
+            "potentially appedned with _concatenated_decoy. "
+            "This output directory can also be supplied through a "
+            "[parameters.json] file. "
+            "WARNING: This overrides already existing files without "
+            "confirmation.",
+        type=click.Path(file_okay=False)
+    )
+    @click.option(
+        "--parameter_file",
+        "-p",
+        "parameter_file_name",
+        help="A [parameters.json] file with optional parameters.",
+        type=click.Path(exists=True, dir_okay=False)
+    )
+    @click.option(
+        "--log_file",
+        "-l",
+        "log_file_name",
+        help="Save the log to a [log.txt] file. "
+            "By default this is written to the current directory. "
+            "This log file can also be supplied through a [parameters.json] "
+            "file. It can be turned off by providing an empty path (i.e. ''). "
+            "If the log file already exists, the new log data is appended.",
+        type=click.Path(dir_okay=False)
+    )
+    def database(
+        input_path,
+        output_directory,
+        parameter_file_name,
+        log_file_name
+    ):
+        Interface.create_database(
+            input_path,
+            output_directory,
+            parameter_file_name,
+            log_file_name
+        )
 
 # TODO: Rename "unified" and "peaks" referring to .inet.csv files?
 # TODO: Define help text in separate json files?

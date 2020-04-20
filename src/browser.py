@@ -9,11 +9,11 @@ import PySimpleGUI as sg
 import matplotlib
 matplotlib.use('TkAgg')
 # local
-import utils
+import ms_utils
 
 
 BROWSER_IMAGES_PATH = os.path.join(
-    utils.LIB_PATH,
+    ms_utils.LIB_PATH,
     "browser_images"
 )
 LOADING_ANIMATION_FILE_NAME = os.path.join(

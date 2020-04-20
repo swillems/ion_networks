@@ -8,10 +8,10 @@ import ms2pip.retention_time
 import pyteomics.parser
 import pyteomics.fasta
 # local
-import utils
+import ms_utils
 
 
-class Database(utils.HDF_File):
+class Database(ms_utils.HDF_File):
     # TODO: Docstring
 
     def __init__(
@@ -363,8 +363,24 @@ class Database(utils.HDF_File):
 
     def get_fragment_coordinates(self, dimensions=None, indices=...):
         # TODO: Docstring
-        return utils.read_hdf_coordinates(self, "fragments", dimensions, indices)
+        return [
+            self.get_dataset(
+                dimension,
+                parent_group_name="fragments",
+                indices=indices
+            ) for dimension in self.get_group_list(
+                parent_group_name="fragments"
+            )
+        ]
 
     def get_peptide_coordinates(self, dimensions=None, indices=...):
         # TODO: Docstring
-        return utils.read_hdf_coordinates(self, "peptides", dimensions, indices)
+        return [
+            self.get_dataset(
+                dimension,
+                parent_group_name="peptides",
+                indices=indices
+            ) for dimension in self.get_group_list(
+                parent_group_name="peptides"
+            )
+        ]

@@ -1,104 +1,70 @@
 #!python
 
 # builtin
-import logging
 import os
 import time
 # external
-import h5py
-import scipy
-import scipy.sparse
-import numba
-import pandas as pd
 import numpy as np
+import scipy
+import numba
+import h5py
+import scipy.sparse
+# local
+import ms_database
+import ms_utils
 
 
-class Network(object):
+class HDF_MS_Run_File(ms_utils.HDF_File):
+    # TODO: Docstring
+
+    @staticmethod
+    def convert_reference_to_trimmed_file_name(reference):
+        # TODO: Docstring
+        if not isinstance(reference, str):
+            try:
+                reference = reference.file_name
+            except AttributeError:
+                raise ValueError("Invalid reference for HDF file")
+        reference_components = reference.split(".")
+        if not (
+            (
+                len(reference_components) >= 3
+            ) and (
+                reference_components[-1] in ["hdf", "csv"]
+            ) and (
+                reference_components[-2] in ["inet", "evidence", "annotation"]
+            )
+        ):
+            raise ValueError("Invalid reference for HDF file")
+        return ".".join(reference_components[:-2])
+
+    @property
+    def run_name(self):
+        # TODO: Docstring
+        return ".".join(os.path.basename(self.file_name).split(".")[:-2])
+
+
+class Network(HDF_MS_Run_File):
     """
-    An ion-network with ions as nodes and possible precursor origin of fragments
-    as edges.
+    An ion-network with ions as nodes and possible precursor origin of
+    fragments as edges.
     """
 
     def __init__(
         self,
-        network_file_name,
-        centroided_csv_file_name=None,
-        parameters={},
-        logger=logging.getLogger()
+        reference,
+        new_file=False,
+        is_read_only=True,
+        logger=None
     ):
-        """
-        Loads an ion-network. Alternatively, an ion-network is created if a
-        .csv file with centroided data is provided.
-
-        Parameters
-        ----------
-        network_file_name : str
-            The file name of the ion-network.
-        centroided_csv_file_name : str / None
-            The name of a .csv file that contains the centroided data or None.
-            WARNING: If not None, any existing ion-networks is overwritten with
-            the data from this centroided .csv file.
-        parameters : dict
-            A dictionary with optional parameters for the creation of an
-            ion-network.
-        logger : logging.logger
-            The logger that indicates all progress.
-        """
-        self.file_name = network_file_name
-        self.logger = logger
-        if centroided_csv_file_name is not None:
-            data = self.read_centroided_csv_file(
-                centroided_csv_file_name,
-                parameters
-            )
-            self.create_from_data(data, parameters)
-
-    def read_centroided_csv_file(
-        self,
-        centroided_csv_file_name,
-        parameters
-    ):
-        """
-        Read a centroided .csv file and return this as a pd.DataFrame.
-
-        Parameters
-        ----------
-        centroided_csv_file_name : str
-            The name of a .csv file with centroided ion peaks.
-        parameters : dict
-            A dictionary with optional parameters for the creation of an
-            ion-network.
-
-        Returns
-        -------
-        pd.Dataframe
-            A pd.Dataframe with centroided ion peaks.
-
-        Raises
-        -------
-        KeyError
-            If the PRECURSOR_RT, FRAGMENT_MZ or FRAGMENT_LOGINT column is
-            missing.
-        """
-        self.logger.info(
-            f"Reading centroided csv file {centroided_csv_file_name}."
+        # TODO: Docstring
+        file_name = self.convert_reference_to_trimmed_file_name(reference)
+        super().__init__(
+            f"{file_name}.inet.hdf",
+            new_file,
+            is_read_only,
+            logger,
         )
-        data = pd.read_csv(
-            centroided_csv_file_name,
-            engine="c",
-            # dtype=np.float,
-        )
-        if "PRECURSOR_RT" not in data:
-            raise KeyError("No PRECURSOR_RT column present")
-        if "FRAGMENT_MZ" not in data:
-            raise KeyError("No FRAGMENT_MZ column present")
-        if "FRAGMENT_LOGINT" not in data:
-            raise KeyError("No FRAGMENT_LOGINT column present")
-        data.sort_values(
-            by=["PRECURSOR_RT", "FRAGMENT_MZ"],
-            inplace=True
-        )
-        return data
 
     def create_from_data(self, data, parameters):
         """
@@ -112,7 +78,7 @@ class Network(object):
             A dictionary with optional parameters for the creation of an
             ion-network.
         """
-        self.logger.info(f"Creating ion-network {self.file_name}.")
+        self.logger.info(f"Creating ion-network {self.file_name}")
         directory = os.path.dirname(self.file_name)
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -137,7 +103,7 @@ class Network(object):
             A dictionary with optional parameters for the creation of an
             ion-network.
         """
-        self.logger.info(f"Writing nodes of ion-network {self.file_name}.")
+        self.logger.info(f"Writing nodes of ion-network {self.file_name}")
         node_group = network_file.create_group("nodes")
         for column in data.columns:
             if column.startswith("#"):
@@ -171,7 +137,7 @@ class Network(object):
             A dictionary with optional parameters for the creation of an
             ion-network.
         """
-        self.logger.info(f"Writing edges of ion-network {self.file_name}.")
+        self.logger.info(f"Writing edges of ion-network {self.file_name}")
         edge_group = network_file.create_group("edges")
         dimensions = self.get_precursor_dimensions(
             remove_precursor_rt=True
@@ -211,7 +177,9 @@ class Network(object):
             A dictionary with optional parameters for the creation of an
             ion-network.
         """
-        self.logger.info(f"Writing parameters of ion-network {self.file_name}.")
+        self.logger.info(
+            f"Writing parameters of ion-network {self.file_name}"
+        )
         network_file.attrs["creation_time"] = time.asctime()
         network_file.attrs["node_count"] = len(
             network_file["edges"]["indptr"]
@@ -289,8 +257,8 @@ class Network(object):
         -------
         np.ndarray or list[np.ndarray]
             A (list of) numpy array(s) with the ion comments from the
-            requested comment dimension(s). If dimensions is None, a sorted list
-            with all the available comment dimensions is returned.
+            requested comment dimension(s). If dimensions is None, a sorted
+            list with all the available comment dimensions is returned.
         """
         if dimensions is None:
             dimensions = self.comment_dimensions
@@ -441,7 +409,7 @@ class Network(object):
 
     def align_nodes(self, other, parameters, return_as_scipy_csr=True):
         # TODO: Docstring
-        self.logger.info(f"Aligning {self.file_name} with {other.file_name}.")
+        self.logger.info(f"Aligning {self.file_name} with {other.file_name}")
         dimensions = self.dimension_overlap(
             other,
             remove_fragment_mz=True,
@@ -487,7 +455,10 @@ class Network(object):
         other_coordinates = tuple(other_coordinates)
         max_absolute_errors = tuple(max_absolute_errors)
         # TODO: Move to seperate function and define type
-        self.logger.info(f"Matching ion coordinates from {self.file_name} and {other.file_name}.")
+        self.logger.info(
+            f"Matching ion coordinates from "
+            f"{self.file_name} and {other.file_name}"
+        )
         @numba.njit
         def numba_wrapper():
             low_limits = np.searchsorted(
@@ -508,7 +479,11 @@ class Network(object):
                 )
             ):
                 small_absolute_errors = np.repeat(True, high_limit - low_limit)
-                for max_absolute_error, self_coordinate, other_coordinate in zip(
+                for (
+                    max_absolute_error,
+                    self_coordinate,
+                    other_coordinate
+                ) in zip(
                     max_absolute_errors,
                     self_coordinates,
                     other_coordinates
@@ -588,7 +563,7 @@ class Network(object):
         # TODO: Docstring
         self.logger.info(
             f"Calibrating PRECURSOR_RT of {self.file_name} with "
-            f"{other.file_name}."
+            f"{other.file_name}"
         )
         self_mzs = self.get_ion_coordinates("FRAGMENT_MZ")
         other_mzs = other.get_ion_coordinates("FRAGMENT_MZ")
@@ -610,7 +585,12 @@ class Network(object):
             indices=other_indices
         )
         calibrated_self_rts = []
-        for self_start_index, self_end_index, other_rt_start, other_rt_end in zip(
+        for (
+            self_start_index,
+            self_end_index,
+            other_rt_start,
+            other_rt_end
+        ) in zip(
             self_indices[:-1],
             self_indices[1:],
             other_rts[:-1],
@@ -619,9 +599,16 @@ class Network(object):
             self_rt_start = self_rts[self_start_index]
             self_rt_end = self_rts[self_end_index]
             if self_rt_start == self_rt_end:
-                new_rts = np.repeat(other_rt_start, self_end_index - self_start_index)
+                new_rts = np.repeat(
+                    other_rt_start,
+                    self_end_index - self_start_index
+                )
             else:
-                slope = (other_rt_end - other_rt_start) / (self_rt_end - self_rt_start)
+                slope = (
+                    other_rt_end - other_rt_start
+                ) / (
+                    self_rt_end - self_rt_start
+                )
                 new_rts = other_rt_start + slope * (
                     self_rts[self_start_index: self_end_index] - self_rt_start
                 )
@@ -785,132 +772,448 @@ class Network(object):
             edge_count = network_file.attrs["edge_count"]
         return edge_count
 
-    @property
-    def creation_time(self):
-        """
-        Get the creation time of the ion-network.
 
-        Returns
-        -------
-        str
-            The creation time of the ion-network as a string.
-        """
-        with h5py.File(self.file_name, "r") as network_file:
-            creation_time = network_file.attrs["creation_time"]
-        return creation_time
+class Evidence(HDF_MS_Run_File):
+    """
+    An evidence set containing positive and negative edge evidence, as well as
+    node evidence.
+    """
 
-    @property
-    def original_file_name(self):
-        """
-        Get the original file name of the ion-network.
-
-        Returns
-        -------
-        str
-            The original file name of the ion-network as a string.
-        """
-        with h5py.File(self.file_name, "r") as network_file:
-            original_file_name = network_file.attrs["original_file_name"]
-        return original_file_name
-
-    @property
-    def file_name_base(self):
-        """
-        Get the file name base of the ion-network.
-
-        Returns
-        -------
-        str
-            The file name base of the ion-network as a string.
-        """
-        return os.path.basename(self.file_name)[:-9]
-
-    @property
-    def run(self):
+    def __init__(
+        self,
+        reference,
+        new_file=False,
+        is_read_only=True,
+        logger=None
+    ):
         # TODO: Docstring
-        return os.path.basename(self.file_name)[:-9]
+        file_name = self.convert_reference_to_trimmed_file_name(reference)
+        super().__init__(
+            f"{file_name}.evidence.hdf",
+            new_file,
+            is_read_only,
+            logger,
+        )
+        self.ion_network = Network(reference, logger=logger)
+        self.ion_network.evidence = self
 
-    @property
-    def directory(self):
+    def mutual_collect_evidence_from(
+        self,
+        other,
+        parameters={},
+        **kwargs,
+    ):
         # TODO: Docstring
-        return os.path.dirname(self.file_name)
-
-    @property
-    def file_name_path(self):
-        """
-        Get the file name path of the ion-network.
-
-        Returns
-        -------
-        str
-            The file name path of the ion-network as a string.
-        """
-        return os.path.dirname(self.file_name)
-
-    @property
-    def key(self):
-        """
-        Get the unique key that identifies an ion-network.
-
-        Returns
-        -------
-        str
-            The unique key of an ion-network as a string.
-        """
-        return f"{self.edge_count}_{self.node_count}"
-
-    def __str__(self):
-        return (
-            f"Ion-network {self.file_name} with {self.node_count} nodes "
-            f"and {self.edge_count} edges"
+        if not self.need_to_set_evidence(other, parameters):
+            return
+        pairwise_alignment = self.ion_network.align_nodes(
+            other.ion_network,
+            parameters
+        )
+        pairwise_alignment_T = pairwise_alignment.T.tocsr()
+        if "edges" in kwargs:
+            self_edges = kwargs["edges"]
+        else:
+            self_edges = self.ion_network.get_edges()
+        other_edges = other.ion_network.get_edges()
+        self_ion_indices, other_ion_indices = pairwise_alignment.nonzero()
+        self.align_edges(
+            other,
+            pairwise_alignment,
+            pairwise_alignment_T,
+            self_ion_indices,
+            self_edges,
+            other_edges,
+            parameters
+        )
+        other.align_edges(
+            self,
+            pairwise_alignment_T,
+            pairwise_alignment,
+            other_ion_indices,
+            other_edges,
+            self_edges,
+            parameters
         )
 
-    def __hash__(self):
-        node_count = self.node_count
-        edge_count = self.edge_count
-        offset = np.ceil(np.log10(node_count + 1))
-        return int(edge_count * 10**offset + node_count)
+    def need_to_set_evidence(self, other, parameters):
+        # TODO: Docstring
+        if self.is_evidenced_with(other) or other.is_evidenced_with(self):
+            if parameters["force_overwrite"]:
+                pass
+                # self.remove_evidence_from(other)
+                # other.remove_evidence_from(self)
+            else:
+                self.logger.info(
+                    f"Evidence for {self.file_name} and {other.file_name} "
+                    f"has already been collected"
+                )
+                return False
+        return True
 
-    def __cmp__(self, other):
-        if self.edge_count != other.edge_count:
-            if self.edge_count < other.edge_count:
-                return -1
-            return 1
-        elif self.node_count != other.node_count:
-            if self.node_count < other.node_count:
-                return -1
-            return 1
-        return 0
+    def is_evidenced_with(self, other):
+        # TODO: Docstring
+        return other.run_name in self.get_group_list()
 
-    def __eq__(self, other):
-        if self.__cmp__(other) == 0:
-            return True
-        return False
+    def align_edges(
+        self,
+        other,
+        pairwise_alignment,
+        pairwise_alignment_T,
+        aligned_ion_indices,
+        self_edges,
+        other_edges,
+        parameters
+    ):
+        # TODO: Docstring
+        self.logger.info(
+            f"Collecting evidence for {self.ion_network.file_name} from "
+            f"{other.ion_network.file_name}"
+        )
+        parent_group_name = other.ion_network.run_name
+        self.create_group(parent_group_name)
+        positive = pairwise_alignment * other_edges * pairwise_alignment_T
+        positive = (positive + positive.T).multiply(self_edges)
+        positive_mask = (self_edges.astype(np.int8) + positive).data == 2
+        alignment_mask = np.diff(pairwise_alignment.indptr) != 0
+        left_node_indices, right_node_indices = self_edges.nonzero()
+        negative_mask = alignment_mask[
+            left_node_indices
+        ] & alignment_mask[
+            right_node_indices
+        ] & ~positive_mask
+        self.create_dataset(
+            "positive_edges",
+            positive_mask,
+            parent_group_name=parent_group_name,
+        )
+        self.create_dataset(
+            "negative_edges",
+            negative_mask,
+            parent_group_name=parent_group_name,
+        )
+        self.create_dataset(
+            "aligned_nodes",
+            aligned_ion_indices,
+            parent_group_name=parent_group_name,
+        )
+        dimension_overlap = self.ion_network.dimension_overlap(
+            other.ion_network
+        )
+        for parameter_key, parameter_value in parameters.items():
+            if parameter_key.startswith("max_alignment_absolute_error_"):
+                if parameter_key[24:] not in dimension_overlap:
+                    continue
+            self.create_attr(
+                parameter_key,
+                parameter_value,
+                parent_group_name=parent_group_name
+            )
 
-    def __ne__(self, other):
-        if self.__cmp__(other) != 0:
-            return True
-        return False
+    def get_alignment(
+        self,
+        other,
+        return_as_scipy_csr=False
+    ):
+        """
+        Get the pairwise alignment between two ion-networks.
 
-    def __lt__(self, other):
-        if self.__cmp__(other) < 0:
-            return True
-        return False
+        Parameters
+        ----------
+        other : evidence
+            The other evidence set against which to align.
+        return_as_scipy_csr : bool
+            If True, return the alignment as a scipy.sparse.csr_matrix,
+            otherwise, return the alignment as a 2-dimensional np.ndarray.
 
-    def __gt__(self, other):
-        if self.__cmp__(other) > 0:
-            return True
-        return False
+        Returns
+        ----------
+        np.ndarray or scipy.sparse.csr_matrix(bool)
+            A 2-dimensional array of shape (2, n) with n the number of nodes
+            aligned. The first column are the indices of the first ion-network
+            and the second column contains the indices of the second
+            ion-network. If return_as_scipy_csr is True, a sparse csr matrix
+            is created from this array before it is returned.
+        """
+        self_ions = self.get_aligned_nodes_from_group(
+            other.ion_network.run_name,
+            return_as_mask=False
+        )
+        other_ions = other.get_aligned_nodes_from_group(
+            self.ion_network.run_name,
+            return_as_mask=False
+        )
+        if return_as_scipy_csr:
+            return scipy.sparse.csr_matrix(
+                (
+                    np.ones(self_ions.shape[0], dtype=np.bool),
+                    (self_ions, other_ions)
+                ),
+                shape=(
+                    self.ion_network.node_count,
+                    other.ion_network.node_count
+                )
+            )
+        return np.stack([self_ions, other_ions]).T
 
-    def __le__(self, other):
-        if self.__cmp__(other) <= 0:
-            return True
-        return False
+    def get_aligned_nodes_from_group(self, group_name="", return_as_mask=True):
+        # TODO: Docstring
+        if group_name == "":
+            ions = np.zeros(self.ion_network.node_count, dtype=np.int)
+            for group_name in self.get_group_list():
+                ion_mask = self.get_dataset(
+                    "aligned_nodes",
+                    parent_group_name=group_name,
+                )
+                ions[ion_mask] += 1
+        else:
+            ions = self.get_dataset(
+                "aligned_nodes",
+                parent_group_name=group_name,
+            )
+            if return_as_mask:
+                mask = np.repeat(False, self.ion_network.node_count)
+                mask[ions] = True
+                ions = mask
+        return ions
 
-    def __ge__(self, other):
-        if self.__cmp__(other) >= 0:
-            return True
-        return False
+    def get_edge_mask_from_group(self, group_name="", positive=True):
+        # TODO: Docstring
+        if positive:
+            mask_name = "positive_edges"
+        else:
+            mask_name = "negative_edges"
+        if group_name == "":
+            edges = np.zeros(self.ion_network.edge_count, dtype=np.int)
+            for group_name in self.get_group_list():
+                edges += self.get_dataset(
+                    mask_name,
+                    parent_group_name=group_name,
+                )
+        else:
+            edges = self.get_dataset(
+                mask_name,
+                parent_group_name=group_name,
+            )
+        return edges
+
+    @property
+    def network_keys(self):
+        """
+        Get a sorted list with all the ion-network keys providing evidence.
+
+        Returns
+        -------
+        list[str]
+            A sorted list with the keys of all ion-network.
+        """
+        return self.get_group_list()
+
+    @property
+    def evidence_count(self):
+        """
+        Get the number of ion-network providing evidence.
+
+        Returns
+        -------
+        int
+            The number of ion-network providing evidence.
+        """
+        return len(self.network_keys)
+
+
+class Annotation(HDF_MS_Run_File):
+    # TODO: Docstring
+
+    def __init__(
+        self,
+        reference,
+        new_file=False,
+        is_read_only=True,
+        logger=None
+    ):
+        # TODO: Docstring
+        file_name = self.convert_reference_to_trimmed_file_name(reference)
+        super().__init__(
+            f"{file_name}.annotation.hdf",
+            new_file,
+            is_read_only,
+            logger,
+        )
+        self.evidence = Evidence(reference, logger=logger)
+        self.evidence.annotation = self
+        self.ion_network = Network(reference, logger=logger)
+        self.ion_network.annotation = self
+
+    def create_annotations(self, database, parameters):
+        if database is not None:
+            if isinstance(database, str):
+                database = ms_database.Database(database)
+        self.write_parameters(database, parameters)
+        self.write_candidates(database, parameters)
+
+    def write_parameters(self, database, parameters):
+        # TODO: Docstring
+        self.logger.info(f"Writing parameters to {self.file_name}")
+        self.create_attr("database_file_name", database.file_name)
+        for key, value in parameters.items():
+            self.create_attr(key, value)
+
+    def write_candidates(self, database, parameters):
+        # TODO: Docstring
+        self.logger.info(f"Writing candidates to {self.file_name}")
+        (
+            low_peptide_indices,
+            high_peptide_indices
+        ) = self.get_candidate_peptide_indices_for_nodes(
+            database,
+            parameters
+        )
+        self.create_group("node_candidates")
+        self.create_dataset(
+            "low_peptide_indices",
+            low_peptide_indices,
+            parent_group_name="node_candidates"
+        )
+        self.create_dataset(
+            "high_peptide_indices",
+            high_peptide_indices,
+            parent_group_name="node_candidates"
+        )
+        (
+            edge_indptr,
+            edge_indices
+        ) = self.get_candidate_peptide_indices_for_edges(
+            database,
+            low_peptide_indices,
+            high_peptide_indices
+        )
+        self.create_group("edge_candidates")
+        self.create_dataset(
+            "indptr",
+            edge_indptr,
+            parent_group_name="edge_candidates"
+        )
+        self.create_dataset(
+            "indices",
+            edge_indices,
+            parent_group_name="edge_candidates"
+        )
+
+    def get_candidate_peptide_indices_for_edges(
+        self,
+        database,
+        low_peptide_indices,
+        high_peptide_indices
+    ):
+        self.logger.info(f"Writing edge candidates to {self.file_name}")
+        database_peptides = database.get_fragment_coordinates("peptide_index")
+        indptr, indices = self.ion_network.get_edges(
+            indptr_and_indices=True
+        )
+        max_batch = np.max(
+            np.diff(indptr) * (high_peptide_indices - low_peptide_indices)
+        )
+        # TODO: remove init and just compile upfront?
+        self.__get_candidate_peptide_indices_for_edges(
+            indptr[:10],
+            indices,
+            low_peptide_indices,
+            high_peptide_indices,
+            database_peptides,
+            max_batch
+        )
+        (
+            edge_indptr,
+            edge_indices
+        ) = self.__get_candidate_peptide_indices_for_edges(
+            indptr,
+            indices,
+            low_peptide_indices,
+            high_peptide_indices,
+            database_peptides,
+            max_batch
+        )
+        return edge_indptr, edge_indices
+
+    @staticmethod
+    @numba.njit
+    def __get_candidate_peptide_indices_for_edges(
+        indptr,
+        indices,
+        low_peptide_indices,
+        high_peptide_indices,
+        database_peptides,
+        max_batch
+    ):
+        # TODO: Docstring
+        result_indptr = np.empty(indptr[-1], np.int64)
+        result_indices = np.empty(max_batch, np.int64)
+        current_index = 0
+        for start, end, low, high in zip(
+            indptr[:-1],
+            indptr[1:],
+            low_peptide_indices,
+            high_peptide_indices,
+        ):
+            if (low == high) or (start == end):
+                result_indptr[start:end] = current_index
+                continue
+            if (
+                (end - start) * (high - low) + current_index
+            ) >= result_indices.shape[0]:
+                new_result_indices = np.empty(
+                    max_batch + result_indices.shape[0],
+                    np.int64
+                )
+                new_result_indices[:result_indices.shape[0]] = result_indices
+                result_indices = new_result_indices
+            peptide_candidates = database_peptides[low: high]
+            peptide_candidates_set = set(peptide_candidates)
+            neighbors = indices[start: end]
+            for i, neighbor in enumerate(neighbors):
+                neighbor_low = low_peptide_indices[neighbor]
+                neighbor_high = high_peptide_indices[neighbor]
+                if neighbor_low == neighbor_high:
+                    result_indptr[start + i] = current_index
+                    continue
+                neighbor_peptide_candidates = database_peptides[
+                    neighbor_low: neighbor_high
+                ]
+                for neighbor_peptide_candidate in neighbor_peptide_candidates:
+                    if neighbor_peptide_candidate in peptide_candidates_set:
+                        result_indices[
+                            current_index
+                        ] = neighbor_peptide_candidate
+                        current_index += 1
+                result_indptr[start + i] = current_index
+        result_indptr[1:] = result_indptr[:-1]
+        result_indptr[0] = 0
+        return result_indptr, result_indices[:current_index]
+
+    def get_candidate_peptide_indices_for_nodes(
+        self,
+        database,
+        parameters
+    ):
+        # TODO: Docstring
+        self.logger.info(f"Writing node candidates to {self.file_name}")
+        max_ppm = parameters["annotation_ppm"]
+        self_mzs = self.ion_network.get_ion_coordinates("FRAGMENT_MZ")
+        mz_order = np.argsort(self_mzs)
+        database_mzs = database.get_fragment_coordinates("mz")
+        low_limits = np.searchsorted(
+            np.log(database_mzs) * 10**6,
+            np.log(self_mzs[mz_order]) * 10**6 - max_ppm,
+            "left"
+        )
+        high_limits = np.searchsorted(
+            np.log(database_mzs) * 10**6,
+            np.log(self_mzs[mz_order]) * 10**6 + max_ppm,
+            "right"
+        )
+        inv_order = np.argsort(mz_order)
+        return low_limits[inv_order], high_limits[inv_order]
 
 
 @numba.njit(fastmath=True)
