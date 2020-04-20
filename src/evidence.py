@@ -89,7 +89,7 @@ class Evidence(utils.HDF_MS_Run_File):
 
     def is_evidenced_with(self, other):
         # TODO: Docstring
-        return other.run_name in self.get_group_list
+        return other.run_name in self.get_group_list()
 
     def align_edges(
         self,
@@ -221,7 +221,7 @@ class Evidence(utils.HDF_MS_Run_File):
             mask_name = "negative_edges"
         if group_name == "":
             edges = np.zeros(self.ion_network.edge_count, dtype=np.int)
-            for group_name in self.get_group_list:
+            for group_name in self.get_group_list():
                 edges += self.get_dataset(
                     mask_name,
                     parent_group_name=group_name,
@@ -243,7 +243,7 @@ class Evidence(utils.HDF_MS_Run_File):
         list[str]
             A sorted list with the keys of all ion-network.
         """
-        return self.get_group_list
+        return self.get_group_list()
 
     @property
     def evidence_count(self):
