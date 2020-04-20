@@ -413,8 +413,9 @@ def read_data_from_diapasef_file(
     logger=logging.getLogger()
 ):
     """
-    Convert a [diapasef_input_centroids.hdf] file to a pd.DataFrame with as columns
-    the PRECURSOR_RT, PRECURSOR_DT, FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
+    Convert a [diapasef_input_centroids.hdf] file to a pd.DataFrame with as
+    columns the PRECURSOR_RT, PRECURSOR_DT, FRAGMENT_MZ and FRAGMENT_LOGINT
+    dimensions.
 
     Parameters
     ----------
@@ -439,7 +440,9 @@ def read_data_from_diapasef_file(
     logger.info(f"Reading {file_name}")
     with h5py.File(file_name, "r") as hdf_file:
         centroided_fragment_mzs = hdf_file["fragment_mz_values"][...]
-        centroided_fragment_intensities = hdf_file["fragment_intensity_values"][...]
+        centroided_fragment_intensities = hdf_file[
+            "fragment_intensity_values"
+        ][...]
         centroided_precursor_mzs = hdf_file["precursor_mz_values"][...]
         centroided_precursor_dts = hdf_file["precursor_dt_values"][...]
         centroided_precursor_rts = hdf_file["precursor_rt_values"][...]

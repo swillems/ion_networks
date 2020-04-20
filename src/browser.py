@@ -403,7 +403,8 @@ class Browser(object):
         if self.bg_color != values["bg_color"]:
             self.bg_color = values["bg_color"]
             self.aggregate_ax.set_facecolor(self.bg_color)
-
+            self.figure_canvas_agg.draw()
+            self.figure_canvas_agg.flush_events()
 
     def perform_plot_action(self, event, values):
         # TODO: Docstring
