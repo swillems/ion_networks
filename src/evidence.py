@@ -290,3 +290,13 @@ class Evidence(object):
             The file name path of the evidence as a string.
         """
         return os.path.dirname(self.file_name)
+
+    @property
+    def run(self):
+        # TODO: Docstring
+        return os.path.basename(self.file_name)[:-13]
+
+    @property
+    def directory(self):
+        # TODO: Docstring
+        return os.path.dirname(self.file_name)

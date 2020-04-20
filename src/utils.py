@@ -552,7 +552,7 @@ def read_hdf_coordinates(
         return arrays
 
 
-class HDFFile(object):
+class HDF_File(object):
     # TODO: Docstring
 
     def __init__(
@@ -728,3 +728,26 @@ class HDFFile(object):
                     )
                 hdf_dataset.attrs["creation_time"] = time.asctime()
                 hdf_file.attrs["last_updated"] = time.asctime()
+
+
+class HDF_MS_Run_File(HDF_File):
+
+    @staticmethod
+    def convert_reference_to_trimmed_file_name(reference):
+        if not isinstance(reference, str):
+            try:
+                reference = reference.file_name
+            except AttributeError:
+                raise ValueError("Invalid reference for HDF file.")
+        reference_components = reference.split(".")
+        if not (
+            (
+                len(reference_components) >= 3
+            ) and (
+                reference_components[-1] == "hdf"
+            ) and (
+                reference_components[-2] in ["inet", "evidence", "annotation"]
+            )
+        ):
+            raise ValueError("Invalid reference for HDF file.")
+        return ".".join(reference_components)[:-2]

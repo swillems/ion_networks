@@ -1,77 +1,52 @@
 #!python
 
-# builtin
-import logging
-import os
 # external
 import h5py
 import numpy as np
 import numba
 # local
-import evidence as evi
+import evidence
+import network
 import database as db
+import utils
 
 
-class Annotation(object):
+class Annotation(utils.HDF_MS_Run_File):
     # TODO: Docstring
 
     def __init__(
         self,
-        annotation_file_name=None,
-        evidence=None,
-        database=None,
-        parameters={},
-        logger=logging.getLogger()
+        reference,
+        new_file=False,
+        is_read_only=True,
+        logger=None
     ):
         # TODO: Docstring
-        self.logger = logger
-        if evidence is not None:
-            self.evidence = evidence
-            self.file_name = os.path.join(
-                evidence.file_name_path,
-                evidence.file_name_base
-            ) + ".annotation.hdf"
-        elif annotation_file_name is not None:
-            self.file_name = annotation_file_name
-            self.evidence = evi.Evidence(
-                os.path.join(
-                    self.file_name_path,
-                    self.file_name_base
-                ) + ".evidence.hdf"
-            )
-        else:
-            raise ValueError("Annotation file needs corresponding evidence.")
-        self.ion_network = evidence.ion_network
+        file_name = self.convert_reference_to_trimmed_file_name(reference)
+        super().__init__(
+            f"{file_name}.annotation.hdf",
+            new_file,
+            is_read_only,
+            logger,
+        )
+        self.evidence = evidence.Evidence(reference)
         self.evidence.annotation = self
-        self.ion_network.annotation = self
+        self.network = network.Network(reference)
+        self.network.annotation = self
+
+    def create_annotations(self, database, parameters):
         if database is not None:
             if isinstance(database, str):
                 database = db.Database(database)
-            self.create_annotation(database, parameters)
-
-    def create_annotation(self, database, parameters):
         self.write_parameters(database, parameters)
         self.write_candidates(database, parameters)
-        # with h5py.File(self.file_name, "w") as hdf_file:
-        #     self.write_parameters(hdf_file, database, parameters)
-        #     self.write_candidates(hdf_file, database, parameters)
 
     def write_parameters(self, database, parameters):
         # TODO: Docstring
-        with h5py.File(self.file_name, "w") as hdf_file:
-            self.logger.info(f"Writing parameters to {self.file_name}")
-            # TODO: Include prot, pep, frag counts
-            hdf_file.attrs["database_file_name"] = str(database.file_name)
-            for arg, value in parameters.items():
-                if isinstance(value, str):
-                    hdf_file.attrs[arg] = value
-                else:
-                    try:
-                        iter(value)
-                    except TypeError:
-                        hdf_file.attrs[arg] = value
-                    else:
-                        hdf_file.attrs[arg] = str(value)
+        self.logger.info(f"Writing parameters to {self.file_name}")
+        self.create_attr("database_file_name", database.file_name)
+        for key, value in parameters.items():
+            self.create_attr(key, value)
 
     def write_candidates(self, database, parameters):
         # TODO: Docstring
@@ -80,35 +55,33 @@ class Annotation(object):
             database,
             parameters
         )
-        with h5py.File(self.file_name, "r+") as hdf_file:
-            candidate_group = hdf_file.create_group("node_candidates")
-            candidate_group.create_dataset(
-                "low_peptide_indices",
-                data=low_peptide_indices,
-                compression="lzf",
-            )
-            candidate_group.create_dataset(
-                "high_peptide_indices",
-                data=high_peptide_indices,
-                compression="lzf",
-            )
+        self.create_group("node_candidates")
+        self.create_dataset(
+            "low_peptide_indices",
+            low_peptide_indices,
+            parent_group_name="node_candidates"
+        )
+        self.create_dataset(
+            "high_peptide_indices",
+            high_peptide_indices,
+            parent_group_name="node_candidates"
+        )
         edge_indptr, edge_indices = self.get_candidate_peptide_indices_for_edges(
             database,
             low_peptide_indices,
             high_peptide_indices
         )
-        with h5py.File(self.file_name, "r+") as hdf_file:
-            candidate_group = hdf_file.create_group("edge_candidates")
-            candidate_group.create_dataset(
-                "indptr",
-                data=edge_indptr,
-                compression="lzf",
-            )
-            candidate_group.create_dataset(
-                "indices",
-                data=edge_indices,
-                compression="lzf",
-            )
+        self.create_group("edge_candidates")
+        self.create_dataset(
+            "indptr",
+            edge_indptr,
+            parent_group_name="edge_candidates"
+        )
+        self.create_dataset(
+            "indices",
+            edge_indices,
+            parent_group_name="edge_candidates"
+        )
 
     def get_candidate_peptide_indices_for_edges(
         self,
@@ -217,11 +190,3 @@ class Annotation(object):
         )
         inv_order = np.argsort(mz_order)
         return low_limits[inv_order], high_limits[inv_order]
-
-    @property
-    def original_file_name(self):
-        # TODO: Docstring
-        with h5py.File(self.file_name, "r") as hdf_file:
-            database_file_name = hdf_file.attrs["database_file_name"]
-            database = db.Database(database_file_name)
-        return database

@@ -826,6 +826,16 @@ class Network(object):
         return os.path.basename(self.file_name)[:-9]
 
     @property
+    def run(self):
+        # TODO: Docstring
+        return os.path.basename(self.file_name)[:-9]
+
+    @property
+    def directory(self):
+        # TODO: Docstring
+        return os.path.dirname(self.file_name)
+
+    @property
     def file_name_path(self):
         """
         Get the file name path of the ion-network.
