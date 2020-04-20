@@ -322,12 +322,12 @@ class Interface(object):
                     database_file_name = f"{database_file_name}.hdf"
             else:
                 database_file_name = f"{database_file_name}_decoy.hdf"
-            database.Database(
+            db = database.Database(
                 database_file_name,
-                fasta_file_names=input_file_names,
-                parameters=parameters,
+                new_file=True,
                 logger=logger,
             )
+            db.create_from_fastas(input_file_names, parameters)
 
     @staticmethod
     def annotate_ion_network(
@@ -354,7 +354,7 @@ class Interface(object):
             logger.info(f"Command: annotate.")
             input_file_names = utils.get_file_names_with_extension(
                 input_path,
-                extension=".evidence.hdf"
+                extension=[".inet.hdf", ".evidence.hdf", "annotation.hdf"]
             )
             file_count = len(input_file_names)
             logger.info(
@@ -366,12 +366,12 @@ class Interface(object):
             logger.info(f"log_file_name: {log_file_name}")
             logger.info("")
             for file_name in input_file_names:
-                annotation.Annotation(
-                    evidence=evidence.Evidence(file_name),
-                    database=database_file_name,
-                    parameters=parameters,
+                ani = annotation.Annotation(
+                    file_name,
+                    new_file=True,
                     logger=logger
                 )
+                ani.create_annotations(database_file_name, parameters)
 
 
 class GUI(object):
@@ -959,6 +959,5 @@ class CLI(object):
 # TODO: Rename "unified" and "peaks" referring to .inet.csv files?
 # TODO: Define help text in separate json files?
 # TODO: Show help text popups in GUI
-# TODO: Database CLI
-# TODO: Database GUI
-# TODO: Database interface
+# TODO: Database interface (CLI + GUI)
+# TODO: Annotation interface (CLI + GUI)

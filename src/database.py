@@ -1,7 +1,5 @@
 #!python
 
-# builtin
-import logging
 # external
 import pandas as pd
 import numpy as np
@@ -9,26 +7,27 @@ import ms2pip.ms2pipC
 import ms2pip.retention_time
 import pyteomics.parser
 import pyteomics.fasta
-import h5py
 # local
 import utils
 
 
-class Database(object):
+class Database(utils.HDF_File):
     # TODO: Docstring
 
     def __init__(
         self,
-        database_file_name,
-        fasta_file_names=None,
-        parameters={},
-        logger=logging.getLogger(),
+        file_name,
+        new_file=False,
+        is_read_only=True,
+        logger=None,
     ):
         # TODO: Docstring
-        self.logger = logger
-        self.file_name = database_file_name
-        if fasta_file_names is not None:
-            self.create_from_fastas(fasta_file_names, parameters)
+        super().__init__(
+            file_name,
+            new_file,
+            is_read_only,
+            logger,
+        )
 
     def create_from_fastas(
         self,
@@ -41,53 +40,17 @@ class Database(object):
             fasta_file_names,
             **parameters
         )
-        with h5py.File(self.file_name, "w") as hdf_file:
-            self.write_proteins(proteins, hdf_file, **parameters)
-            peprec = self.write_peptides(hdf_file, peptides, **parameters)
-            self.write_fragments(hdf_file, peprec, **parameters)
-            self.write_parameters(hdf_file, fasta_file_names, parameters)
+        self.write_proteins(proteins, **parameters)
+        peprec = self.write_peptides(peptides, **parameters)
+        self.write_fragments(peprec, **parameters)
+        self.write_parameters(fasta_file_names, parameters)
 
-    def write_parameters(self, hdf_file, fasta_file_names, parameters):
+    def write_parameters(self, fasta_file_names, parameters):
         # TODO: Docstring
         self.logger.info(f"Writing parameters to {self.file_name}")
-        # TODO: Include prot, pep, frag counts
-        hdf_file.attrs["fasta_file_names"] = str(fasta_file_names)
-        for arg, value in parameters.items():
-            if isinstance(value, str):
-                hdf_file.attrs[arg] = value
-            else:
-                try:
-                    iter(value)
-                except TypeError:
-                    hdf_file.attrs[arg] = value
-                else:
-                    hdf_file.attrs[arg] = str(value)
-
-    def write_dataframe_to_hdf_group_name(
-        self,
-        hdf_file,
-        group_name,
-        data,
-        **kwargs,
-    ):
-        # TODO: Docstring
-        if group_name in hdf_file:
-            del hdf_file[group_name]
-        group = hdf_file.create_group(group_name)
-        for column in data.columns:
-            try:
-                group.create_dataset(
-                    column,
-                    data=data[column],
-                    compression="lzf",
-                )
-            except TypeError:
-                group.create_dataset(
-                    column,
-                    data=data[column],
-                    compression="lzf",
-                    dtype=h5py.string_dtype()
-                )
+        self.create_attr("fasta_file_names", fasta_file_names)
+        for key, value in parameters.items():
+            self.create_attr(key, value)
 
     def read_proteins_and_peptides_from_fasta(
         self,
@@ -189,7 +152,7 @@ class Database(object):
             protein_index += 1
         return proteins, peptides
 
-    def write_proteins(self, proteins, hdf_file, **parameters):
+    def write_proteins(self, proteins, **parameters):
         # TODO: Docstring
         self.logger.info(f"Writing proteins to {self.file_name}")
         columns = sorted(
@@ -211,11 +174,10 @@ class Database(object):
             columns=["protein"] + columns
         )
         protrec.set_index("index", inplace=True)
-        self.write_dataframe_to_hdf_group_name(hdf_file, "proteins", protrec)
+        self.create_dataset("proteins", protrec)
 
     def write_peptides(
         self,
-        hdf_file,
         peptides,
         variable_ptms,
         fixed_ptms,
@@ -249,7 +211,9 @@ class Database(object):
                 ):
                     parsed_ptm_combination = "|".join(
                         [
-                            f"{i}|{ptm_dict[ptm][0]}" for i, ptm in enumerate(ptm_combination) if ptm != ""
+                            f"{i}|{ptm_dict[ptm][0]}" for i, ptm in enumerate(
+                                ptm_combination
+                            ) if ptm != ""
                         ]
                     )
                     ptm_combo_mass = np.sum(
@@ -274,12 +238,11 @@ class Database(object):
         )
         peprec["index"] = np.arange(peprec.shape[0])
         peprec.set_index("index", inplace=True)
-        self.write_dataframe_to_hdf_group_name(hdf_file, "peptides", peprec)
+        self.create_dataset("peptides", peprec)
         return peprec
 
     def write_fragments(
         self,
-        hdf_file,
         peprec,
         model,
         cpu_count,
@@ -297,7 +260,9 @@ class Database(object):
                 "model": model,
                 "frag_error": 0,
                 "ptm": [
-                    ",".join([str(s) for s in ptm_values]) for ptm_values in ptm_dict.values()
+                    ",".join(
+                        [str(s) for s in ptm_values]
+                    ) for ptm_values in ptm_dict.values()
                 ],
                 "sptm": [],
                 "gptm": [],
@@ -322,7 +287,10 @@ class Database(object):
                     return_results=True,
                 ).run()
                 del charged_fragrec["charge"]
-                charged_fragrec.set_index(["spec_id", "ion", "ionnumber", "mz"], inplace=True)
+                charged_fragrec.set_index(
+                    ["spec_id", "ion", "ionnumber", "mz"],
+                    inplace=True
+                )
                 try:
                     partial_fragrec = partial_fragrec.join(charged_fragrec)
                     partial_fragrec.rename(
@@ -350,7 +318,7 @@ class Database(object):
         fragrec["index"] = np.arange(fragrec.shape[0])
         fragrec.set_index("index", inplace=True)
         self.logger.info(f"Writing fragments to {self.file_name}")
-        self.write_dataframe_to_hdf_group_name(hdf_file, "fragments", fragrec)
+        self.create_dataset("fragments", fragrec)
 
     @staticmethod
     def generate_ptm_combinations_recursively(ptms, selected=[]):

@@ -1,7 +1,5 @@
 #!python
 
-# builtin
-import time
 # external
 import numpy as np
 import scipy
@@ -108,44 +106,45 @@ class Evidence(utils.HDF_MS_Run_File):
             f"Collecting evidence for {self.ion_network.file_name} from "
             f"{other.ion_network.file_name}."
         )
-        with h5py.File(self.file_name, "a") as evidence_file:
-            evidence_group = evidence_file.create_group(
-                other.ion_network.file_name_base
+        parent_group = other.ion_network.file_name_base
+        self.create_group(parent_group)
+        positive = pairwise_alignment * other_edges * pairwise_alignment_T
+        positive = (positive + positive.T).multiply(self_edges)
+        positive_mask = (self_edges.astype(np.int8) + positive).data == 2
+        alignment_mask = pairwise_alignment.indptr[:-1] != pairwise_alignment.indptr[1:]
+        left_node_indices, right_node_indices = self_edges.nonzero()
+        negative_mask = alignment_mask[
+            left_node_indices
+        ] & alignment_mask[
+            right_node_indices
+        ] & ~positive_mask
+        self.create_dataset(
+            "positive_edges",
+            positive_mask,
+            parent_group=parent_group,
+        )
+        self.create_dataset(
+            "negative_edges",
+            negative_mask,
+            parent_group=parent_group,
+        )
+        self.create_dataset(
+            "aligned_nodes",
+            aligned_ion_indices,
+            parent_group=parent_group,
+        )
+        dimension_overlap = self.ion_network.dimension_overlap(
+            other.ion_network
+        )
+        for parameter_key, parameter_value in parameters.items():
+            if parameter_key.startswith("max_alignment_absolute_error_"):
+                if parameter_key[24:] not in dimension_overlap:
+                    continue
+            self.create_attr(
+                parameter_key,
+                parameter_value,
+                parent_group=parent_group
             )
-            positive = pairwise_alignment * other_edges * pairwise_alignment_T
-            positive = (positive + positive.T).multiply(self_edges)
-            positive_mask = (self_edges.astype(np.int8) + positive).data == 2
-            alignment_mask = pairwise_alignment.indptr[:-1] != pairwise_alignment.indptr[1:]
-            left_node_indices, right_node_indices = self_edges.nonzero()
-            negative_mask = alignment_mask[
-                left_node_indices
-            ] & alignment_mask[
-                right_node_indices
-            ] & ~positive_mask
-            evidence_group.create_dataset(
-                "positive_edges",
-                data=positive_mask,
-                compression="lzf",
-            )
-            evidence_group.create_dataset(
-                "negative_edges",
-                data=negative_mask,
-                compression="lzf",
-            )
-            evidence_group.create_dataset(
-                "aligned_nodes",
-                data=aligned_ion_indices,
-                compression="lzf",
-            )
-            dimension_overlap = self.ion_network.dimension_overlap(
-                other.ion_network
-            )
-            evidence_group.attrs["creation_time"] = time.asctime()
-            for parameter_key, parameter_value in parameters.items():
-                if parameter_key.startswith("max_alignment_absolute_error_"):
-                    if parameter_key[24:] not in dimension_overlap:
-                        continue
-                evidence_group.attrs[parameter_key] = parameter_value
 
     def get_alignment(
         self,
@@ -197,7 +196,7 @@ class Evidence(utils.HDF_MS_Run_File):
         # TODO: Docstring
         if group_name == "":
             ions = np.zeros(self.ion_network.node_count, dtype=np.int)
-            for group_name in self.get_group_list:
+            for group_name in self.get_group_list():
                 ion_mask = self.get_dataset(
                     "aligned_nodes",
                     parent_group_name=group_name,

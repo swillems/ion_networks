@@ -6,6 +6,7 @@ import sys
 import logging
 import json
 import time
+import contextlib
 # external
 import numpy as np
 import pandas as pd
@@ -33,71 +34,45 @@ DATA_TYPE_FILE_EXTENSIONS = {
 }
 
 
-class open_logger(object):
-    """
-    Create a logger to track all progress.
-    """
-
-    def __init__(
-        self,
-        log_file_name,
-        log_level=logging.INFO,
-    ):
-        """
-        Create a logger to track all progress.
-
-        Parameters
-        ----------
-        log_file_name : str
-            If a log_file_name is provided, the current log is appended to this
-            file.
-        log_level : int
-            The level at which log messages are returned. By default this is
-            logging.INFO.
-        """
-        self.start_time = time.time()
-        logger = logging.getLogger()
-        formatter = logging.Formatter('%(asctime)s > %(message)s')
-        logger.setLevel(log_level)
-        if len(logger.handlers) == 0:
-            console_handler = logging.StreamHandler(stream=sys.stdout)
-            console_handler.setLevel(log_level)
-            console_handler.setFormatter(formatter)
-            logger.addHandler(console_handler)
-        if log_file_name != "":
-            directory = os.path.dirname(log_file_name)
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            file_handler = logging.FileHandler(log_file_name, mode="a")
-            file_handler.setLevel(log_level)
-            file_handler.setFormatter(formatter)
-            logger.addHandler(file_handler)
-        self.logger = logger
-        self.log_file_name = log_file_name
-
-    def __enter__(self):
-        self.logger.info("=" * 50)
-        self.logger.info(
-            "ion_networks.py " + " ".join(sys.argv[1:])
+@contextlib.contextmanager
+def open_logger(log_file_name, log_level=logging.INFO):
+    start_time = time.time()
+    logger = logging.getLogger("Ion-networks")
+    formatter = logging.Formatter('%(asctime)s > %(message)s')
+    logger.setLevel(log_level)
+    if logger.hasHandlers():
+        logger.handlers.clear()
+    console_handler = logging.StreamHandler(stream=sys.stdout)
+    console_handler.setLevel(log_level)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    if log_file_name != "":
+        directory = os.path.dirname(log_file_name)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        file_handler = logging.FileHandler(log_file_name, mode="a")
+        file_handler.setLevel(log_level)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+    logger.info("=" * 50)
+    logger.info(
+        "ion_networks.py " + " ".join(sys.argv[1:])
+    )
+    if log_file_name != "":
+        logger.info(
+            f"This log is being saved as: {log_file_name}."
         )
-        if self.log_file_name != "":
-            self.logger.info(
-                f"This log is being saved as: {self.log_file_name}."
-            )
-        self.logger.info("")
-        return self.logger
-
-    def __exit__(self, type, value, traceback):
-        if type is not None:
-            self.logger.exception("Errors occurred, execution incomplete!")
-            sys.exit()
-        else:
-            self.logger.info("")
-            self.logger.info("Successfully finished execution.")
-            self.logger.info(f"Time taken: {time.time() - self.start_time}.")
-        for handler in list(self.logger.handlers)[1:]:
-            handler.close()
-            self.logger.removeHandler(handler)
+    logger.info("")
+    try:
+        yield logger
+        logger.info("")
+        logger.info("Successfully finished execution.")
+        logger.info(f"Time taken: {time.time() - start_time}.")
+    except:
+        logger.exception("Something went wrong, execution incomplete!")
+    finally:
+        if logger.hasHandlers():
+            logger.handlers.clear()
 
 
 def read_parameters_from_json_file(file_name="", default=""):
@@ -158,18 +133,26 @@ def get_file_names_with_extension(input_path, extension=""):
         A sorted list with unique file names with the specific extension.
     """
     input_files = set()
-    for current_path in input_path:
-        if os.path.isfile(current_path):
-            if current_path.endswith(extension):
-                input_files.add(current_path)
-        elif os.path.isdir(current_path):
-            for current_file_name in os.listdir(current_path):
-                if current_file_name.endswith(extension):
-                    file_name = os.path.join(
-                        current_path,
-                        current_file_name
-                    )
-                    input_files.add(file_name)
+    if not isinstance(extension, str):
+        for tmp_extension in extension:
+            for file_name in get_file_names_with_extension(
+                input_path,
+                tmp_extension
+            ):
+                input_files.add(file_name)
+    else:
+        for current_path in input_path:
+            if os.path.isfile(current_path):
+                if current_path.endswith(extension):
+                    input_files.add(current_path)
+            elif os.path.isdir(current_path):
+                for current_file_name in os.listdir(current_path):
+                    if current_file_name.endswith(extension):
+                        file_name = os.path.join(
+                            current_path,
+                            current_file_name
+                        )
+                        input_files.add(file_name)
     return sorted([os.path.abspath(file_name) for file_name in input_files])
 
 
@@ -706,28 +689,42 @@ class HDF_File(object):
         # TODO: Docstring
         if self.is_read_only:
             raise IOError("HDF file is opened as read only")
-        with h5py.File(self.file_name, "a") as hdf_file:
-            parent_group = self.__get_parent_group(hdf_file, parent_group_name)
-            if overwrite and (dataset_name in parent_group):
-                del parent_group[dataset_name]
-            if dataset_name not in parent_group:
-                if dataset.dtype.type == np.str_:
-                    dataset = dataset.astype(np.dtype('O'))
-                if dataset.dtype == np.dtype('O'):
-                    hdf_dataset = parent_group.create_dataset(
-                        dataset_name,
-                        data=dataset,
-                        compression=compression,
-                        dtype=h5py.string_dtype()
-                    )
-                else:
-                    hdf_dataset = parent_group.create_dataset(
-                        dataset_name,
-                        data=dataset,
-                        compression=compression,
-                    )
-                hdf_dataset.attrs["creation_time"] = time.asctime()
-                hdf_file.attrs["last_updated"] = time.asctime()
+        if isinstance(dataset, pd.core.frame.DataFrame):
+            self.create_group(dataset_name, parent_group_name, overwrite)
+            for column in dataset.columns:
+                self.create_dataset(
+                    column,
+                    dataset[column].values,
+                    dataset_name,
+                    overwrite,
+                    compression
+                )
+        else:
+            with h5py.File(self.file_name, "a") as hdf_file:
+                parent_group = self.__get_parent_group(
+                    hdf_file,
+                    parent_group_name
+                )
+                if overwrite and (dataset_name in parent_group):
+                    del parent_group[dataset_name]
+                if dataset_name not in parent_group:
+                    if dataset.dtype.type == np.str_:
+                        dataset = dataset.astype(np.dtype('O'))
+                    if dataset.dtype == np.dtype('O'):
+                        hdf_dataset = parent_group.create_dataset(
+                            dataset_name,
+                            data=dataset,
+                            compression=compression,
+                            dtype=h5py.string_dtype()
+                        )
+                    else:
+                        hdf_dataset = parent_group.create_dataset(
+                            dataset_name,
+                            data=dataset,
+                            compression=compression,
+                        )
+                    hdf_dataset.attrs["creation_time"] = time.asctime()
+                    hdf_file.attrs["last_updated"] = time.asctime()
 
 
 class HDF_MS_Run_File(HDF_File):

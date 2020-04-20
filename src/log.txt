@@ -1,0 +1,42 @@
+2020-04-20 15:16:31,457 > ==================================================
+2020-04-20 15:16:31,459 > ion_networks.py -f /home/sander/.local/share/jupyter/runtime/kernel-3cd73bdb-d0a9-4d57-88d4-adf8be251bd8.json
+2020-04-20 15:16:31,459 > This log is being saved as: /home/sander/Documents/Proteomics/ion_networks/src/log.txt.
+2020-04-20 15:16:31,460 > 
+2020-04-20 15:16:31,461 > Command: database.
+2020-04-20 15:16:31,463 > 2 input_file_names: ['/home/sander/Documents/Proteomics/data/databases/fasta/corona.fasta', '/home/sander/Documents/Proteomics/data/databases/fasta/crap.fasta']
+2020-04-20 15:16:31,463 > output_directory: /home/sander/Documents/Proteomics/data/databases/hdf/test
+2020-04-20 15:16:31,465 > parameter_file_name: 
+2020-04-20 15:16:31,465 > log_file_name: /home/sander/Documents/Proteomics/ion_networks/src/log.txt
+2020-04-20 15:16:31,466 > 
+2020-04-20 15:16:31,508 > Creating database /home/sander/Documents/Proteomics/data/databases/hdf/test/corona_crap_concatenated_decoy.hdf
+2020-04-20 15:16:31,509 > Reading /home/sander/Documents/Proteomics/data/databases/fasta/corona.fasta
+2020-04-20 15:16:31,584 > Reading /home/sander/Documents/Proteomics/data/databases/fasta/crap.fasta
+2020-04-20 15:16:31,659 > Writing proteins to /home/sander/Documents/Proteomics/data/databases/hdf/test/corona_crap_concatenated_decoy.hdf
+2020-04-20 15:16:31,700 > Writing peptidoforms to /home/sander/Documents/Proteomics/data/databases/hdf/test/corona_crap_concatenated_decoy.hdf
+2020-04-20 15:16:32,459 > Predicting fragments
+2020-04-20 15:16:46,460 > Writing fragments to /home/sander/Documents/Proteomics/data/databases/hdf/test/corona_crap_concatenated_decoy.hdf
+2020-04-20 15:16:46,584 > Writing parameters to /home/sander/Documents/Proteomics/data/databases/hdf/test/corona_crap_concatenated_decoy.hdf
+2020-04-20 15:16:46,610 > 
+2020-04-20 15:16:46,611 > Successfully finished execution.
+2020-04-20 15:16:46,611 > Time taken: 15.154101848602295.
+2020-04-20 15:20:45,726 > ==================================================
+2020-04-20 15:20:45,727 > ion_networks.py -f /home/sander/.local/share/jupyter/runtime/kernel-3cd73bdb-d0a9-4d57-88d4-adf8be251bd8.json
+2020-04-20 15:20:45,727 > This log is being saved as: /home/sander/Documents/Proteomics/ion_networks/src/log.txt.
+2020-04-20 15:20:45,728 > 
+2020-04-20 15:20:45,728 > Command: database.
+2020-04-20 15:20:45,729 > 2 input_file_names: ['/home/sander/Documents/Proteomics/data/databases/fasta/corona.fasta', '/home/sander/Documents/Proteomics/data/databases/fasta/crap.fasta']
+2020-04-20 15:20:45,730 > output_directory: /home/sander/Documents/Proteomics/data/databases/hdf
+2020-04-20 15:20:45,731 > parameter_file_name: 
+2020-04-20 15:20:45,732 > log_file_name: /home/sander/Documents/Proteomics/ion_networks/src/log.txt
+2020-04-20 15:20:45,733 > 
+2020-04-20 15:20:45,736 > Creating database /home/sander/Documents/Proteomics/data/databases/hdf/corona_crap_concatenated_decoy.hdf
+2020-04-20 15:20:45,736 > Reading /home/sander/Documents/Proteomics/data/databases/fasta/corona.fasta
+2020-04-20 15:20:45,761 > Reading /home/sander/Documents/Proteomics/data/databases/fasta/crap.fasta
+2020-04-20 15:20:45,792 > Writing proteins to /home/sander/Documents/Proteomics/data/databases/hdf/corona_crap_concatenated_decoy.hdf
+2020-04-20 15:20:45,827 > Writing peptidoforms to /home/sander/Documents/Proteomics/data/databases/hdf/corona_crap_concatenated_decoy.hdf
+2020-04-20 15:20:46,697 > Predicting fragments
+2020-04-20 15:20:59,141 > Writing fragments to /home/sander/Documents/Proteomics/data/databases/hdf/corona_crap_concatenated_decoy.hdf
+2020-04-20 15:20:59,248 > Writing parameters to /home/sander/Documents/Proteomics/data/databases/hdf/corona_crap_concatenated_decoy.hdf
+2020-04-20 15:20:59,265 > 
+2020-04-20 15:20:59,266 > Successfully finished execution.
+2020-04-20 15:20:59,266 > Time taken: 13.539642333984375.
