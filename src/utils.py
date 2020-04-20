@@ -612,10 +612,10 @@ class HDF_File(object):
         return hash(self.file_name)
 
     def __str__(self):
-        return self.file_name
+        return f"<{self.file_name}>"
 
     def __repr__(self):
-        return self.file_name
+        return str(self)
 
     def __get_parent_group(self, hdf_file, parent_group_name):
         # TODO: Docstring
@@ -731,9 +731,11 @@ class HDF_File(object):
 
 
 class HDF_MS_Run_File(HDF_File):
+    # TODO: Docstring
 
     @staticmethod
     def convert_reference_to_trimmed_file_name(reference):
+        # TODO: Docstring
         if not isinstance(reference, str):
             try:
                 reference = reference.file_name
@@ -750,4 +752,9 @@ class HDF_MS_Run_File(HDF_File):
             )
         ):
             raise ValueError("Invalid reference for HDF file.")
-        return ".".join(reference_components)[:-2]
+        return ".".join(reference_components[:-2])
+
+    @property
+    def run_name(self):
+        # TODO: Docstring
+        return ".".join(os.path.basename(self.file_name).split(".")[:-2])

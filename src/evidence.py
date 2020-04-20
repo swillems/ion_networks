@@ -1,18 +1,16 @@
 #!python
 
 # builtin
-import logging
-import os
 import time
 # external
-import h5py
 import numpy as np
 import scipy
 # local
 import network
+import utils
 
 
-class Evidence(object):
+class Evidence(utils.HDF_MS_Run_File):
     """
     An evidence set containing positive and negative edge evidence, as well as
     node evidence.
@@ -20,29 +18,21 @@ class Evidence(object):
 
     def __init__(
         self,
-        evidence_file_name=None,
-        ion_network=None,
-        parameters={},
-        logger=logging.getLogger()
+        reference,
+        new_file=False,
+        is_read_only=True,
+        logger=None
     ):
         # TODO: Docstring
-        self.logger = logger
-        if ion_network is not None:
-            self.ion_network = ion_network
-            self.file_name = os.path.join(
-                ion_network.file_name_path,
-                ion_network.file_name_base
-            ) + ".evidence.hdf"
-        elif evidence_file_name is not None:
-            self.file_name = evidence_file_name
-            self.ion_network = network.Network(
-                os.path.join(
-                    self.file_name_path,
-                    self.file_name_base
-                ) + ".inet.hdf"
-            )
-        else:
-            raise ValueError("Evidence file needs a corresponding ion-network.")
+        file_name = self.convert_reference_to_trimmed_file_name(reference)
+        super().__init__(
+            f"{file_name}.evidence.hdf",
+            new_file,
+            is_read_only,
+            logger,
+        )
+        # self.ion_network = network.Network(reference)
+        self.ion_network = network.Network(file_name + ".inet.hdf")
         self.ion_network.evidence = self
 
     def mutual_collect_evidence_from(
@@ -88,8 +78,9 @@ class Evidence(object):
         # TODO: Docstring
         if self.is_evidenced_with(other) or other.is_evidenced_with(self):
             if parameters["force_overwrite"]:
-                self.remove_evidence_from(other)
-                other.remove_evidence_from(self)
+                pass
+                # self.remove_evidence_from(other)
+                # other.remove_evidence_from(self)
             else:
                 self.logger.info(
                     f"Evidence for {self.file_name} and {other.file_name} "
@@ -100,16 +91,7 @@ class Evidence(object):
 
     def is_evidenced_with(self, other):
         # TODO: Docstring
-        with h5py.File(self.file_name, "a") as evidence_file:
-            if other.ion_network.file_name_base in evidence_file:
-                return True
-        return False
-
-    def remove_evidence_from(self, other):
-        # TODO: Docstring
-        if self.is_evidenced_with(other):
-            with h5py.File(self.file_name, "a") as evidence_file:
-                del evidence_file[other.ion_network.file_name_base]
+        return other.run_name in self.get_group_list
 
     def align_edges(
         self,
@@ -213,17 +195,23 @@ class Evidence(object):
 
     def get_aligned_nodes_from_group(self, group_name="", return_as_mask=True):
         # TODO: Docstring
-        with h5py.File(self.file_name, "r") as evidence_file:
-            if group_name == "":
-                ions = np.zeros(self.ion_network.node_count, dtype=np.int)
-                for group_name in evidence_file:
-                    ions[evidence_file[group_name]["aligned_nodes"][...]] += 1
-            else:
-                ions = evidence_file[group_name]["aligned_nodes"][...]
-                if return_as_mask:
-                    mask = np.repeat(False, self.ion_network.node_count)
-                    mask[ions] = True
-                    ions = mask
+        if group_name == "":
+            ions = np.zeros(self.ion_network.node_count, dtype=np.int)
+            for group_name in self.get_group_list:
+                ion_mask = self.get_dataset(
+                    "aligned_nodes",
+                    parent_group_name=group_name,
+                )
+                ions[ion_mask] += 1
+        else:
+            ions = self.get_dataset(
+                "aligned_nodes",
+                parent_group_name=group_name,
+            )
+            if return_as_mask:
+                mask = np.repeat(False, self.ion_network.node_count)
+                mask[ions] = True
+                ions = mask
         return ions
 
     def get_edge_mask_from_group(self, group_name="", positive=True):
@@ -232,13 +220,18 @@ class Evidence(object):
             mask_name = "positive_edges"
         else:
             mask_name = "negative_edges"
-        with h5py.File(self.file_name, "r") as evidence_file:
-            if group_name == "":
-                edges = np.zeros(self.ion_network.edge_count, dtype=np.int)
-                for group_name in evidence_file:
-                    edges += evidence_file[group_name][mask_name][...]
-            else:
-                edges = evidence_file[group_name][mask_name][...]
+        if group_name == "":
+            edges = np.zeros(self.ion_network.edge_count, dtype=np.int)
+            for group_name in self.get_group_list:
+                edges += self.get_dataset(
+                    mask_name,
+                    parent_group_name=group_name,
+                )
+        else:
+            edges = self.get_dataset(
+                mask_name,
+                parent_group_name=group_name,
+            )
         return edges
 
     @property
@@ -251,9 +244,7 @@ class Evidence(object):
         list[str]
             A sorted list with the keys of all ion-network.
         """
-        with h5py.File(self.file_name, "r") as evidence_file:
-            ion_networks = list(evidence_file)
-        return ion_networks
+        return self.get_group_list
 
     @property
     def evidence_count(self):
@@ -266,37 +257,3 @@ class Evidence(object):
             The number of ion-network providing evidence.
         """
         return len(self.network_keys)
-
-    @property
-    def file_name_base(self):
-        """
-        Get the file name base of the evidence.
-
-        Returns
-        -------
-        str
-            The file name base of the evidence as a string.
-        """
-        return os.path.basename(self.file_name)[:-13]
-
-    @property
-    def file_name_path(self):
-        """
-        Get the file name path of the evidence.
-
-        Returns
-        -------
-        str
-            The file name path of the evidence as a string.
-        """
-        return os.path.dirname(self.file_name)
-
-    @property
-    def run(self):
-        # TODO: Docstring
-        return os.path.basename(self.file_name)[:-13]
-
-    @property
-    def directory(self):
-        # TODO: Docstring
-        return os.path.dirname(self.file_name)

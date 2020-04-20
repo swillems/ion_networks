@@ -1,7 +1,6 @@
 #!python
 
 # external
-import h5py
 import numpy as np
 import numba
 # local
@@ -29,10 +28,11 @@ class Annotation(utils.HDF_MS_Run_File):
             is_read_only,
             logger,
         )
-        self.evidence = evidence.Evidence(reference)
+        self.evidence = evidence.Evidence(file_name + ".evidence.hdf")
         self.evidence.annotation = self
-        self.network = network.Network(reference)
-        self.network.annotation = self
+        # self.ion_network = network.Network(reference)
+        self.ion_network = network.Network(file_name + ".inet.hdf")
+        self.ion_network.annotation = self
 
     def create_annotations(self, database, parameters):
         if database is not None:

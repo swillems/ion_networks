@@ -219,8 +219,8 @@ class Interface(object):
             logger.info("")
             evidence_files = [
                 evidence.Evidence(
-                    ion_network=network.Network(file_name),
-                    parameters=parameters,
+                    file_name,
+                    new_file=True,
                     logger=logger
                 ) for file_name in input_file_names
             ]
@@ -254,11 +254,7 @@ class Interface(object):
         if log_file_name != "":
             log_file_name = os.path.abspath(log_file_name)
         with utils.open_logger(log_file_name) as logger:
-            evi = evidence.Evidence(
-                evidence_file_name=evidence_file_name,
-                parameters=parameters,
-                logger=logger
-            )
+            evi = evidence.Evidence(evidence_file_name)
             browser.Browser(
                 evi,
                 logger
