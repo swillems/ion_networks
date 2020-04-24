@@ -85,7 +85,6 @@ class Interface(object):
                 data = ms_utils.read_data_from_file(
                     data_type,
                     input_file_name,
-                    logger=logger
                 )
                 file_name_base = os.path.basename(input_file_name)[
                     :-len(ms_utils.DATA_TYPE_FILE_EXTENSIONS[data_type])
@@ -98,7 +97,7 @@ class Interface(object):
                     output_path,
                     f"{file_name_base}.inet.csv"
                 )
-                ms_utils.write_data_to_csv_file(data, output_file_name, logger)
+                ms_utils.write_data_to_csv_file(data, output_file_name)
 
     @staticmethod
     def create_ion_networks(
@@ -166,12 +165,10 @@ class Interface(object):
                 network = ms_run_files.Network(
                     ion_network_file_name,
                     new_file=True,
-                    logger=logger
                 )
                 data = ms_utils.read_centroided_csv_file(
                     csv_file_name,
                     parameters,
-                    logger=logger
                 )
                 network.create_from_data(data, parameters)
 
@@ -224,7 +221,6 @@ class Interface(object):
                 ms_run_files.Evidence(
                     file_name,
                     new_file=True,
-                    logger=logger
                 ) for file_name in input_file_names
             ]
             for index, evidence_file in enumerate(evidence_files[:-1]):
@@ -260,7 +256,6 @@ class Interface(object):
             evi = ms_run_files.Evidence(evidence_file_name)
             browser.Browser(
                 evi,
-                logger
             )
 
     @staticmethod
@@ -328,7 +323,6 @@ class Interface(object):
             db = ms_database.Database(
                 database_file_name,
                 new_file=True,
-                logger=logger,
             )
             db.create_from_fastas(input_file_names, parameters)
 
@@ -357,7 +351,7 @@ class Interface(object):
             logger.info(f"Command: annotate")
             input_file_names = ms_utils.get_file_names_with_extension(
                 input_path,
-                extension=[".inet.hdf", ".evidence.hdf", "annotation.hdf"]
+                extension=".evidence.hdf"
             )
             file_count = len(input_file_names)
             logger.info(
@@ -372,7 +366,6 @@ class Interface(object):
                 ani = ms_run_files.Annotation(
                     file_name,
                     new_file=True,
-                    logger=logger
                 )
                 ani.create_annotations(database_file_name, parameters)
 
@@ -700,6 +693,7 @@ class CLI(object):
         self.main.add_command(CLI.show)
         self.main.add_command(CLI.gui)
         self.main.add_command(CLI.database)
+        self.main.add_command(CLI.annotate)
         self.main()
 
     @staticmethod
@@ -1019,8 +1013,66 @@ class CLI(object):
             log_file_name
         )
 
+    @staticmethod
+    @click.command(
+        "annotate",
+        help="Annotate ion-network files.",
+        short_help="Annotate ion-network files."
+    )
+    @click.option(
+        "--input_path",
+        "-i",
+        help="An [input.evidence.hdf] evidence file."
+            "Individual files can be provided, as well as folders. "
+            "This flag can be set multiple times.",
+        required=True,
+        multiple=True,
+        type=click.Path(exists=True)
+    )
+    @click.option(
+        "--database_file",
+        "-d",
+        "database_file_name",
+        help="A [database.hdf] file.",
+        required=True,
+        type=click.Path(exists=True, dir_okay=False),
+    )
+    @click.option(
+        "--parameter_file",
+        "-p",
+        "parameter_file_name",
+        help="A [parameters.json] file with optional parameters.",
+        type=click.Path(exists=True, dir_okay=False)
+    )
+    @click.option(
+        "--log_file",
+        "-l",
+        "log_file_name",
+        help="Save the log to a [log.txt] file. "
+            "By default this is written to the current directory. "
+            "This log file can also be supplied through a [parameters.json] "
+            "file. It can be turned off by providing an empty path (i.e. ''). "
+            "If the log file already exists, the new log data is appended.",
+        type=click.Path(dir_okay=False)
+    )
+    def annotate(
+        input_path,
+        database_file_name,
+        parameter_file_name,
+        log_file_name
+    ):
+        Interface.annotate_ion_network(
+            input_path,
+            database_file_name,
+            parameter_file_name,
+            log_file_name
+        )
+
 # TODO: Rename "unified" and "peaks" referring to .inet.csv files?
 # TODO: Define help text in separate json files?
 # TODO: Show help text popups in GUI
 # TODO: Database interface (CLI + GUI)
 # TODO: Annotation interface (CLI + GUI)
+
+
+# -pRawDirName ~/sandbox/HDMSE_test/171114_HDMSE_Mclass_K562_30min_01.raw -outputDirName ~/sandbox/HDMSE_test/ -lockMassZ2 785.8426 -lockmassToleranceAMU 0.25 -bCSVOutput 1 -writeFuncCsvFiles 0 -leThresholdCounts 1 -heThresholdCounts 1 -apexTrackSNRThreshold 1 -bEnableCentroids 0

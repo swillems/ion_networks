@@ -2,7 +2,6 @@
 
 # builtin
 import os
-import time
 # external
 import numpy as np
 import scipy
@@ -55,7 +54,6 @@ class Network(HDF_MS_Run_File):
         reference,
         new_file=False,
         is_read_only=True,
-        logger=None
     ):
         # TODO: Docstring
         file_name = self.convert_reference_to_trimmed_file_name(reference)
@@ -63,7 +61,6 @@ class Network(HDF_MS_Run_File):
             f"{file_name}.inet.hdf",
             new_file,
             is_read_only,
-            logger,
         )
 
     def create_from_data(self, data, parameters):
@@ -78,16 +75,12 @@ class Network(HDF_MS_Run_File):
             A dictionary with optional parameters for the creation of an
             ion-network.
         """
-        self.logger.info(f"Creating ion-network {self.file_name}")
-        directory = os.path.dirname(self.file_name)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        with h5py.File(self.file_name, "w") as network_file:
-            self.write_nodes(network_file, data, parameters)
-            self.write_edges(network_file, parameters)
-            self.write_parameters(network_file, parameters)
+        ms_utils.LOGGER.info(f"Creating ion-network {self.file_name}")
+        self.write_nodes(data, parameters)
+        self.write_edges(parameters)
+        self.write_parameters(parameters)
 
-    def write_nodes(self, network_file, data, parameters):
+    def write_nodes(self, data):
         """
         Saves all data as individual arrays to an .hdf file. Each array
         will be placed in a 'nodes' group and names according to its column
@@ -95,35 +88,21 @@ class Network(HDF_MS_Run_File):
 
         Parameters
         ----------
-        network_file : h5py.file
-            An opened and writeable .hdf file representing the ion-network.
         data : pd.Dataframe
             A pd.Dataframe with centroided ion peaks.
-        parameters : dict
-            A dictionary with optional parameters for the creation of an
-            ion-network.
         """
-        self.logger.info(f"Writing nodes of ion-network {self.file_name}")
-        node_group = network_file.create_group("nodes")
-        for column in data.columns:
-            if column.startswith("#"):
-                if "comments" not in network_file:
-                    comment_group = network_file.create_group("comments")
-                comment_group.create_dataset(
-                    column[1:],
-                    data=data[column],
-                    compression="lzf",
-                    dtype=h5py.string_dtype()
-                )
-            else:
-                node_group.create_dataset(
-                    column,
-                    data=data[column],
-                    compression="lzf",
-                    dtype=np.float
-                )
+        ms_utils.LOGGER.info(f"Writing nodes of ion-network {self.file_name}")
+        regular_columns = [
+            column for column in data.columns if not column.startswith("#")
+        ]
+        self.create_dataset("nodes", data[regular_columns])
+        if len(regular_columns) != data.shape[1]:
+            comment_columns = [
+                column for column in data.columns if column.startswith("#")
+            ]
+            self.create_dataset("comments", data[comment_columns])
 
-    def write_edges(self, network_file, parameters):
+    def write_edges(self, parameters):
         """
         Creates and saves all edges of an ion-network. They are saved in an
         .hdf file as indptr and indices of a scipy.sparse.csr matrix in an
@@ -131,14 +110,12 @@ class Network(HDF_MS_Run_File):
 
         Parameters
         ----------
-        network_file : h5py.file
-            An opened and writeable .hdf file representing the ion-network.
         parameters : dict
             A dictionary with optional parameters for the creation of an
             ion-network.
         """
-        self.logger.info(f"Writing edges of ion-network {self.file_name}")
-        edge_group = network_file.create_group("edges")
+        ms_utils.LOGGER.info(f"Writing edges of ion-network {self.file_name}")
+        self.create_group("edges")
         dimensions = self.get_precursor_dimensions(
             remove_precursor_rt=True
         )
@@ -153,46 +130,44 @@ class Network(HDF_MS_Run_File):
             tuple(self.get_ion_coordinates(dimensions)),
             tuple(max_absolute_errors)
         )
-        edge_group.create_dataset(
+        self.create_dataset(
             "indptr",
-            data=indptr,
-            compression="lzf"
+            indptr,
+            parent_group="edges"
         )
-        edge_group.create_dataset(
+        self.create_dataset(
             "indices",
-            data=indices,
-            compression="lzf"
+            indices,
+            parent_group="edges"
         )
 
-    def write_parameters(self, network_file, parameters):
+    def write_parameters(self, parameters):
         """
         Saves all parameters of an ion-network. They are saved in an .hdf
         file as attributes of 'parameters' group.
 
         Parameters
         ----------
-        network_file : h5py.file
-            An opened and writeable .hdf file representing the ion-network.
         parameters : dict
             A dictionary with optional parameters for the creation of an
             ion-network.
         """
-        self.logger.info(
+        ms_utils.LOGGER.info(
             f"Writing parameters of ion-network {self.file_name}"
         )
-        network_file.attrs["creation_time"] = time.asctime()
-        network_file.attrs["node_count"] = len(
-            network_file["edges"]["indptr"]
-        ) - 1
-        network_file.attrs["edge_count"] = len(
-            network_file["edges"]["indices"]
+        self.create_attr(
+            "node_count",
+            self.get_dataset("FRAGMENT_MZ", "nodes", return_length=True)
         )
-        network_file.attrs["original_file_name"] = self.file_name
+        self.create_attr(
+            "edge_count",
+            self.get_dataset("indices", "edges", return_length=True)
+        )
         for parameter_key, parameter_value in parameters.items():
             if parameter_key.startswith("max_edge_absolute_error"):
                 if parameter_key[19:] not in self.dimensions:
                     continue
-            network_file.attrs[parameter_key] = parameter_value
+            self.create_attr(parameter_key, parameter_value)
 
     def get_ion_coordinates(self, dimensions=None, indices=...):
         """
@@ -326,7 +301,7 @@ class Network(HDF_MS_Run_File):
             return second_indices, indices
 
     @staticmethod
-    @numba.njit()
+    @numba.njit(cache=True)
     def create_sparse_edges(
         rt_coordinate_array,
         max_rt_absolute_error,
@@ -409,7 +384,7 @@ class Network(HDF_MS_Run_File):
 
     def align_nodes(self, other, parameters, return_as_scipy_csr=True):
         # TODO: Docstring
-        self.logger.info(f"Aligning {self.file_name} with {other.file_name}")
+        ms_utils.LOGGER.info(f"Aligning {self.file_name} with {other.file_name}")
         dimensions = self.dimension_overlap(
             other,
             remove_fragment_mz=True,
@@ -455,11 +430,11 @@ class Network(HDF_MS_Run_File):
         other_coordinates = tuple(other_coordinates)
         max_absolute_errors = tuple(max_absolute_errors)
         # TODO: Move to seperate function and define type
-        self.logger.info(
+        ms_utils.LOGGER.info(
             f"Matching ion coordinates from "
             f"{self.file_name} and {other.file_name}"
         )
-        @numba.njit
+        @numba.njit(cache=True)
         def numba_wrapper():
             low_limits = np.searchsorted(
                 other_mz[other_mz_order],
@@ -518,7 +493,7 @@ class Network(HDF_MS_Run_File):
         return self_indices, other_indices
 
     @staticmethod
-    @numba.njit
+    @numba.njit(cache=True)
     def quick_align(
         self_mzs,
         other_mzs,
@@ -561,7 +536,7 @@ class Network(HDF_MS_Run_File):
 
     def calibrate_precursor_rt(self, other, parameters):
         # TODO: Docstring
-        self.logger.info(
+        ms_utils.LOGGER.info(
             f"Calibrating PRECURSOR_RT of {self.file_name} with "
             f"{other.file_name}"
         )
@@ -712,65 +687,24 @@ class Network(HDF_MS_Run_File):
         return sorted(dimensions)
 
     @property
-    def node_count(self):
-        """
-        Get the number of nodes in the ion-network.
-
-        Returns
-        -------
-        int
-            The number of nodes in the ion-network.
-        """
-        with h5py.File(self.file_name, "r") as network_file:
-            node_count = network_file.attrs["node_count"]
-        return node_count
-
-    @property
     def dimensions(self):
-        """
-        Get a sorted list with all the dimensions of the nodes in the
-        ion-network.
-
-        Returns
-        -------
-        list[str]
-            A sorted list with the names of all dimensions ion-network.
-        """
-        with h5py.File(self.file_name, "r") as network_file:
-            dimensions = sorted(network_file["nodes"])
-        return dimensions
+        return self.get_group_list("nodes")
 
     @property
     def comment_dimensions(self):
-        """
-        Get a sorted list with all the dimensions of the nodes in the
-        ion-network.
-
-        Returns
-        -------
-        list[str]
-            A sorted list with the names of all dimensions ion-network.
-        """
-        with h5py.File(self.file_name, "r") as network_file:
-            if "comments" in network_file:
-                dimensions = sorted(network_file["comments"])
-            else:
-                dimensions = []
+        if "comments" in self.get_group_list():
+            dimensions = self.get_group_list("comments")
+        else:
+            dimensions = []
         return dimensions
 
     @property
-    def edge_count(self):
-        """
-        Get the number of edges in the ion-network.
+    def node_count(self):
+        return self.get_attr("node_count")
 
-        Returns
-        -------
-        int
-            The number of edges in the ion-network.
-        """
-        with h5py.File(self.file_name, "r") as network_file:
-            edge_count = network_file.attrs["edge_count"]
-        return edge_count
+    @property
+    def edge_count(self):
+        return self.get_attr("edge_count")
 
 
 class Evidence(HDF_MS_Run_File):
@@ -784,7 +718,6 @@ class Evidence(HDF_MS_Run_File):
         reference,
         new_file=False,
         is_read_only=True,
-        logger=None
     ):
         # TODO: Docstring
         file_name = self.convert_reference_to_trimmed_file_name(reference)
@@ -792,9 +725,8 @@ class Evidence(HDF_MS_Run_File):
             f"{file_name}.evidence.hdf",
             new_file,
             is_read_only,
-            logger,
         )
-        self.ion_network = Network(reference, logger=logger)
+        self.ion_network = Network(reference)
         self.ion_network.evidence = self
 
     def mutual_collect_evidence_from(
@@ -844,7 +776,7 @@ class Evidence(HDF_MS_Run_File):
                 # self.remove_evidence_from(other)
                 # other.remove_evidence_from(self)
             else:
-                self.logger.info(
+                ms_utils.LOGGER.info(
                     f"Evidence for {self.file_name} and {other.file_name} "
                     f"has already been collected"
                 )
@@ -866,7 +798,7 @@ class Evidence(HDF_MS_Run_File):
         parameters
     ):
         # TODO: Docstring
-        self.logger.info(
+        ms_utils.LOGGER.info(
             f"Collecting evidence for {self.ion_network.file_name} from "
             f"{other.ion_network.file_name}"
         )
@@ -1030,7 +962,6 @@ class Annotation(HDF_MS_Run_File):
         reference,
         new_file=False,
         is_read_only=True,
-        logger=None
     ):
         # TODO: Docstring
         file_name = self.convert_reference_to_trimmed_file_name(reference)
@@ -1038,11 +969,10 @@ class Annotation(HDF_MS_Run_File):
             f"{file_name}.annotation.hdf",
             new_file,
             is_read_only,
-            logger,
         )
-        self.evidence = Evidence(reference, logger=logger)
+        self.evidence = Evidence(reference)
         self.evidence.annotation = self
-        self.ion_network = Network(reference, logger=logger)
+        self.ion_network = Network(reference)
         self.ion_network.annotation = self
 
     def create_annotations(self, database, parameters):
@@ -1054,14 +984,14 @@ class Annotation(HDF_MS_Run_File):
 
     def write_parameters(self, database, parameters):
         # TODO: Docstring
-        self.logger.info(f"Writing parameters to {self.file_name}")
+        ms_utils.LOGGER.info(f"Writing parameters to {self.file_name}")
         self.create_attr("database_file_name", database.file_name)
         for key, value in parameters.items():
             self.create_attr(key, value)
 
     def write_candidates(self, database, parameters):
         # TODO: Docstring
-        self.logger.info(f"Writing candidates to {self.file_name}")
+        ms_utils.LOGGER.info(f"Writing candidates to {self.file_name}")
         (
             low_peptide_indices,
             high_peptide_indices
@@ -1106,7 +1036,7 @@ class Annotation(HDF_MS_Run_File):
         low_peptide_indices,
         high_peptide_indices
     ):
-        self.logger.info(f"Writing edge candidates to {self.file_name}")
+        ms_utils.LOGGER.info(f"Writing edge candidates to {self.file_name}")
         database_peptides = database.get_fragment_coordinates("peptide_index")
         indptr, indices = self.ion_network.get_edges(
             indptr_and_indices=True
@@ -1137,7 +1067,7 @@ class Annotation(HDF_MS_Run_File):
         return edge_indptr, edge_indices
 
     @staticmethod
-    @numba.njit
+    @numba.njit(cache=True)
     def __get_candidate_peptide_indices_for_edges(
         indptr,
         indices,
@@ -1197,7 +1127,7 @@ class Annotation(HDF_MS_Run_File):
         parameters
     ):
         # TODO: Docstring
-        self.logger.info(f"Writing node candidates to {self.file_name}")
+        ms_utils.LOGGER.info(f"Writing node candidates to {self.file_name}")
         max_ppm = parameters["annotation_ppm"]
         self_mzs = self.ion_network.get_ion_coordinates("FRAGMENT_MZ")
         mz_order = np.argsort(self_mzs)
@@ -1216,7 +1146,7 @@ class Annotation(HDF_MS_Run_File):
         return low_limits[inv_order], high_limits[inv_order]
 
 
-@numba.njit(fastmath=True)
+@numba.njit(fastmath=True, cache=True)
 def longest_increasing_subsequence(sequence):
     # TODO:Docstring
     M = np.zeros(len(sequence) + 1, np.int64)

@@ -19,14 +19,12 @@ class Database(ms_utils.HDF_File):
         file_name,
         new_file=False,
         is_read_only=True,
-        logger=None,
     ):
         # TODO: Docstring
         super().__init__(
             file_name,
             new_file,
             is_read_only,
-            logger,
         )
 
     def create_from_fastas(
@@ -35,7 +33,7 @@ class Database(ms_utils.HDF_File):
         parameters,
     ):
         # TODO: Docstring
-        self.logger.info(f"Creating database {self.file_name}")
+        ms_utils.LOGGER.info(f"Creating database {self.file_name}")
         proteins, peptides = self.read_proteins_and_peptides_from_fasta(
             fasta_file_names,
             **parameters
@@ -47,7 +45,7 @@ class Database(ms_utils.HDF_File):
 
     def write_parameters(self, fasta_file_names, parameters):
         # TODO: Docstring
-        self.logger.info(f"Writing parameters to {self.file_name}")
+        ms_utils.LOGGER.info(f"Writing parameters to {self.file_name}")
         self.create_attr("fasta_file_names", fasta_file_names)
         for key, value in parameters.items():
             self.create_attr(key, value)
@@ -72,7 +70,7 @@ class Database(ms_utils.HDF_File):
         if not (create_targets or create_decoys):
             raise ValueError("No targets or decoys to create")
         for fasta_file_name in fasta_file_names:
-            self.logger.info(f"Reading {fasta_file_name}")
+            ms_utils.LOGGER.info(f"Reading {fasta_file_name}")
             if create_targets:
                 reversed_protein_decoy = False
                 proteins, peptides = self.__read_proteins_and_peptides_from_fasta(
@@ -154,7 +152,7 @@ class Database(ms_utils.HDF_File):
 
     def write_proteins(self, proteins, **parameters):
         # TODO: Docstring
-        self.logger.info(f"Writing proteins to {self.file_name}")
+        ms_utils.LOGGER.info(f"Writing proteins to {self.file_name}")
         columns = sorted(
             {
                 v for values in proteins.values() for v in values
@@ -185,7 +183,7 @@ class Database(ms_utils.HDF_File):
         **kwargs,
     ):
         # TODO: Docstring
-        self.logger.info(f"Writing peptidoforms to {self.file_name}")
+        ms_utils.LOGGER.info(f"Writing peptidoforms to {self.file_name}")
         peptide_list = [
             (
                 peptide,
@@ -254,7 +252,7 @@ class Database(ms_utils.HDF_File):
         **kwargs,
     ):
         # TODO: Docstring
-        self.logger.info(f"Predicting fragments")
+        ms_utils.LOGGER.info(f"Predicting fragments")
         ms2pip_params = {
             "ms2pip": {
                 "model": model,
@@ -317,7 +315,7 @@ class Database(ms_utils.HDF_File):
         del fragrec["ion"]
         fragrec["index"] = np.arange(fragrec.shape[0])
         fragrec.set_index("index", inplace=True)
-        self.logger.info(f"Writing fragments to {self.file_name}")
+        ms_utils.LOGGER.info(f"Writing fragments to {self.file_name}")
         self.create_dataset("fragments", fragrec)
 
     @staticmethod
@@ -363,24 +361,40 @@ class Database(ms_utils.HDF_File):
 
     def get_fragment_coordinates(self, dimensions=None, indices=...):
         # TODO: Docstring
+        if isinstance(dimensions, str):
+            return self.get_dataset(
+                dimensions,
+                parent_group_name="fragments",
+                indices=indices
+            )
+        elif dimensions is None:
+            dimensions = self.get_group_list(
+                parent_group_name="fragments"
+            )
         return [
             self.get_dataset(
                 dimension,
                 parent_group_name="fragments",
                 indices=indices
-            ) for dimension in self.get_group_list(
-                parent_group_name="fragments"
-            )
+            ) for dimension in dimensions
         ]
 
     def get_peptide_coordinates(self, dimensions=None, indices=...):
         # TODO: Docstring
+        if isinstance(dimensions, str):
+            return self.get_dataset(
+                dimensions,
+                parent_group_name="peptides",
+                indices=indices
+            )
+        elif dimensions is None:
+            dimensions = self.get_group_list(
+                parent_group_name="peptides"
+            )
         return [
             self.get_dataset(
                 dimension,
                 parent_group_name="peptides",
                 indices=indices
-            ) for dimension in self.get_group_list(
-                parent_group_name="peptides"
-            )
+            ) for dimension in dimensions
         ]

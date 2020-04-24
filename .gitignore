@@ -130,7 +130,8 @@ dmypy.json
 
 # Temp folder and sandbox
 .tmp
-# src/sandbox.*
+# src/sandbox*
+src/log.txt
 
 # TODO: remove from .gitignore
 # docs

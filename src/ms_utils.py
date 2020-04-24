@@ -32,20 +32,21 @@ DATA_TYPE_FILE_EXTENSIONS = {
     "SWIMDIA": "_Apex3DIons.csv",
     "DIAPASEF": "_centroids.hdf",
 }
+LOGGER = logging.getLogger("Ion-networks")
 
 
 @contextlib.contextmanager
 def open_logger(log_file_name, log_level=logging.INFO):
+    # TODO: Docstring
     start_time = time.time()
-    logger = logging.getLogger("Ion-networks")
     formatter = logging.Formatter('%(asctime)s > %(message)s')
-    logger.setLevel(log_level)
-    if logger.hasHandlers():
-        logger.handlers.clear()
+    LOGGER.setLevel(log_level)
+    if LOGGER.hasHandlers():
+        LOGGER.handlers.clear()
     console_handler = logging.StreamHandler(stream=sys.stdout)
     console_handler.setLevel(log_level)
     console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
+    LOGGER.addHandler(console_handler)
     if log_file_name != "":
         directory = os.path.dirname(log_file_name)
         if not os.path.exists(directory):
@@ -53,26 +54,26 @@ def open_logger(log_file_name, log_level=logging.INFO):
         file_handler = logging.FileHandler(log_file_name, mode="a")
         file_handler.setLevel(log_level)
         file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-    logger.info("=" * 50)
-    logger.info(
+        LOGGER.addHandler(file_handler)
+    LOGGER.info("=" * 50)
+    LOGGER.info(
         "ion_networks.py " + " ".join(sys.argv[1:])
     )
     if log_file_name != "":
-        logger.info(
+        LOGGER.info(
             f"This log is being saved as: {log_file_name}"
         )
-    logger.info("")
+    LOGGER.info("")
     try:
-        yield logger
-        logger.info("")
-        logger.info("Successfully finished execution")
-        logger.info(f"Time taken: {time.time() - start_time}")
+        yield LOGGER
+        LOGGER.info("")
+        LOGGER.info("Successfully finished execution")
+        LOGGER.info(f"Time taken: {time.time() - start_time}")
     except:
-        logger.exception("Something went wrong, execution incomplete!")
+        LOGGER.exception("Something went wrong, execution incomplete!")
     finally:
-        if logger.hasHandlers():
-            logger.handlers.clear()
+        if LOGGER.hasHandlers():
+            LOGGER.handlers.clear()
 
 
 def read_parameters_from_json_file(file_name="", default=""):
@@ -160,7 +161,6 @@ def read_data_from_file(
     data_type,
     file_name,
     log_transform_intensity=True,
-    logger=logging.getLogger()
 ):
     """
     Convert an [input_file.*] file to a pd.DataFrame with as columns the
@@ -179,8 +179,6 @@ def read_data_from_file(
         The file name containing centroided ions.
     log_transform_intensity : bool
         Transform the intensities to logarithmic values.
-    logger : logging.logger
-        The logger that indicates all progress.
 
     Returns
     -------
@@ -201,7 +199,6 @@ def read_data_from_file(
     data = read_function(
         file_name,
         log_transform_intensity=log_transform_intensity,
-        logger=logger
     )
     return data
 
@@ -209,7 +206,6 @@ def read_data_from_file(
 def read_data_from_mgf_file(
     file_name,
     log_transform_intensity=True,
-    logger=logging.getLogger()
 ):
     """
     Convert an [mgf_input.mgf] file to a pd.DataFrame with as columns the
@@ -221,8 +217,6 @@ def read_data_from_mgf_file(
         The file name of the DDA .mgf file (generated with ms-convert).
     log_transform_intensity : bool
         Transform the intensities to logarithmic values.
-    logger : logging.logger
-        The logger that indicates all progress.
 
     Returns
     -------
@@ -230,7 +224,7 @@ def read_data_from_mgf_file(
         A pd.DataFrame with as columns the PRECURSOR_RT, PRECURSOR_MZ,
         FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
     """
-    logger.info(f"Reading mgf file {file_name}")
+    LOGGER.info(f"Reading mgf file {file_name}")
     mz1s = []
     mz2s = []
     rts = []
@@ -262,7 +256,6 @@ def read_data_from_mgf_file(
 def read_data_from_sonar_file(
     file_name,
     log_transform_intensity=True,
-    logger=logging.getLogger()
 ):
     """
     Convert a [sonar_input.csv] file to a pd.DataFrame with as columns the
@@ -274,8 +267,6 @@ def read_data_from_sonar_file(
         The file name of the SONAR .csv file (generated with Waters' Apex3d).
     log_transform_intensity : bool
         Transform the intensities to logarithmic values.
-    logger : logging.logger
-        The logger that indicates all progress.
 
     Returns
     -------
@@ -283,7 +274,7 @@ def read_data_from_sonar_file(
         A pd.DataFrame with as columns the PRECURSOR_RT, PRECURSOR_MZ,
         FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
     """
-    logger.info(f"Reading sonar file {file_name}")
+    LOGGER.info(f"Reading sonar file {file_name}")
     data = pd.read_csv(
         file_name,
         engine="c",
@@ -306,7 +297,6 @@ def read_data_from_sonar_file(
 def read_data_from_hdmse_file(
     file_name,
     log_transform_intensity=True,
-    logger=logging.getLogger()
 ):
     """
     Convert a [hdmse_input.csv] file to a pd.DataFrame with as columns the
@@ -318,8 +308,6 @@ def read_data_from_hdmse_file(
         The file name of the HDMSE .csv file (generated with Waters' Apex3d).
     log_transform_intensity : bool
         Transform the intensities to logarithmic values.
-    logger : logging.logger
-        The logger that indicates all progress.
 
     Returns
     -------
@@ -327,7 +315,7 @@ def read_data_from_hdmse_file(
         A pd.DataFrame with as columns the PRECURSOR_RT, PRECURSOR_DT,
         FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
     """
-    logger.info(f"Reading hdmse file {file_name}")
+    LOGGER.info(f"Reading hdmse file {file_name}")
     data = pd.read_csv(
         file_name,
         engine="c",
@@ -349,7 +337,6 @@ def read_data_from_hdmse_file(
 def read_data_from_swimdia_file(
     file_name,
     log_transform_intensity=True,
-    logger=logging.getLogger()
 ):
     """
     Convert a [swimdia_input.csv] file to a pd.DataFrame with as columns the
@@ -361,8 +348,6 @@ def read_data_from_swimdia_file(
         The file name of the SWIM-DIA .csv file (generated with Waters' Apex3d).
     log_transform_intensity : bool
         Transform the intensities to logarithmic values.
-    logger : logging.logger
-        The logger that indicates all progress.
 
     Returns
     -------
@@ -370,7 +355,7 @@ def read_data_from_swimdia_file(
         A pd.DataFrame with as columns the PRECURSOR_RT, PRECURSOR_DT,
         FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
     """
-    logger.info(f"Reading swimdia dile {file_name}")
+    LOGGER.info(f"Reading swimdia dile {file_name}")
     data = pd.read_csv(
         file_name,
         engine="c",
@@ -393,7 +378,6 @@ def read_data_from_diapasef_file(
     min_intensity=1000,
     min_cluster_size=10,
     log_transform_intensity=True,
-    logger=logging.getLogger()
 ):
     """
     Convert a [diapasef_input_centroids.hdf] file to a pd.DataFrame with as
@@ -411,8 +395,6 @@ def read_data_from_diapasef_file(
         The minimimum cluster size of an ion to retain it.
     log_transform_intensity : bool
         Transform the intensities to logarithmic values.
-    logger : logging.logger
-        The logger that indicates all progress.
 
     Returns
     -------
@@ -420,7 +402,7 @@ def read_data_from_diapasef_file(
         A pd.DataFrame with as columns the PRECURSOR_RT, PRECURSOR_DT,
         PRECURSOR_MZ, FRAGMENT_MZ and FRAGMENT_LOGINT dimensions.
     """
-    logger.info(f"Reading diapasef file {file_name}")
+    LOGGER.info(f"Reading diapasef file {file_name}")
     with h5py.File(file_name, "r") as hdf_file:
         centroided_fragment_mzs = hdf_file["fragment_mz_values"][...]
         centroided_fragment_intensities = hdf_file[
@@ -461,7 +443,6 @@ def read_data_from_diapasef_file(
 def read_centroided_csv_file(
     centroided_csv_file_name,
     parameters,
-    logger=logging.getLogger()
 ):
     """
     Read a centroided .csv file and return this as a pd.DataFrame.
@@ -485,7 +466,7 @@ def read_centroided_csv_file(
         If the PRECURSOR_RT, FRAGMENT_MZ or FRAGMENT_LOGINT column is
         missing.
     """
-    logger.info(f"Reading centroided csv file {centroided_csv_file_name}")
+    LOGGER.info(f"Reading centroided csv file {centroided_csv_file_name}")
     data = pd.read_csv(
         centroided_csv_file_name,
         engine="c",
@@ -506,7 +487,6 @@ def read_centroided_csv_file(
 def write_data_to_csv_file(
     data,
     out_file_name,
-    logger=logging.getLogger()
 ):
     """
     Save a pandas dataframe with ion coordinates to a file.
@@ -517,10 +497,8 @@ def write_data_to_csv_file(
         A pd.DataFrame with as columns the selection / separation dimensions.
     out_file_name : str
         The file name of the .csv file in which to save the data.
-    logger : logging.logger
-        The logger that indicates all progress.
     """
-    logger.info(f"Writing to centroided csv file {out_file_name}")
+    LOGGER.info(f"Writing to centroided csv file {out_file_name}")
     data.to_csv(out_file_name, index=False)
 
 
@@ -530,12 +508,15 @@ class HDF_File(object):
     def __init__(
         self,
         file_name,
-        new_file=False,
         is_read_only=True,
-        logger=None,
+        new_file=False,
     ):
         # TODO: Docstring
         self.__file_name = os.path.abspath(file_name)
+        if not isinstance(new_file, bool):
+            raise ValueError(
+                f"HDF {self.file_name} file is not defined as (un)existing"
+            )
         if new_file:
             is_read_only = False
             if not os.path.exists(self.directory):
@@ -549,9 +530,6 @@ class HDF_File(object):
             with h5py.File(self.file_name, "r") as hdf_file:
                 pass
         self.__is_read_only = is_read_only
-        if logger is None:
-            logger = logging.getLogger()
-        self.__logger = logger
 
     @property
     def directory(self):
@@ -573,10 +551,6 @@ class HDF_File(object):
     def is_read_only(self):
         return self.__is_read_only
 
-    @property
-    def logger(self):
-        return self.__logger
-
     def __eq__(self, other):
         return self.file_name == other.file_name
 
@@ -597,7 +571,14 @@ class HDF_File(object):
             parent_group = hdf_file[parent_group_name]
         return parent_group
 
-    def get_dataset(self, dataset_name, parent_group_name="", indices=Ellipsis):
+    def get_dataset(
+        self,
+        dataset_name,
+        parent_group_name="",
+        indices=Ellipsis,
+        return_length=False,
+        return_dtype=False,
+    ):
         # TODO: Docstring
         try:
             iter(indices)
@@ -608,10 +589,13 @@ class HDF_File(object):
         with h5py.File(self.file_name, "r") as hdf_file:
             parent_group = self.__get_parent_group(hdf_file, parent_group_name)
             array = parent_group[dataset_name]
+            if return_length:
+                return len(parent_group[dataset_name])
+            if return_dtype:
+                return len(parent_group[dataset_name].dtype)
             if fancy_indices:
                 array = array[...]
-            array = array[indices]
-        return array
+            return array[indices]
 
     def get_attr(self, attr_key, parent_group_name=""):
         # TODO: Docstring
@@ -637,7 +621,7 @@ class HDF_File(object):
     def create_group(self, group_name, parent_group_name="", overwrite=False):
         # TODO: Docstring
         if self.is_read_only:
-            raise IOError("HDF file is opened as read only")
+            raise IOError(f"HDF {self.file_name} file is opened as read only")
         with h5py.File(self.file_name, "a") as hdf_file:
             parent_group = self.__get_parent_group(hdf_file, parent_group_name)
             if group_name not in parent_group:
@@ -653,7 +637,7 @@ class HDF_File(object):
     def create_attr(self, attr_key, attr_value, parent_group_name=""):
         # TODO: Docstring
         if self.is_read_only:
-            raise IOError("HDF file is opened as read only")
+            raise IOError(f"HDF {self.file_name} file is opened as read only")
         with h5py.File(self.file_name, "a") as hdf_file:
             parent_group = self.__get_parent_group(hdf_file, parent_group_name)
             if isinstance(attr_value, str):
@@ -677,7 +661,7 @@ class HDF_File(object):
     ):
         # TODO: Docstring
         if self.is_read_only:
-            raise IOError("HDF file is opened as read only")
+            raise IOError(f"HDF {self.file_name} file is opened as read only")
         if isinstance(dataset, pd.core.frame.DataFrame):
             self.create_group(dataset_name, parent_group_name, overwrite)
             for column in dataset.columns:

@@ -25,7 +25,7 @@ LOADING_ANIMATION_FILE_NAME = os.path.join(
 class Browser(object):
     # TODO: Docstring
 
-    def __init__(self, evidence, logger):
+    def __init__(self, evidence):
         # TODO: Docstring
         self.evidence = evidence
         self.ion_network = self.evidence.ion_network

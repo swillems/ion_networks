@@ -8,8 +8,8 @@
         "C": ["C_cam"]
     },
     "ptm_dict": {
-        "Q_deam": ["Deamidation" , 0.984016, "opt", "Q"],
-        "N_deam": ["Deamidation" , 0.984016, "opt", "N"],
+        "Q_deam": ["DeamidationQ" , 0.984016, "opt", "Q"],
+        "N_deam": ["DeamidationN" , 0.984016, "opt", "N"],
         "M_ox": ["Oxidation" , 15.994915, "opt", "M"],
         "C_cam": ["Carbamidomethyl" , 57.021464, "opt", "C"],
         "N_ac": ["Acetyl" , 42.010565, "opt", "N-term"]
