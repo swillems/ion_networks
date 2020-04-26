@@ -133,12 +133,12 @@ class Network(HDF_MS_Run_File):
         self.create_dataset(
             "indptr",
             indptr,
-            parent_group="edges"
+            parent_group_name="edges"
         )
         self.create_dataset(
             "indices",
             indices,
-            parent_group="edges"
+            parent_group_name="edges"
         )
 
     def write_parameters(self, parameters):

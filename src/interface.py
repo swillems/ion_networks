@@ -351,7 +351,8 @@ class Interface(object):
             logger.info(f"Command: annotate")
             input_file_names = ms_utils.get_file_names_with_extension(
                 input_path,
-                extension=".evidence.hdf"
+                # extension=".evidence.hdf"
+                extension=".inet.hdf"
             )
             file_count = len(input_file_names)
             logger.info(
