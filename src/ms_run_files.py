@@ -59,8 +59,8 @@ class Network(HDF_MS_Run_File):
         file_name = self.convert_reference_to_trimmed_file_name(reference)
         super().__init__(
             f"{file_name}.inet.hdf",
-            new_file,
-            is_read_only,
+            iw_read_only=is_read_only,
+            new_file=new_file,
         )
 
     def create_from_data(self, data, parameters):
@@ -723,8 +723,8 @@ class Evidence(HDF_MS_Run_File):
         file_name = self.convert_reference_to_trimmed_file_name(reference)
         super().__init__(
             f"{file_name}.evidence.hdf",
-            new_file,
-            is_read_only,
+            iw_read_only=is_read_only,
+            new_file=new_file,
         )
         self.ion_network = Network(reference)
         self.ion_network.evidence = self
@@ -967,8 +967,8 @@ class Annotation(HDF_MS_Run_File):
         file_name = self.convert_reference_to_trimmed_file_name(reference)
         super().__init__(
             f"{file_name}.annotation.hdf",
-            new_file,
-            is_read_only,
+            iw_read_only=is_read_only,
+            new_file=new_file,
         )
         self.evidence = Evidence(reference)
         self.evidence.annotation = self
