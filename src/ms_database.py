@@ -23,8 +23,8 @@ class Database(ms_utils.HDF_File):
         # TODO: Docstring
         super().__init__(
             file_name,
-            new_file,
-            is_read_only,
+            is_read_only=is_read_only,
+            new_file=new_file,
         )
 
     def create_from_fastas(
