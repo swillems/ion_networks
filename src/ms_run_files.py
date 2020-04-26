@@ -76,7 +76,7 @@ class Network(HDF_MS_Run_File):
             ion-network.
         """
         ms_utils.LOGGER.info(f"Creating ion-network {self.file_name}")
-        self.write_nodes(data, parameters)
+        self.write_nodes(data)
         self.write_edges(parameters)
         self.write_parameters(parameters)
 
