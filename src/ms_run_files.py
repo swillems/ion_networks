@@ -52,8 +52,8 @@ class Network(HDF_MS_Run_File):
     def __init__(
         self,
         reference,
-        new_file=False,
         is_read_only=True,
+        new_file=False,
     ):
         # TODO: Docstring
         file_name = self.convert_reference_to_trimmed_file_name(reference)
@@ -716,8 +716,8 @@ class Evidence(HDF_MS_Run_File):
     def __init__(
         self,
         reference,
-        new_file=False,
         is_read_only=True,
+        new_file=False,
     ):
         # TODO: Docstring
         file_name = self.convert_reference_to_trimmed_file_name(reference)
@@ -960,8 +960,8 @@ class Annotation(HDF_MS_Run_File):
     def __init__(
         self,
         reference,
-        new_file=False,
         is_read_only=True,
+        new_file=False,
     ):
         # TODO: Docstring
         file_name = self.convert_reference_to_trimmed_file_name(reference)

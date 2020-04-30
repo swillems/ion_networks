@@ -17,8 +17,8 @@ class Database(ms_utils.HDF_File):
     def __init__(
         self,
         file_name,
-        new_file=False,
         is_read_only=True,
+        new_file=False,
     ):
         # TODO: Docstring
         super().__init__(

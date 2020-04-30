@@ -234,7 +234,6 @@ class Interface(object):
 
     @staticmethod
     def show_ion_network(
-        evidence_file_name,
         parameter_file_name,
         log_file_name
     ):
@@ -253,10 +252,10 @@ class Interface(object):
         if log_file_name != "":
             log_file_name = os.path.abspath(log_file_name)
         with ms_utils.open_logger(log_file_name) as logger:
-            evi = ms_run_files.Evidence(evidence_file_name)
-            browser.Browser(
-                evi,
-            )
+            logger.info(f"Command: show")
+            logger.info("")
+            with browser.Browser() as browser_object:
+                browser_object.run()
 
     @staticmethod
     def run_ion_network_gui():
@@ -387,7 +386,6 @@ class GUI(object):
         self.init_convert_window()
         self.init_create_window()
         self.init_evidence_window()
-        self.init_show_window()
         self.init_terminal_window()
         self.window["Main"] = sg.Window("Main", self.window["Main"])
         self.active_window_name = "Main"
@@ -469,20 +467,6 @@ class GUI(object):
         ]
         self.evaluate_window["Evidence"] = self.evaluate_evidence_window
 
-    def init_show_window(self):
-        # TODO: Docstring
-        # TODO: Implement
-        self.window["Show"] = [
-            self.add_input_path_to_layout(
-                file_types=(('Evidence', '*.evidence.hdf'),),
-                title="Evidence",
-                key="evidence_file_name",
-                multiple=False
-            ),
-            self.add_main_menu_and_continue_buttons_to_layout(),
-        ]
-        self.evaluate_window["Show"] = self.evaluate_show_window
-
     def init_terminal_window(self):
         # TODO: Docstring
         self.window["Terminal"] = [
@@ -494,7 +478,15 @@ class GUI(object):
 
     def evaluate_main_window(self, event, values):
         # TODO: Docstring
-        self.swap_active_window(event)
+        if event == "Show":
+            self.swap_active_window("")
+            Interface.show_ion_network(
+                "",
+                ""
+            )
+            self.swap_active_window("Main")
+        else:
+            self.swap_active_window(event)
 
     def evaluate_convert_window(self, event, values):
         # TODO: Docstring
@@ -528,18 +520,6 @@ class GUI(object):
                 values["parameter_file_name"],
                 values["log_file_name"]
             )
-
-    def evaluate_show_window(self, event, values):
-        # TODO: Docstring,
-        # TODO: implement
-        if event == "Submit":
-            self.swap_active_window("")
-            Interface.show_ion_network(
-                values["evidence_file_name"],
-                "",
-                ""
-            )
-            self.swap_active_window("Main")
 
     def add_input_path_to_layout(
         self,
@@ -912,13 +892,6 @@ class CLI(object):
         short_help="Show and browse ion-networks."
     )
     @click.option(
-        "--evidence_file",
-        "-e",
-        "evidence_file_name",
-        help="The corresponding evidence file (.evidence.hdf).",
-        type=click.Path(exists=True, dir_okay=False)
-    )
-    @click.option(
         "--parameter_file",
         "-p",
         "parameter_file_name",
@@ -937,12 +910,10 @@ class CLI(object):
         type=click.Path(dir_okay=False)
     )
     def show(
-        evidence_file_name,
         parameter_file_name,
         log_file_name
     ):
         Interface.show_ion_network(
-            evidence_file_name,
             parameter_file_name,
             log_file_name
         )

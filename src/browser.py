@@ -1,7 +1,5 @@
 #!python
 
-# builtin
-import os
 # external
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,44 +8,163 @@ import matplotlib
 matplotlib.use('TkAgg')
 # local
 import ms_utils
+import ms_run_files
 
 
-BROWSER_IMAGES_PATH = os.path.join(
-    ms_utils.LIB_PATH,
-    "browser_images"
-)
-LOADING_ANIMATION_FILE_NAME = os.path.join(
-    BROWSER_IMAGES_PATH,
-    "load_animation.gif"
-)
+MATPLOTLIB_COLORS_CONTINUOUS = sorted(matplotlib.cm.__dict__['datad'])
+MATPLOTLIB_COLORS_FIXED = sorted(matplotlib.colors.__dict__['CSS4_COLORS'])
 
 
 class Browser(object):
     # TODO: Docstring
 
-    def __init__(self, evidence):
+    def __init__(
+        self,
+        start=False,
+        widget_size=20,
+    ):
         # TODO: Docstring
-        self.evidence = evidence
-        self.ion_network = self.evidence.ion_network
-        sg.PopupAnimated(
-            LOADING_ANIMATION_FILE_NAME,
-            message='Loading',
-            # time_between_frames=10
-            # non_blocking=True
-        )
-        self.create_overview_window()
-        self.create_plot_window()
-        while True:
-            if self.update_window(self.overview_window) is not None:
-                break
-            sg.PopupAnimated(None)
-            # if self.update_window(self.plot_window) is not None:
-            #     break
-        self.overview_window.close()
-        self.plot_window.close()
+        self.widget_size = widget_size
+        self.window = {}
+        self.evaluate_window = {}
+        self.init_main_window()
+        self.window["Main"] = sg.Window("Main", self.window["Main"])
+        self.active_window_name = "Main"
+        self.figs = {
+            "network": self.init_figure("network"),
+            "evidence": self.init_figure("evidence"),
+        }
+        plt.show(block=False)
+        if start:
+            self.run()
+            self.__exit__()
 
-    def create_overview_window(self):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type=None, value=None, traceback=None):
+        for window in list(self.window.values()):
+            if not isinstance(window, list):
+                window.close()
+        for fig in list(self.figs.values()):
+            plt.close(fig)
+
+    def run(self):
         # TODO: Docstring
+        while self.active_window_name is not None:
+            window = self.window[self.active_window_name]
+            event, values = window.read(timeout=10)
+            if event == sg.TIMEOUT_KEY:
+                continue
+            elif event is None:
+                self.active_window_name = None
+            elif event == "Return to main menu":
+                self.swap_active_window("Main")
+            else:
+                self.evaluate_window[self.active_window_name](event, values)
+
+    def init_main_window(self):
+        self.window["Main"] = [
+            [
+                sg.Text("Ion-network", size=(self.widget_size, 1)),
+                sg.Button(
+                    'None',
+                    size=(self.widget_size, 1),
+                    key='Select ion-network'
+                ),
+            ],
+            [
+                sg.Text("Nodes", size=(self.widget_size, 1)),
+                sg.Button(
+                    'Settings',
+                    size=(self.widget_size, 1),
+                    key="Node settings"
+                )
+            ],
+            [
+                sg.Text("Edges", size=(self.widget_size, 1)),
+                sg.Button(
+                    'Settings',
+                    size=(self.widget_size, 1),
+                    key="Edge settings"
+                )
+            ],
+            # Compare with other samples
+            # Other settings (bg color, save, export)
+        ]
+        self.evaluate_window["Main"] = self.evaluate_main_window
+
+    def evaluate_main_window(self, event, values):
+        # TODO: Docstring
+        if event == "Select ion-network":
+            file_name = sg.popup_get_file(
+                'Please select an ion-network',
+                file_types=(('Ion-network', '*.inet.hdf'),)
+            )
+            if file_name is None:
+                return
+            try:
+                ion_network = ms_run_files.Network(file_name)
+            except (OSError, ValueError):
+                sg.popup_error('This is not a valid ion_network')
+                return
+            try:
+                evidence = ms_run_files.Evidence(file_name)
+            except (OSError, ValueError):
+                sg.popup_error('This ion_network has no valid evidence')
+                return
+            if hasattr(self, "ion_network") and (self.ion_network == ion_network):
+                pass
+            else:
+                self.window[self.active_window_name].Hide()
+                for i in range(4):
+                    sg.one_line_progress_meter(
+                        'Loading ion-network and evidence',
+                        i,
+                        3,
+                        'load_window',
+                        'Please wait...',
+                        orientation="h",
+                    )
+                    if i == 0:
+                        self.ion_network = ion_network
+                        self.evidence = evidence
+                        self.init_node_settings_window()
+                    if i == 1:
+                        self.init_edge_settings_window()
+                    if i == 2:
+                        self.figure_recenter(
+                            self.figs["network"],
+                            reset_axis="xy"
+                        )
+                        (
+                            nodes,
+                            x_coordinates,
+                            y_coordinates
+                        ) = self.network_figure_update_node_selection(flush=False)
+                        self.network_figure_update_node_colors(nodes, flush=False)
+                        selected_edges = self.network_figure_update_edge_selection(
+                            nodes=nodes,
+                            x_coordinates=x_coordinates,
+                            y_coordinates=y_coordinates,
+                            flush=False
+                        )
+                        self.network_figure_update_edge_colors(selected_edges)
+                        self.window["Main"]["Select ion-network"](
+                            ion_network.run_name
+                        )
+                self.window[self.active_window_name].UnHide()
+            # sg.PopupAnimated(None)
+        if event == 'Node settings':
+            self.swap_active_window("Node settings")
+        if event == 'Edge settings':
+            self.swap_active_window("Edge settings")
+
+    def init_node_settings_window(self):
+        try:
+            del self.nodes
+        except AttributeError:
+            pass
         layout = []
         self.node_dimensions = {}
         for dimension in self.ion_network.dimensions:
@@ -61,13 +178,11 @@ class Browser(object):
                     min_coordinate,
                     key=f"min_{dimension}",
                     size=(10, 1),
-                    # enable_events=True
                 ),
                 sg.InputText(
                     max_coordinate,
                     key=f"max_{dimension}",
                     size=(10, 1),
-                    # enable_events=True
                 ),
             ]
             layout.append(row)
@@ -75,11 +190,6 @@ class Browser(object):
         self.node_dimensions["node_evidence"] = [max_node_count, max_node_count]
         self.node_threshold = 2 * len(self.node_dimensions)
         self.nodes = np.repeat(self.node_threshold, self.ion_network.node_count)
-        self.edges = self.ion_network.get_edges(data_as_index=True)
-        self.positive_edge_evidence = self.evidence.get_edge_mask_from_group()
-        self.negative_edge_evidence = self.evidence.get_edge_mask_from_group(
-            positive=False
-        )
         node_evidence = self.evidence.get_aligned_nodes_from_group()
         self.nodes -= node_evidence < max_node_count
         layout.append(
@@ -89,65 +199,70 @@ class Browser(object):
                     max_node_count,
                     key=f"min_node_count",
                     size=(10, 1),
-                    # enable_events=True
                 ),
                 sg.InputText(
                     max_node_count,
                     key=f"max_node_count",
                     size=(10, 1),
-                    # enable_events=True
                 ),
             ]
         )
-        self.x_axis = "FRAGMENT_MZ"
+        self.x_axis = "PRECURSOR_RT"
         layout.append(
             [
-                sg.Text('x-axis', size=(25, 1)),
+                sg.Text('X-AXIS', size=(25, 1)),
                 sg.Combo(
-                    self.ion_network.dimensions,# + ["node_count"],
+                    self.ion_network.dimensions,
                     size=(21, 1),
                     default_value=self.x_axis,
                     key="x_axis",
-                    # enable_events=True
                 )
             ]
         )
-        self.y_axis = "FRAGMENT_LOGINT"
+        self.y_axis = "FRAGMENT_MZ"
         layout.append(
             [
-                sg.Text('y-axis', size=(25, 1)),
+                sg.Text('Y-AXIS', size=(25, 1)),
                 sg.Combo(
-                    self.ion_network.dimensions,# + ["node_count"],
+                    self.ion_network.dimensions,
                     size=(21, 1),
                     default_value=self.y_axis,
                     key="y_axis",
-                    # enable_events=True
                 )
             ]
         )
-        self.show_edges = False
-        self.c_map = "RdYlGn"
+        self.node_color = "FRAGMENT_LOGINT"
+        # self.node_color = "lightgrey"
+        self.node_color_c_map = "RdYlGn"
+        self.node_color_normalize = True
         layout.append(
             [
-                sg.Checkbox(
-                    'Show edges',
-                    default=self.show_edges,
-                    key="show_edges"
+                sg.Text('NODE COLOR', size=(25, 1)),
+                sg.Combo(
+                    self.ion_network.dimensions + ['NODE EVIDENCE'] + MATPLOTLIB_COLORS_FIXED,
+                    size=(21, 1),
+                    default_value=self.node_color,
+                    key="node_color",
                 ),
                 sg.Combo(
-                    sorted(matplotlib.cm.__dict__['datad']),
+                    MATPLOTLIB_COLORS_CONTINUOUS,
                     size=(21, 1),
-                    default_value=self.c_map,
-                    key="c_map",
-                    # enable_events=True
-                )
+                    default_value=self.node_color_c_map,
+                    key="node_color_c_map",
+                ),
+                sg.Checkbox(
+                    'Relative',
+                    default=self.node_color_normalize,
+                    key="node_color_normalize"
+                ),
             ]
         )
         self.bg_color = "white"
         layout.append(
             [
+                sg.Text('BACKGROUND COLOR', size=(25, 1)),
                 sg.Combo(
-                    sorted(matplotlib.colors.__dict__['CSS4_COLORS']),
+                    MATPLOTLIB_COLORS_FIXED,
                     size=(21, 1),
                     default_value=self.bg_color,
                     key="bg_color",
@@ -155,6 +270,200 @@ class Browser(object):
                 )
             ]
         )
+        self.figs["network"].axes[0].set_facecolor(self.bg_color)
+        layout.append(self.add_main_menu_and_continue_buttons_to_layout())
+        self.window["Node settings"] = sg.Window('Node settings', layout)
+        self.evaluate_window["Node settings"] = self.evaluate_node_settings_window
+
+    def evaluate_node_settings_window(
+        self,
+        event,
+        values,
+        update_node_selection=False,
+        update_node_colors=False,
+    ):
+        for key, (low, high) in list(self.node_dimensions.items()):
+            if key == "node_evidence":
+                if low != float(values["min_node_count"]):
+                    update_node_selection = True
+                    node_count = self.evidence.get_aligned_nodes_from_group()
+                    self.nodes -= node_count >= low
+                    self.nodes += node_count >= float(values["min_node_count"])
+                    self.node_dimensions["node_evidence"][0] = float(
+                        values["min_node_count"]
+                    )
+                if high != float(values["max_node_count"]):
+                    update_node_selection = True
+                    node_count = self.evidence.get_aligned_nodes_from_group()
+                    self.nodes -= node_count <= high
+                    self.nodes += node_count <= float(values["max_node_count"])
+                    self.node_dimensions["node_evidence"][1] = float(
+                        values["max_node_count"]
+                    )
+            else:
+                if low != float(values[f"min_{key}"]):
+                    update_node_selection = True
+                    coordinates = self.ion_network.get_ion_coordinates(key)
+                    self.nodes -= coordinates >= low
+                    self.nodes += coordinates >= float(values[f"min_{key}"])
+                    self.node_dimensions[key][0] = float(values[f"min_{key}"])
+                if high != float(values[f"max_{key}"]):
+                    update_node_selection = True
+                    coordinates = self.ion_network.get_ion_coordinates(key)
+                    self.nodes -= coordinates <= high
+                    self.nodes += coordinates <= float(values[f"max_{key}"])
+                    self.node_dimensions[key][1] = float(values[f"max_{key}"])
+        if self.x_axis != values["x_axis"]:
+            self.x_axis = values["x_axis"]
+            self.figure_recenter(
+                self.figs["network"],
+                reset_axis="x",
+                flush=False
+            )
+            update_node_selection = True
+        if self.y_axis != values["y_axis"]:
+            self.y_axis = values["y_axis"]
+            self.figure_recenter(
+                self.figs["network"],
+                reset_axis="y",
+                flush=False
+            )
+            update_node_selection = True
+        if update_node_selection:
+            (
+                nodes,
+                x_coordinates,
+                y_coordinates
+            ) = self.network_figure_update_node_selection(flush=False)
+            selected_edges = self.network_figure_update_edge_selection(
+                nodes,
+                x_coordinates,
+                y_coordinates,
+                flush=False
+            )
+            self.network_figure_update_edge_colors(selected_edges)
+            update_node_colors = True
+        if self.node_color != values["node_color"]:
+            self.node_color = values["node_color"]
+            update_node_colors = True
+        if self.node_color_c_map != values["node_color_c_map"]:
+            self.node_color_c_map = values["node_color_c_map"]
+            update_node_colors = True
+        if self.node_color_normalize != values["node_color_normalize"]:
+            self.node_color_normalize = values["node_color_normalize"]
+            update_node_colors |= (
+                self.node_color in self.ion_network.dimensions + ['NODE EVIDENCE']
+            )
+        if update_node_colors:
+            try:
+                self.network_figure_update_node_colors(
+                    nodes,
+                    flush=self.bg_color == values["bg_color"]
+                )
+            except NameError:
+                self.network_figure_update_node_colors(
+                    flush=self.bg_color == values["bg_color"]
+                )
+        elif self.bg_color != values["bg_color"]:
+            self.bg_color = values["bg_color"]
+            self.figs["network"].axes[0].set_facecolor(self.bg_color)
+            self.figs["network"].canvas.draw()
+            self.figs["network"].canvas.flush_events()
+
+    def network_figure_update_node_colors(
+        self,
+        nodes=None,
+        reorder=True,
+        flush=True,
+    ):
+        # TODO: Docstring
+        if nodes is None:
+            nodes = np.flatnonzero(self.nodes == self.node_threshold)
+        if self.node_color in self.ion_network.dimensions + ['NODE EVIDENCE']:
+            if self.node_color in self.ion_network.dimensions:
+                inds = self.ion_network.get_ion_coordinates(self.node_color)
+            elif self.node_color == 'NODE EVIDENCE':
+                inds = self.evidence.get_aligned_nodes_from_group()
+            color_inds = inds[nodes]
+            if reorder:
+                offsets = np.array(self.node_scatter.get_offsets())
+                x_coordinates = offsets[:, 0]
+                y_coordinates = offsets[:, 1]
+                order = np.argsort(color_inds)
+                color_inds = color_inds[order]
+                x_coordinates = x_coordinates[order]
+                y_coordinates = y_coordinates[order]
+                self.node_scatter.set_offsets(
+                    np.c_[x_coordinates, y_coordinates]
+                )
+            if not self.node_color_normalize:
+                vmin = np.min(inds)
+                vmax = np.max(inds)
+            else:
+                vmin = np.min(color_inds)
+                vmax = np.max(color_inds)
+            color_mapper = matplotlib.cm.ScalarMappable(
+                norm=matplotlib.colors.Normalize(
+                    vmin=vmin,
+                    vmax=vmax,
+                ),
+                cmap=self.node_color_c_map
+            )
+            colors = color_mapper.to_rgba(color_inds)
+        else:
+            colors = [matplotlib.colors.to_rgba(self.node_color)] * len(nodes)
+        self.node_scatter.set_facecolor(colors)
+        if flush:
+            self.figs["network"].canvas.draw()
+            self.figs["network"].canvas.flush_events()
+
+    def _reset_axis(self, fig, axis):
+        try:
+            ax = fig.axes[0]
+            if "x" in axis.lower():
+                ax.set_xlabel(self.x_axis)
+                ax.set_xlim(
+                    [
+                        self.node_dimensions[self.x_axis][0],
+                        self.node_dimensions[self.x_axis][1],
+                    ]
+                )
+            if "y" in axis.lower():
+                ax.set_ylabel(self.y_axis)
+                ax.set_ylim(
+                    [
+                        self.node_dimensions[self.y_axis][0],
+                        self.node_dimensions[self.y_axis][1],
+                    ]
+                )
+        except AttributeError:
+            pass
+
+    def init_edge_settings_window(self):
+        # TODO: Docstring
+        try:
+            del self.edges
+            del self.positive_edge_evidence
+            del self.negative_edge_evidence
+        except AttributeError:
+            pass
+        layout = []
+        self.edges = self.ion_network.get_edges(data_as_index=True)
+        self.positive_edge_evidence = self.evidence.get_edge_mask_from_group()
+        self.negative_edge_evidence = self.evidence.get_edge_mask_from_group(
+            positive=False
+        )
+        self.show_edges = False
+        layout.append(
+            [
+                sg.Checkbox(
+                    'SHOW EDGES',
+                    default=self.show_edges,
+                    key="show_edges"
+                ),
+            ]
+        )
+        max_node_count = float(self.evidence.evidence_count)
         self.min_positive_threshold = max_node_count
         self.max_positive_threshold = max_node_count
         layout.append(
@@ -164,13 +473,11 @@ class Browser(object):
                     self.min_positive_threshold,
                     key=f"min_positive_edge_count",
                     size=(10, 1),
-                    # enable_events=True
                 ),
                 sg.InputText(
                     self.max_positive_threshold,
                     key=f"max_positive_edge_count",
                     size=(10, 1),
-                    # enable_events=True
                 ),
             ]
         )
@@ -183,67 +490,234 @@ class Browser(object):
                     self.min_negative_threshold,
                     key=f"min_negative_edge_count",
                     size=(10, 1),
-                    # enable_events=True
                 ),
                 sg.InputText(
                     self.max_negative_threshold,
                     key=f"max_negative_edge_count",
                     size=(10, 1),
-                    # enable_events=True
                 ),
             ]
         )
+        self.min_summed_threshold = max_node_count
+        self.max_summed_threshold = max_node_count
         layout.append(
             [
-                sg.Button('Refresh'),
-                sg.Button("Save"),
+                sg.Text('SUMMED EDGE EVIDENCE', size=(25, 1)),
                 sg.InputText(
-                    "",
-                    key=f"file_name",
+                    self.min_summed_threshold,
+                    key=f"min_summed_edge_count",
                     size=(10, 1),
-                    # enable_events=True
                 ),
                 sg.InputText(
-                    "1",
-                    key="dpi",
+                    self.max_summed_threshold,
+                    key=f"max_summed_edge_count",
                     size=(10, 1),
-                    # enable_events=True
-                )
+                ),
             ]
         )
-        self.overview_window = sg.Window('Settings', layout)
+        self.edge_color = "SUMMED"
+        # self.edge_color = "lightgrey"
+        self.edge_color_c_map = "RdYlGn"
+        self.edge_color_normalize = True
+        layout.append(
+            [
+                sg.Text('EDGE COLOR', size=(25, 1)),
+                sg.Combo(
+                    ['POSITIVE', 'NEGATIVE', 'SUMMED'] + MATPLOTLIB_COLORS_FIXED,
+                    size=(21, 1),
+                    default_value=self.edge_color,
+                    key="edge_color",
+                ),
+                sg.Combo(
+                    MATPLOTLIB_COLORS_CONTINUOUS,
+                    size=(21, 1),
+                    default_value=self.edge_color_c_map,
+                    key="edge_color_c_map",
+                ),
+                sg.Checkbox(
+                    'Relative',
+                    default=self.edge_color_normalize,
+                    key="edge_color_normalize"
+                ),
+            ]
+        )
+        layout.append(self.add_main_menu_and_continue_buttons_to_layout())
+        self.window["Edge settings"] = sg.Window('Edge settings', layout)
+        self.evaluate_window["Edge settings"] = self.evaluate_edge_settings_window
 
-    def create_plot_window(self):
+    def evaluate_edge_settings_window(
+        self,
+        event,
+        values,
+        update_edge_selection=False,
+        update_edge_colors=False,
+    ):
         # TODO: Docstring
-        # self.fig = plt.figure(1, figsize=(13, 9))
-        # a4 1200ppi 9921 x 14032 (40% is cropped of)
-        self.fig = plt.figure(
-            1,
-            figsize=(
-                (14032 / 0.6) / 2400,
-                (9921 / 0.6) / 2400)
-        )
-        # self.fig = plt.figure(1, figsize=(29.7 / 2.5, 21 / 2.5))
-        self.aggregate_ax = self.fig.add_subplot(111)
-        self.aggregate_ax.set_facecolor('white')
-        figure_x, figure_y, figure_w, figure_h = self.fig.bbox.bounds
-        layout = [
-            [sg.Canvas(size=(figure_w, figure_h), key='canvas')]
-        ]
-        self.plot_window = sg.Window('Plot', layout, finalize=True)
-        mpl_backend = matplotlib.backends.backend_tkagg
-        self.figure_canvas_agg = mpl_backend.FigureCanvasTkAgg(
-            self.fig,
-            self.plot_window['canvas'].TKCanvas
-        )
-        self.figure_canvas_agg.get_tk_widget().pack(
-            side='top',
-            fill='both',
-            expand=1
-        )
-        self.update_plot()
+        if self.show_edges != values["show_edges"]:
+            self.show_edges = values["show_edges"]
+            update_edge_selection = True
+        if self.min_positive_threshold != values["min_positive_edge_count"]:
+            self.min_positive_threshold = float(
+                values["min_positive_edge_count"]
+            )
+            update_edge_selection = True
+        if self.max_positive_threshold != values["max_positive_edge_count"]:
+            self.max_positive_threshold = float(
+                values["max_positive_edge_count"]
+            )
+            update_edge_selection = True
+        if self.min_negative_threshold != values["min_negative_edge_count"]:
+            self.min_negative_threshold = float(
+                values["min_negative_edge_count"]
+            )
+            update_edge_selection = True
+        if self.max_negative_threshold != values["max_negative_edge_count"]:
+            self.max_negative_threshold = float(
+                values["max_negative_edge_count"]
+            )
+            update_edge_selection = True
+        if self.min_summed_threshold != values["min_summed_edge_count"]:
+            self.min_summed_threshold = float(
+                values["min_summed_edge_count"]
+            )
+            update_edge_selection = True
+        if self.max_summed_threshold != values["max_summed_edge_count"]:
+            self.max_summed_threshold = float(
+                values["max_summed_edge_count"]
+            )
+            update_edge_selection = True
+        if update_edge_selection:
+            selected_edges = self.network_figure_update_edge_selection(flush=False)
+            update_edge_colors = True
+        if self.edge_color != values["edge_color"]:
+            self.edge_color = values["edge_color"]
+            update_edge_colors = True
+        if self.edge_color_c_map != values["edge_color_c_map"]:
+            self.edge_color_c_map = values["edge_color_c_map"]
+            update_edge_colors = True
+        if self.edge_color_normalize != values["edge_color_normalize"]:
+            self.edge_color_normalize = values["edge_color_normalize"]
+            update_edge_colors |= (
+                self.edge_color in ['POSITIVE', 'NEGATIVE', 'SUMMED']
+            )
+        if update_edge_colors:
+            self.network_figure_update_edge_colors(selected_edges)
 
-    def update_plot(self):
+    def network_figure_update_edge_colors(
+        self,
+        selected_edges=None,
+        reorder=True,
+        flush=True,
+    ):
+        # TODO: Docstring
+        if self.show_edges:
+            if selected_edges is None:
+                nodes = np.flatnonzero(self.nodes == self.node_threshold)
+                selected_neighbors = self.edges[nodes].T.tocsr()[nodes]
+                positive_counts = self.positive_edge_evidence[
+                    selected_neighbors.data
+                ]
+                negative_counts = self.negative_edge_evidence[
+                    selected_neighbors.data
+                ]
+                summed_counts = positive_counts - negative_counts
+                selection = (positive_counts >= self.min_positive_threshold)
+                selection &= (positive_counts <= self.max_positive_threshold)
+                selection &= (negative_counts >= self.min_negative_threshold)
+                selection &= (negative_counts <= self.max_negative_threshold)
+                selection &= (summed_counts >= self.min_summed_threshold)
+                selection &= (summed_counts <= self.max_summed_threshold)
+                selected_edges = selected_neighbors.data[selection]
+            if self.edge_color in ['POSITIVE', 'NEGATIVE', 'SUMMED']:
+                if self.edge_color == 'POSITIVE':
+                    inds = self.positive_edge_evidence
+                if self.edge_color == 'NEGATIVE':
+                    inds = self.negative_edge_evidence
+                elif self.edge_color == 'SUMMED':
+                    inds = self.positive_edge_evidence - self.negative_edge_evidence
+                color_inds = inds[selected_edges]
+                if reorder:
+                    offsets = np.array(self.edge_collection.get_segments())
+                    order = np.argsort(color_inds)
+                    color_inds = color_inds[order]
+                    offsets = offsets[order]
+                    self.edge_collection.set_segments(offsets)
+                if not self.edge_color_normalize:
+                    vmin = np.min(inds)
+                    vmax = np.max(inds)
+                else:
+                    vmin = np.min(color_inds)
+                    vmax = np.max(color_inds)
+                color_mapper = matplotlib.cm.ScalarMappable(
+                    norm=matplotlib.colors.Normalize(
+                        vmin=vmin,
+                        vmax=vmax,
+                    ),
+                    cmap=self.edge_color_c_map
+                )
+                colors = color_mapper.to_rgba(color_inds)
+            else:
+                colors = [
+                    matplotlib.colors.to_rgba(self.edge_color)
+                ] * len(selected_edges)
+        else:
+            colors = []
+        self.edge_collection.set_color(colors)
+        if flush:
+            self.figs["network"].canvas.draw()
+            self.figs["network"].canvas.flush_events()
+
+    def network_figure_update_edge_selection(
+        self,
+        nodes=None,
+        x_coordinates=None,
+        y_coordinates=None,
+        flush=True
+    ):
+        # TODO: Docstring
+        if not hasattr(self, "edge_collection"):
+            self.edge_collection = self.figs["network"].axes[0].add_collection(
+                matplotlib.collections.LineCollection([], [])
+            )
+        if self.show_edges:
+            if nodes is None:
+                nodes = np.flatnonzero(self.nodes == self.node_threshold)
+            if (x_coordinates is None) or (y_coordinates is None):
+                x_coordinates, y_coordinates = self.ion_network.get_ion_coordinates(
+                    [self.x_axis, self.y_axis],
+                    nodes
+                )
+            selected_neighbors = self.edges[nodes].T.tocsr()[nodes]
+            a, b = selected_neighbors.nonzero()
+            positive_counts = self.positive_edge_evidence[
+                selected_neighbors.data
+            ]
+            negative_counts = self.negative_edge_evidence[
+                selected_neighbors.data
+            ]
+            summed_counts = positive_counts - negative_counts
+            selection = (positive_counts >= self.min_positive_threshold)
+            selection &= (positive_counts <= self.max_positive_threshold)
+            selection &= (negative_counts >= self.min_negative_threshold)
+            selection &= (negative_counts <= self.max_negative_threshold)
+            selection &= (summed_counts >= self.min_summed_threshold)
+            selection &= (summed_counts <= self.max_summed_threshold)
+            a = a[selection]
+            b = b[selection]
+            start_edges = list(zip(x_coordinates[a], y_coordinates[a]))
+            end_edges = list(zip(x_coordinates[b], y_coordinates[b]))
+            edges = np.array(list(zip(start_edges, end_edges)))
+            selected_edges = selected_neighbors.data[selection]
+        else:
+            edges = []
+            selected_edges = []
+        self.edge_collection.set_segments(edges)
+        if flush:
+            self.figs["network"].canvas.draw()
+            self.figs["network"].canvas.flush_events()
+        return selected_edges
+
+    def network_figure_update_node_selection(self, flush=True):
         # TODO: Docstring
         nodes = np.flatnonzero(self.nodes == self.node_threshold)
         x_coordinates, y_coordinates = self.ion_network.get_ion_coordinates(
@@ -251,161 +725,139 @@ class Browser(object):
             nodes
         )
         if not hasattr(self, "node_scatter"):
-            self.node_scatter = self.aggregate_ax.scatter(
+            self.node_scatter = self.figs["network"].axes[0].scatter(
                 x_coordinates,
                 y_coordinates,
                 marker=".",
-                c="lightgrey"
             )
         else:
             self.node_scatter.set_offsets(np.c_[x_coordinates, y_coordinates])
-        self.aggregate_ax.set_xlabel(self.x_axis)
-        self.aggregate_ax.set_ylabel(self.y_axis)
-        self.aggregate_ax.set_xlim(
-            [np.min(x_coordinates), np.max(x_coordinates)]
+        if flush:
+            self.figs["network"].canvas.draw()
+            self.figs["network"].canvas.flush_events()
+        return nodes, x_coordinates, y_coordinates
+
+    def init_figure(self, title):
+        fig = plt.figure()
+        fig.add_subplot(111)
+        fig.canvas.toolbar.pack_forget()
+        fig.canvas.manager.window.protocol(
+            "WM_DELETE_WINDOW",
+            lambda: self.swap_active_window(None)
         )
-        self.aggregate_ax.set_ylim(
-            [np.min(y_coordinates), np.max(y_coordinates)]
-        )
-        if not hasattr(self, "edge_collection"):
-            self.edge_collection = self.aggregate_ax.add_collection(
-                matplotlib.collections.LineCollection([], [])
+        fig.canvas.set_window_title(title)
+        fig.canvas.mpl_connect(
+            'scroll_event',
+            lambda event: self.figure_zoom(
+                fig,
+                x=event.xdata,
+                y=event.ydata,
+                zoom=event.button,
             )
+        )
+        fig.canvas.mpl_connect(
+            'button_press_event',
+            lambda event: self.mouse_event(fig, event)
+        )
+        return fig
+
+    def figure_zoom(self, fig, x=None, y=None, zoom=None, flush=True):
+        ax = fig.axes[0]
+        if x is not None:
+            x_min, x_max = ax.get_xlim()
+            x_center = (x_min + x_max) / 2
+            x_range = x_max - x_min
+            x_offset = 0.5 - np.abs(x - x_center) / x_range
+            if zoom == "down":
+                x_scale = 1 + x_offset
+            elif zoom == "up":
+                x_scale = 1 - x_offset
+            new_x_lim = [
+                x_center - x_range / 2 * x_scale,
+                x_center + x_range / 2 * x_scale
+            ]
+            ax.set_xlim(new_x_lim)
+        if x is not None:
+            y_min, y_max = ax.get_ylim()
+            y_center = (y_min + y_max) / 2
+            y_range = y_max - y_min
+            y_offset = 0.5 - np.abs(y - y_center) / y_range
+            if zoom == "down":
+                y_scale = 1 + y_offset
+            elif zoom == "up":
+                y_scale = 1 - y_offset
+            new_y_lim = [
+                y_center - y_range / 2 * y_scale,
+                y_center + y_range / 2 * y_scale
+            ]
+            ax.set_ylim(new_y_lim)
+        if flush:
+            fig.canvas.draw()
+            fig.canvas.flush_events()
+
+    def mouse_event(self, fig, event):
+        if event.button == matplotlib.backend_bases.MouseButton.MIDDLE:
+            reset_axis = "xy" if event.dblclick else None
+            self.figure_recenter(
+                fig,
+                x=event.xdata,
+                y=event.ydata,
+                reset_axis=reset_axis
+            )
+
+    def figure_recenter(self, fig, x=None, y=None, reset_axis=None, flush=True):
+        if reset_axis is not None:
+            self._reset_axis(fig, reset_axis)
         else:
-            if self.show_edges:
-                selected_neighbors = self.edges[nodes].T.tocsr()[nodes]
-                a, b = selected_neighbors.nonzero()
-                positive_counts = self.positive_edge_evidence[
-                    selected_neighbors.data
+            ax = fig.axes[0]
+            if x is not None:
+                x_min, x_max = ax.get_xlim()
+                x_range = x_max - x_min
+                new_x_lim = [
+                    x - x_range / 2,
+                    x + x_range / 2
                 ]
-                negative_counts = self.negative_edge_evidence[
-                    selected_neighbors.data
+                ax.set_xlim(new_x_lim)
+            if y is not None:
+                y_min, y_max = ax.get_ylim()
+                y_range = y_max - y_min
+                new_y_lim = [
+                    y - y_range / 2,
+                    y + y_range / 2
                 ]
-                selection = (positive_counts >= self.min_positive_threshold)
-                selection &= (positive_counts <= self.max_positive_threshold)
-                selection &= (negative_counts >= self.min_negative_threshold)
-                selection &= (negative_counts <= self.max_negative_threshold)
-                a = a[selection]
-                b = b[selection]
-                start_edges = list(zip(x_coordinates[a], y_coordinates[a]))
-                end_edges = list(zip(x_coordinates[b], y_coordinates[b]))
-                colors = positive_counts[selection] - negative_counts[selection]
-                edges = np.array(list(zip(start_edges, end_edges)))
-                color_order = np.argsort(colors)
-                self.colors = colors[color_order]
-                edges = edges[color_order]
-            else:
-                edges = []
-                self.colors = []
-            self.edge_collection.set_segments(edges)
-            self.update_edge_colors()
-        self.figure_canvas_agg.draw()
-        self.figure_canvas_agg.flush_events()
+                ax.set_ylim(new_y_lim)
+        if flush:
+            fig.canvas.draw()
+            fig.canvas.flush_events()
 
-    def update_edge_colors(self):
-        edge_color_mapper = matplotlib.cm.ScalarMappable(
-            norm=matplotlib.colors.Normalize(
-                # vmin=-self.evidence.evidence_count,
-                vmin=-self.evidence.evidence_count - 1,
-                # vmin=0,
-                vmax=self.evidence.evidence_count
-            ),
-            cmap=self.c_map
-        )
-        self.edge_collection.set_color(edge_color_mapper.to_rgba(self.colors))
-        self.figure_canvas_agg.draw()
-        self.figure_canvas_agg.flush_events()
-
-    def update_window(self, window):
+    def add_main_menu_and_continue_buttons_to_layout(
+        self,
+        main_menu_button=True,
+        continue_button=True
+    ):
         # TODO: Docstring
-        event, values = window.read(timeout=100)
-        if event == sg.TIMEOUT_KEY:
+        row = []
+        if main_menu_button:
+            row.append(
+                sg.Button("Return to main menu", size=(self.widget_size, 1))
+            )
+        if continue_button:
+            row.append(sg.Button("Submit", size=(self.widget_size, 1)))
+        return row
+
+    def swap_active_window(self, new_window_name=""):
+        # TODO: Docstring, implement
+        if new_window_name is None:
+            self.active_window_name = None
+        if self.active_window_name is None:
             return
-        if event in (None, 'Exit'):
-            return "exit"
-        if (event == "Save") and (values["file_name"] != ""):
-            plt.savefig(values["file_name"], dpi=2 * int(values["dpi"]))
-        if window.Title == "Settings":
-            # print(event, values)
-            self.perform_overview_action(event, values)
-        if window.Title == "Plot":
-            self.perform_plot_action(event, values)
-
-    def perform_overview_action(self, event, values):
-        # TODO: Docstring
-        update = False
-        if self.show_edges != values["show_edges"]:
-            self.show_edges = values["show_edges"]
-            update = True
-        if self.x_axis != values["x_axis"]:
-            self.x_axis = values["x_axis"]
-            update = True
-        if self.y_axis != values["y_axis"]:
-            self.y_axis = values["y_axis"]
-            update = True
-        if self.min_positive_threshold != values["min_positive_edge_count"]:
-            self.min_positive_threshold = float(
-                values["min_positive_edge_count"]
-            )
-            update = True
-        if self.max_positive_threshold != values["max_positive_edge_count"]:
-            self.max_positive_threshold = float(
-                values["max_positive_edge_count"]
-            )
-            update = True
-        if self.min_negative_threshold != values["min_negative_edge_count"]:
-            self.min_negative_threshold = float(
-                values["min_negative_edge_count"]
-            )
-            update = True
-        if self.max_negative_threshold != values["max_negative_edge_count"]:
-            self.max_negative_threshold = float(
-                values["max_negative_edge_count"]
-            )
-            update = True
-        for key, (low, high) in list(self.node_dimensions.items()):
-            if key == "node_evidence":
-                if low != float(values["min_node_count"]):
-                    update = True
-                    node_count = self.evidence.get_aligned_nodes_from_group()
-                    self.nodes -= node_count >= low
-                    self.nodes += node_count >= float(values["min_node_count"])
-                    self.node_dimensions["node_evidence"][0] = float(
-                        values["min_node_count"]
-                    )
-                if high != float(values["max_node_count"]):
-                    update = True
-                    node_count = self.evidence.get_aligned_nodes_from_group()
-                    self.nodes -= node_count <= high
-                    self.nodes += node_count <= float(values["max_node_count"])
-                    self.node_dimensions["node_evidence"][1] = float(
-                        values["max_node_count"]
-                    )
-            else:
-                if low != float(values[f"min_{key}"]):
-                    update = True
-                    coordinates = self.ion_network.get_ion_coordinates(key)
-                    self.nodes -= coordinates >= low
-                    self.nodes += coordinates >= float(values[f"min_{key}"])
-                    self.node_dimensions[key][0] = float(values[f"min_{key}"])
-                if high != float(values[f"max_{key}"]):
-                    update = True
-                    coordinates = self.ion_network.get_ion_coordinates(key)
-                    self.nodes -= coordinates <= high
-                    self.nodes += coordinates <= float(values[f"max_{key}"])
-                    self.node_dimensions[key][1] = float(values[f"max_{key}"])
-        if update:
-            # print(np.bincount(self.nodes == self.node_threshold))
-            self.update_plot()
-        if self.c_map != values["c_map"]:
-            self.c_map = values["c_map"]
-            self.update_edge_colors()
-        if self.bg_color != values["bg_color"]:
-            self.bg_color = values["bg_color"]
-            self.aggregate_ax.set_facecolor(self.bg_color)
-            self.figure_canvas_agg.draw()
-            self.figure_canvas_agg.flush_events()
-
-    def perform_plot_action(self, event, values):
-        # TODO: Docstring
-        print("plot", event, values)
+        if self.active_window_name != "":
+            self.window[self.active_window_name].Hide()
+        if new_window_name != "":
+            if isinstance(self.window[new_window_name], list):
+                self.window[new_window_name] = sg.Window(
+                    new_window_name,
+                    self.window[new_window_name]
+                )
+            self.window[new_window_name].UnHide()
+        self.active_window_name = new_window_name
