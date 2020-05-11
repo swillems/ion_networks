@@ -675,40 +675,40 @@ class Browser(object):
         # TODO: Docstring
         print("plot", event, values)
 
-
-def updateSelectedNodes(self, gui, event):
-    self.log.printMessage("Updating selected nodes")
-    rt = event.xdata
-    dt = event.ydata
-    rt_low, rt_high, dt_low, dt_high = gui.getVisibleBoundaries()
-    rt_distance = (
-        self.anchors["RT"][self.visible_nodes] - rt
-    ) / (rt_high - rt_low)
-    dt_distance = (
-        self.anchors["DT"][self.visible_nodes] - dt
-    ) / (dt_high - dt_low)
-    distance = np.sqrt(rt_distance**2 + dt_distance**2)
-    if event.key != "control":
-        self.unselectAllVisible()
-    selected_index = np.argmin(distance)
-    self.selected_nodes[selected_index] = not self.selected_nodes[selected_index]
-    self.updateLabelSelection(gui)
-
-def onclick(event):
-    if (event is None) or (not event.dblclick):
-        return
-    self.dataset.updateSelectedNodes(self, event)
-    self.dataset.plotSelectedNodes(self)
-    self.dataset.plotIons(self)
-    self.refreshAggregateCanvas()
-    self.refreshIonCanvas()
-    self.aggregate_canvas.mpl_disconnect(self.click_connection)
-    self.click_connection = self.aggregate_canvas.mpl_connect(
-        'button_press_event',
-        onclick
-    )
-
-self.click_connection = self.aggregate_canvas.mpl_connect(
-    'button_press_event',
-    onclick
-)
+#
+# def updateSelectedNodes(self, gui, event):
+#     self.log.printMessage("Updating selected nodes")
+#     rt = event.xdata
+#     dt = event.ydata
+#     rt_low, rt_high, dt_low, dt_high = gui.getVisibleBoundaries()
+#     rt_distance = (
+#         self.anchors["RT"][self.visible_nodes] - rt
+#     ) / (rt_high - rt_low)
+#     dt_distance = (
+#         self.anchors["DT"][self.visible_nodes] - dt
+#     ) / (dt_high - dt_low)
+#     distance = np.sqrt(rt_distance**2 + dt_distance**2)
+#     if event.key != "control":
+#         self.unselectAllVisible()
+#     selected_index = np.argmin(distance)
+#     self.selected_nodes[selected_index] = not self.selected_nodes[selected_index]
+#     self.updateLabelSelection(gui)
+#
+# def onclick(event):
+#     if (event is None) or (not event.dblclick):
+#         return
+#     self.dataset.updateSelectedNodes(self, event)
+#     self.dataset.plotSelectedNodes(self)
+#     self.dataset.plotIons(self)
+#     self.refreshAggregateCanvas()
+#     self.refreshIonCanvas()
+#     self.aggregate_canvas.mpl_disconnect(self.click_connection)
+#     self.click_connection = self.aggregate_canvas.mpl_connect(
+#         'button_press_event',
+#         onclick
+#     )
+#
+# self.click_connection = self.aggregate_canvas.mpl_connect(
+#     'button_press_event',
+#     onclick
+# )
