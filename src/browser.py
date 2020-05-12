@@ -7,11 +7,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import PySimpleGUI as sg
 import matplotlib
-matplotlib.use('TkAgg')
 # local
-import ms_utils
 import ms_run_files
 
+
+matplotlib.use('TkAgg')
+# plt.rcParams['toolbar'] = 'toolmanager'
 
 MATPLOTLIB_COLORS_CONTINUOUS = sorted(matplotlib.cm.__dict__['datad'])
 MATPLOTLIB_COLORS_FIXED = sorted(matplotlib.colors.__dict__['CSS4_COLORS'])
@@ -320,7 +321,22 @@ class Browser(object):
         self.evaluate_window["Edge settings"] = self.evaluate_edge_settings_window
 
     def init_compare_settings_window(self):
-        pass
+        layout = []
+        self.evidence_axis = "FRAGMENT_LOGINT"
+        layout.append(
+            [
+                sg.Text('X-AXIS', size=(25, 1)),
+                sg.Combo(
+                    self.ion_network.dimensions,
+                    size=(21, 1),
+                    default_value=self.evidence_axis,
+                    key="evidence_axis",
+                )
+            ]
+        )
+        layout.append(self.add_main_menu_and_continue_buttons_to_layout())
+        self.window["Compare settings"] = sg.Window('Compare settings', layout)
+        self.evaluate_window["Compare settings"] = self.evaluate_compare_settings_window
 
     def init_misc_settings_window(self):
         layout = []
@@ -365,68 +381,7 @@ class Browser(object):
     def evaluate_main_window(self, event, values):
         # TODO: Docstring
         if event == "Select ion-network":
-            file_name = sg.popup_get_file(
-                'Please select an ion-network',
-                file_types=(('Ion-network', '*.inet.hdf'),)
-            )
-            if file_name is None:
-                return
-            try:
-                ion_network = ms_run_files.Network(file_name)
-            except (OSError, ValueError):
-                sg.popup_error('This is not a valid ion_network')
-                return
-            try:
-                evidence = ms_run_files.Evidence(file_name)
-            except (OSError, ValueError):
-                sg.popup_error('This ion_network has no valid evidence')
-                return
-            if hasattr(self, "ion_network") and (self.ion_network == ion_network):
-                pass
-            else:
-                self.window[self.active_window_name].Hide()
-                opts = 5
-                for i in range(opts):
-                    sg.one_line_progress_meter(
-                        'Loading ion-network and evidence',
-                        i,
-                        opts - 1,
-                        'load_window',
-                        'Please wait...',
-                        orientation="h",
-                    )
-                    if i == 0:
-                        self.ion_network = ion_network
-                        self.evidence = evidence
-                        self.init_node_settings_window()
-                        self.init_misc_settings_window()
-                    if i == 1:
-                        self.init_edge_settings_window()
-                    if i == 2:
-                        self.init_compare_settings_window()
-                    if i == 3:
-                        self.figure_recenter(
-                            self.figs["network"],
-                            reset_axis="xy"
-                        )
-                        (
-                            nodes,
-                            x_coordinates,
-                            y_coordinates
-                        ) = self.network_figure_update_node_selection(flush=False)
-                        self.network_figure_update_node_colors(nodes, flush=False)
-                        selected_edges = self.network_figure_update_edge_selection(
-                            nodes=nodes,
-                            x_coordinates=x_coordinates,
-                            y_coordinates=y_coordinates,
-                            flush=False
-                        )
-                        self.network_figure_update_edge_colors(selected_edges)
-                        self.window["Main"]["Select ion-network"](
-                            ion_network.run_name
-                        )
-                self.window[self.active_window_name].UnHide()
-            # sg.PopupAnimated(None)
+            self.init_network()
         else:
             if event not in self.window:
                 sg.popup_error('Please select an ion-network first.')
@@ -469,6 +424,22 @@ class Browser(object):
                 return
             with loading_window():
                 self.figs["evidence"].savefig(file_name)
+
+    def evaluate_compare_settings_window(
+        self,
+        event,
+        values,
+        update_node_selection=False,
+        update_node_colors=False,
+    ):
+        if self.evidence_axis != values["evidence_axis"]:
+            self.evidence_axis = values["evidence_axis"]
+            self.figure_recenter(
+                self.figs["evidence"],
+                reset_axis="x",
+                flush=False
+            )
+            self.evidence_figure_update_axis_selection()
 
     def evaluate_node_settings_window(
         self,
@@ -555,53 +526,6 @@ class Browser(object):
             except NameError:
                 self.network_figure_update_node_colors()
 
-    def network_figure_update_node_colors(
-        self,
-        nodes=None,
-        reorder=True,
-        flush=True,
-    ):
-        # TODO: Docstring
-        if nodes is None:
-            nodes = np.flatnonzero(self.nodes == self.node_threshold)
-        if self.node_color in self.ion_network.dimensions + ['NODE EVIDENCE']:
-            if self.node_color in self.ion_network.dimensions:
-                inds = self.ion_network.get_ion_coordinates(self.node_color)
-            elif self.node_color == 'NODE EVIDENCE':
-                inds = self.evidence.get_aligned_nodes_from_group()
-            color_inds = inds[nodes]
-            if reorder:
-                offsets = np.array(self.node_scatter.get_offsets())
-                x_coordinates = offsets[:, 0]
-                y_coordinates = offsets[:, 1]
-                order = np.argsort(color_inds)
-                color_inds = color_inds[order]
-                x_coordinates = x_coordinates[order]
-                y_coordinates = y_coordinates[order]
-                self.node_scatter.set_offsets(
-                    np.c_[x_coordinates, y_coordinates]
-                )
-            if not self.node_color_normalize:
-                vmin = np.min(inds)
-                vmax = np.max(inds)
-            else:
-                vmin = np.min(color_inds)
-                vmax = np.max(color_inds)
-            color_mapper = matplotlib.cm.ScalarMappable(
-                norm=matplotlib.colors.Normalize(
-                    vmin=vmin,
-                    vmax=vmax,
-                ),
-                cmap=self.node_color_c_map
-            )
-            colors = color_mapper.to_rgba(color_inds)
-        else:
-            colors = [matplotlib.colors.to_rgba(self.node_color)] * len(nodes)
-        self.node_scatter.set_facecolor(colors)
-        if flush:
-            self.figs["network"].canvas.draw()
-            self.figs["network"].canvas.flush_events()
-
     def evaluate_edge_settings_window(
         self,
         event,
@@ -659,6 +583,53 @@ class Browser(object):
             )
         if update_edge_colors:
             self.network_figure_update_edge_colors(selected_edges)
+
+    def network_figure_update_node_colors(
+        self,
+        nodes=None,
+        reorder=True,
+        flush=True,
+    ):
+        # TODO: Docstring
+        if nodes is None:
+            nodes = np.flatnonzero(self.nodes == self.node_threshold)
+        if self.node_color in self.ion_network.dimensions + ['NODE EVIDENCE']:
+            if self.node_color in self.ion_network.dimensions:
+                inds = self.ion_network.get_ion_coordinates(self.node_color)
+            elif self.node_color == 'NODE EVIDENCE':
+                inds = self.evidence.get_aligned_nodes_from_group()
+            color_inds = inds[nodes]
+            if reorder:
+                offsets = np.array(self.node_scatter.get_offsets())
+                x_coordinates = offsets[:, 0]
+                y_coordinates = offsets[:, 1]
+                order = np.argsort(color_inds)
+                color_inds = color_inds[order]
+                x_coordinates = x_coordinates[order]
+                y_coordinates = y_coordinates[order]
+                self.node_scatter.set_offsets(
+                    np.c_[x_coordinates, y_coordinates]
+                )
+            if not self.node_color_normalize:
+                vmin = np.min(inds)
+                vmax = np.max(inds)
+            else:
+                vmin = np.min(color_inds)
+                vmax = np.max(color_inds)
+            color_mapper = matplotlib.cm.ScalarMappable(
+                norm=matplotlib.colors.Normalize(
+                    vmin=vmin,
+                    vmax=vmax,
+                ),
+                cmap=self.node_color_c_map
+            )
+            colors = color_mapper.to_rgba(color_inds)
+        else:
+            colors = [matplotlib.colors.to_rgba(self.node_color)] * len(nodes)
+        self.node_scatter.set_facecolor(colors)
+        if flush:
+            self.figs["network"].canvas.draw()
+            self.figs["network"].canvas.flush_events()
 
     def network_figure_update_edge_colors(
         self,
@@ -794,10 +765,56 @@ class Browser(object):
             self.figs["network"].canvas.flush_events()
         return nodes, x_coordinates, y_coordinates
 
+    def evidence_figure_update_axis_selection(self, flush=True):
+        # TODO: Docstring
+        node_mask = np.zeros(self.ion_network.node_count, np.int64)
+        nodes = np.flatnonzero(self.nodes == self.node_threshold)
+        node_mask[nodes] = np.arange(len(nodes))
+        alignments = np.zeros((len(nodes), self.evidence.evidence_count + 1))
+        alignments[:, 0] = self.ion_network.get_ion_coordinates(
+            self.evidence_axis,
+            nodes
+        )
+        for i, other_run in enumerate(self.evidence.network_keys):
+            evidence = self.evidence.get_other_run(other_run)
+            alignment = self.evidence.get_alignment(
+                other=evidence
+            )
+            self_ions = node_mask[alignment[:, 0]]
+            other_ions = alignment[:, 1]
+            alignments[self_ions, i + 1] = evidence.ion_network.get_ion_coordinates(
+                self.evidence_axis,
+                other_ions
+            )
+        if not hasattr(self, "evidence_plot"):
+            self.evidence_plot = self.figs["evidence"].axes[0].plot(
+                alignments.T
+            )
+            self.figs["evidence"].axes[0].set_xticks(
+                list(range(self.evidence.evidence_count + 1))
+            )
+            self.figs["evidence"].axes[0].set_xticklabels(
+                [self.ion_network.run_name] + self.evidence.network_keys,
+                rotation=45,
+                ha="right"
+            )
+        else:
+            for i in self.evidence_plot:
+                i.remove()
+            del self.evidence_plot[:]
+            self.evidence_plot = self.figs["evidence"].axes[0].plot(
+                alignments.T
+            )
+        if flush:
+            self.figs["evidence"].canvas.draw()
+            self.figs["evidence"].canvas.flush_events()
+
     def init_figure(self, title):
         fig = plt.figure()
         fig.add_subplot(111)
         fig.canvas.toolbar.pack_forget()
+        # for tool in list(fig.canvas.manager.toolmanager.tools):
+        #     fig.canvas.manager.toolmanager.remove_tool(tool)
         fig.canvas.manager.window.protocol(
             "WM_DELETE_WINDOW",
             lambda: self.swap_active_window(None)
@@ -821,6 +838,7 @@ class Browser(object):
     def _reset_axis(self, fig, axis):
         try:
             ax = fig.axes[0]
+            # TODO what if it is evidence fig?
             if "x" in axis.lower():
                 ax.set_xlabel(self.x_axis)
                 ax.set_xlim(
@@ -940,6 +958,69 @@ class Browser(object):
                 )
             self.window[new_window_name].UnHide()
         self.active_window_name = new_window_name
+
+    def init_network(self):
+        file_name = sg.popup_get_file(
+            'Please select an ion-network',
+            file_types=(('Ion-network', '*.inet.hdf'),)
+        )
+        if file_name is None:
+            return
+        try:
+            ion_network = ms_run_files.Network(file_name)
+        except (OSError, ValueError):
+            sg.popup_error('This is not a valid ion_network')
+            return
+        try:
+            evidence = ms_run_files.Evidence(file_name)
+        except (OSError, ValueError):
+            sg.popup_error('This ion_network has no valid evidence')
+            return
+        if hasattr(self, "ion_network") and (self.ion_network == ion_network):
+            pass
+        else:
+            self.window[self.active_window_name].Hide()
+            opts = 5
+            for i in range(opts):
+                sg.one_line_progress_meter(
+                    'Loading ion-network and evidence',
+                    i,
+                    opts - 1,
+                    'load_window',
+                    'Please wait...',
+                    orientation="h",
+                )
+                if i == 0:
+                    self.ion_network = ion_network
+                    self.evidence = evidence
+                    self.init_node_settings_window()
+                    self.init_misc_settings_window()
+                if i == 1:
+                    self.init_edge_settings_window()
+                if i == 2:
+                    self.init_compare_settings_window()
+                if i == 3:
+                    self.figure_recenter(
+                        self.figs["network"],
+                        reset_axis="xy"
+                    )
+                    (
+                        nodes,
+                        x_coordinates,
+                        y_coordinates
+                    ) = self.network_figure_update_node_selection(flush=False)
+                    self.network_figure_update_node_colors(nodes, flush=False)
+                    selected_edges = self.network_figure_update_edge_selection(
+                        nodes=nodes,
+                        x_coordinates=x_coordinates,
+                        y_coordinates=y_coordinates,
+                        flush=False
+                    )
+                    self.network_figure_update_edge_colors(selected_edges)
+                    self.window["Main"]["Select ion-network"](
+                        ion_network.run_name
+                    )
+            self.window[self.active_window_name].UnHide()
 
 
 @contextlib.contextmanager

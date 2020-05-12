@@ -929,6 +929,13 @@ class Evidence(HDF_MS_Run_File):
             )
         return edges
 
+    def get_other_run(self, group_name):
+        probable_file_name = os.path.join(
+            self.directory,
+            group_name + ".evidence.hdf"
+        )
+        return Evidence(probable_file_name)
+
     @property
     def network_keys(self):
         """
