@@ -2,6 +2,7 @@
 
 # builtin
 import contextlib
+import os
 # external
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,9 +11,15 @@ import matplotlib
 # local
 import ms_run_files
 
-
 matplotlib.use('TkAgg')
-# plt.rcParams['toolbar'] = 'toolmanager'
+plt.rcParams['toolbar'] = 'toolmanager'
+
+BASE_PATH = os.path.dirname(os.path.dirname(__file__))
+LIB_PATH = os.path.join(BASE_PATH, "lib")
+DEFAULT_BROWSER_PATH = os.path.join(LIB_PATH, "browser_images")
+DEFAULT_BROWSER_IMAGES = {
+    "pointer": "pointer_25x25.png",
+}
 
 MATPLOTLIB_COLORS_CONTINUOUS = sorted(matplotlib.cm.__dict__['datad'])
 MATPLOTLIB_COLORS_FIXED = sorted(matplotlib.colors.__dict__['CSS4_COLORS'])
@@ -115,7 +122,7 @@ class Browser(object):
 
     def init_node_settings_window(self):
         try:
-            del self.nodes
+            del self.node_mask
         except AttributeError:
             pass
         layout = []
@@ -142,9 +149,9 @@ class Browser(object):
         max_node_count = float(self.evidence.evidence_count)
         self.node_dimensions["node_evidence"] = [max_node_count, max_node_count]
         self.node_threshold = 2 * len(self.node_dimensions)
-        self.nodes = np.repeat(self.node_threshold, self.ion_network.node_count)
+        self.node_mask = np.repeat(self.node_threshold, self.ion_network.node_count)
         node_evidence = self.evidence.get_aligned_nodes_from_group()
-        self.nodes -= node_evidence < max_node_count
+        self.node_mask -= node_evidence < max_node_count
         layout.append(
             [
                 sg.Text('NODE EVIDENCE', size=(25, 1)),
@@ -335,6 +342,22 @@ class Browser(object):
             ]
         )
         layout.append(self.add_main_menu_and_continue_buttons_to_layout())
+        self.figs["evidence"].axes[0].set_xticks(
+            list(range(self.evidence.evidence_count + 1))
+        )
+        self.figs["evidence"].axes[0].set_xticklabels(
+            [self.ion_network.run_name] + self.evidence.network_keys,
+            rotation=45,
+            ha="right"
+        )
+        self.figs["evidence"].axes[0].set_xlabel("Run")
+        self.figs["evidence"].axes[0].set_xlim(
+            [
+                0,
+                len(self.evidence.network_keys),
+            ]
+        )
+        flush_figure(self.figs["evidence"], True)
         self.window["Compare settings"] = sg.Window('Compare settings', layout)
         self.evaluate_window["Compare settings"] = self.evaluate_compare_settings_window
 
@@ -405,13 +428,11 @@ class Browser(object):
         if self.network_bg_color != values["network_bg_color"]:
             self.network_bg_color = values["network_bg_color"]
             self.figs["network"].axes[0].set_facecolor(self.network_bg_color)
-            self.figs["network"].canvas.draw()
-            self.figs["network"].canvas.flush_events()
+            flush_figure(self.figs["network"], True)
         if self.evidence_bg_color != values["evidence_bg_color"]:
             self.evidence_bg_color = values["evidence_bg_color"]
             self.figs["evidence"].axes[0].set_facecolor(self.evidence_bg_color)
-            self.figs["evidence"].canvas.draw()
-            self.figs["evidence"].canvas.flush_events()
+            flush_figure(self.figs["evidence"], True)
         if event == "Save network":
             file_name = sg.popup_get_file("Save network", save_as=True)
             if file_name is None:
@@ -432,13 +453,9 @@ class Browser(object):
         update_node_selection=False,
         update_node_colors=False,
     ):
-        if self.evidence_axis != values["evidence_axis"]:
+        # if self.evidence_axis != values["evidence_axis"]:
+        if True:
             self.evidence_axis = values["evidence_axis"]
-            self.figure_recenter(
-                self.figs["evidence"],
-                reset_axis="x",
-                flush=False
-            )
             self.evidence_figure_update_axis_selection()
 
     def evaluate_node_settings_window(
@@ -453,16 +470,16 @@ class Browser(object):
                 if low != float(values["min_node_count"]):
                     update_node_selection = True
                     node_count = self.evidence.get_aligned_nodes_from_group()
-                    self.nodes -= node_count >= low
-                    self.nodes += node_count >= float(values["min_node_count"])
+                    self.node_mask -= node_count >= low
+                    self.node_mask += node_count >= float(values["min_node_count"])
                     self.node_dimensions["node_evidence"][0] = float(
                         values["min_node_count"]
                     )
                 if high != float(values["max_node_count"]):
                     update_node_selection = True
                     node_count = self.evidence.get_aligned_nodes_from_group()
-                    self.nodes -= node_count <= high
-                    self.nodes += node_count <= float(values["max_node_count"])
+                    self.node_mask -= node_count <= high
+                    self.node_mask += node_count <= float(values["max_node_count"])
                     self.node_dimensions["node_evidence"][1] = float(
                         values["max_node_count"]
                     )
@@ -470,14 +487,14 @@ class Browser(object):
                 if low != float(values[f"min_{key}"]):
                     update_node_selection = True
                     coordinates = self.ion_network.get_ion_coordinates(key)
-                    self.nodes -= coordinates >= low
-                    self.nodes += coordinates >= float(values[f"min_{key}"])
+                    self.node_mask -= coordinates >= low
+                    self.node_mask += coordinates >= float(values[f"min_{key}"])
                     self.node_dimensions[key][0] = float(values[f"min_{key}"])
                 if high != float(values[f"max_{key}"]):
                     update_node_selection = True
                     coordinates = self.ion_network.get_ion_coordinates(key)
-                    self.nodes -= coordinates <= high
-                    self.nodes += coordinates <= float(values[f"max_{key}"])
+                    self.node_mask -= coordinates <= high
+                    self.node_mask += coordinates <= float(values[f"max_{key}"])
                     self.node_dimensions[key][1] = float(values[f"max_{key}"])
         if self.x_axis != values["x_axis"]:
             self.x_axis = values["x_axis"]
@@ -587,12 +604,15 @@ class Browser(object):
     def network_figure_update_node_colors(
         self,
         nodes=None,
-        reorder=True,
+        reorder=False,
         flush=True,
     ):
         # TODO: Docstring
         if nodes is None:
-            nodes = np.flatnonzero(self.nodes == self.node_threshold)
+            nodes = self.get_filtered_nodes()
+        if len(nodes) == 0:
+            flush_figure(self.figs["network"], flush)
+            return
         if self.node_color in self.ion_network.dimensions + ['NODE EVIDENCE']:
             if self.node_color in self.ion_network.dimensions:
                 inds = self.ion_network.get_ion_coordinates(self.node_color)
@@ -627,9 +647,7 @@ class Browser(object):
         else:
             colors = [matplotlib.colors.to_rgba(self.node_color)] * len(nodes)
         self.node_scatter.set_facecolor(colors)
-        if flush:
-            self.figs["network"].canvas.draw()
-            self.figs["network"].canvas.flush_events()
+        flush_figure(self.figs["network"], flush)
 
     def network_figure_update_edge_colors(
         self,
@@ -640,7 +658,7 @@ class Browser(object):
         # TODO: Docstring
         if self.show_edges:
             if selected_edges is None:
-                nodes = np.flatnonzero(self.nodes == self.node_threshold)
+                nodes = self.get_filtered_nodes()
                 selected_neighbors = self.edges[nodes].T.tocsr()[nodes]
                 positive_counts = self.positive_edge_evidence[
                     selected_neighbors.data
@@ -656,6 +674,9 @@ class Browser(object):
                 selection &= (summed_counts >= self.min_summed_threshold)
                 selection &= (summed_counts <= self.max_summed_threshold)
                 selected_edges = selected_neighbors.data[selection]
+            if len(selected_edges) == 0:
+                flush_figure(self.figs["network"], flush)
+                return
             if self.edge_color in ['POSITIVE', 'NEGATIVE', 'SUMMED']:
                 if self.edge_color == 'POSITIVE':
                     inds = self.positive_edge_evidence
@@ -691,9 +712,7 @@ class Browser(object):
         else:
             colors = []
         self.edge_collection.set_color(colors)
-        if flush:
-            self.figs["network"].canvas.draw()
-            self.figs["network"].canvas.flush_events()
+        flush_figure(self.figs["network"], flush)
 
     def network_figure_update_edge_selection(
         self,
@@ -709,7 +728,7 @@ class Browser(object):
             )
         if self.show_edges:
             if nodes is None:
-                nodes = np.flatnonzero(self.nodes == self.node_threshold)
+                nodes = self.get_filtered_nodes()
             if (x_coordinates is None) or (y_coordinates is None):
                 x_coordinates, y_coordinates = self.ion_network.get_ion_coordinates(
                     [self.x_axis, self.y_axis],
@@ -740,14 +759,12 @@ class Browser(object):
             edges = []
             selected_edges = []
         self.edge_collection.set_segments(edges)
-        if flush:
-            self.figs["network"].canvas.draw()
-            self.figs["network"].canvas.flush_events()
+        flush_figure(self.figs["network"], flush)
         return selected_edges
 
     def network_figure_update_node_selection(self, flush=True):
         # TODO: Docstring
-        nodes = np.flatnonzero(self.nodes == self.node_threshold)
+        nodes = self.get_filtered_nodes()
         x_coordinates, y_coordinates = self.ion_network.get_ion_coordinates(
             [self.x_axis, self.y_axis],
             nodes
@@ -757,18 +774,22 @@ class Browser(object):
                 x_coordinates,
                 y_coordinates,
                 marker=".",
+                picker=True
             )
         else:
             self.node_scatter.set_offsets(np.c_[x_coordinates, y_coordinates])
-        if flush:
-            self.figs["network"].canvas.draw()
-            self.figs["network"].canvas.flush_events()
+        self.evidence_figure_update_axis_selection(flush=False)
+        flush_figure(self.figs["network"], flush)
         return nodes, x_coordinates, y_coordinates
 
     def evidence_figure_update_axis_selection(self, flush=True):
         # TODO: Docstring
+        self.figs["evidence"].axes[0].set_ylabel(self.evidence_axis)
         node_mask = np.zeros(self.ion_network.node_count, np.int64)
-        nodes = np.flatnonzero(self.nodes == self.node_threshold)
+        nodes = self.get_selected_nodes()
+        if len(nodes) == 0:
+            flush_figure(self.figs["evidence"], flush)
+            return
         node_mask[nodes] = np.arange(len(nodes))
         alignments = np.zeros((len(nodes), self.evidence.evidence_count + 1))
         alignments[:, 0] = self.ion_network.get_ion_coordinates(
@@ -790,14 +811,6 @@ class Browser(object):
             self.evidence_plot = self.figs["evidence"].axes[0].plot(
                 alignments.T
             )
-            self.figs["evidence"].axes[0].set_xticks(
-                list(range(self.evidence.evidence_count + 1))
-            )
-            self.figs["evidence"].axes[0].set_xticklabels(
-                [self.ion_network.run_name] + self.evidence.network_keys,
-                rotation=45,
-                ha="right"
-            )
         else:
             for i in self.evidence_plot:
                 i.remove()
@@ -805,34 +818,33 @@ class Browser(object):
             self.evidence_plot = self.figs["evidence"].axes[0].plot(
                 alignments.T
             )
-        if flush:
-            self.figs["evidence"].canvas.draw()
-            self.figs["evidence"].canvas.flush_events()
+        self.figs["evidence"].axes[0].set_ylim(
+            [
+                np.min(alignments),
+                np.max(alignments),
+            ]
+        )
+        flush_figure(self.figs["evidence"], flush)
 
     def init_figure(self, title):
         fig = plt.figure()
         fig.add_subplot(111)
-        fig.canvas.toolbar.pack_forget()
-        # for tool in list(fig.canvas.manager.toolmanager.tools):
-        #     fig.canvas.manager.toolmanager.remove_tool(tool)
+        fig.canvas.manager.toolmanager.add_tool(
+            'node_select',
+            PointerTool
+        )
+        fig.canvas.manager.toolbar.add_tool('node_select', 'navigation', 1)
+        fig.canvas.manager.toolmanager.remove_tool('back')
+        fig.canvas.manager.toolmanager.remove_tool('forward')
+        fig.canvas.manager.toolmanager.remove_tool('home')
+        fig.canvas.manager.toolmanager.remove_tool('copy')
+        fig.canvas.manager.toolmanager.remove_tool('allnav')
+        fig.canvas.manager.toolmanager.remove_tool('nav')
         fig.canvas.manager.window.protocol(
             "WM_DELETE_WINDOW",
             lambda: self.swap_active_window(None)
         )
         fig.canvas.set_window_title(title)
-        fig.canvas.mpl_connect(
-            'scroll_event',
-            lambda event: self.figure_zoom(
-                fig,
-                x=event.xdata,
-                y=event.ydata,
-                zoom=event.button,
-            )
-        )
-        fig.canvas.mpl_connect(
-            'button_press_event',
-            lambda event: self.mouse_event(fig, event)
-        )
         return fig
 
     def _reset_axis(self, fig, axis):
@@ -888,19 +900,7 @@ class Browser(object):
                 y_center + y_range / 2 * y_scale
             ]
             ax.set_ylim(new_y_lim)
-        if flush:
-            fig.canvas.draw()
-            fig.canvas.flush_events()
-
-    def mouse_event(self, fig, event):
-        if event.button == matplotlib.backend_bases.MouseButton.MIDDLE:
-            reset_axis = "xy" if event.dblclick else None
-            self.figure_recenter(
-                fig,
-                x=event.xdata,
-                y=event.ydata,
-                reset_axis=reset_axis
-            )
+        flush_figure(fig, flush)
 
     def figure_recenter(self, fig, x=None, y=None, reset_axis=None, flush=True):
         if reset_axis is not None:
@@ -923,9 +923,7 @@ class Browser(object):
                     y + y_range / 2
                 ]
                 ax.set_ylim(new_y_lim)
-        if flush:
-            fig.canvas.draw()
-            fig.canvas.flush_events()
+        flush_figure(fig, flush)
 
     def add_main_menu_and_continue_buttons_to_layout(
         self,
@@ -958,6 +956,19 @@ class Browser(object):
                 )
             self.window[new_window_name].UnHide()
         self.active_window_name = new_window_name
+
+    def get_filtered_nodes(self):
+        return np.flatnonzero(self.node_mask == self.node_threshold)
+
+    def get_selected_nodes(self):
+        nodes = self.get_filtered_nodes()
+        node_selection = self.figs[
+            "network"
+        ].canvas.manager.toolmanager._tools['node_select']._current_selection
+        return nodes[list(node_selection)]
+
+    def reset_selected_nodes(self):
+        self.figs["network"].canvas.manager.toolmanager._tools['node_select'].reset()
 
     def init_network(self):
         file_name = sg.popup_get_file(
@@ -1043,3 +1054,114 @@ def loading_window():
         'Please wait...',
         orientation="h",
     )
+
+
+def flush_figure(figure, flush):
+    if flush:
+        figure.canvas.draw()
+        figure.canvas.flush_events()
+
+
+def bind(instance, func, as_name=None):
+    """
+    Bind the function *func* to *instance*, with either provided name *as_name*
+    or the existing name of *func*. The provided *func* should accept the
+    instance as the first argument, i.e. "self".
+    """
+    if as_name is None:
+        as_name = func.__name__
+    bound_method = func.__get__(instance, instance.__class__)
+    setattr(instance, as_name, bound_method)
+    return bound_method
+
+
+class PointerTool(matplotlib.backend_tools.ToolToggleBase):
+    description = 'Select nodes with left mouse, deselect with right, scroll to undo/redo'
+    image = os.path.join(DEFAULT_BROWSER_PATH, DEFAULT_BROWSER_IMAGES["pointer"])
+    radio_group = 'default'
+    default_keymap = 's'
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._pick_connection = None
+        self._zoom_connection = None
+        self._stack = []
+        self._stack_pointer = -1
+        self._current_selection = set()
+
+    def reset(self):
+        self._stack = []
+        self._stack_pointer = -1
+        self._current_selection = set()
+        scatter = self.figure.axes[0].collections[0]
+        edge_colors = scatter.get_facecolors().copy()
+        scatter.set_edgecolors(edge_colors)
+        flush_figure(self.figure, True)
+
+    def enable(self, event):
+        self._pick_connection = self.figure.canvas.mpl_connect(
+            'pick_event',
+            self.pick_event
+        )
+        self._zoom_connection = self.figure.canvas.mpl_connect(
+            'scroll_event',
+            self.scroll_event
+        )
+
+    def disable(self, event):
+        self.figure.canvas.mpl_disconnect(self._zoom_connection)
+        self.figure.canvas.mpl_disconnect(self._pick_connection)
+
+    def scroll_event(self, event):
+        if event.button == "up":
+            self.update_stack_pointer(direction=1)
+        elif event.button == "down":
+            self.update_stack_pointer(direction=-1)
+        self.custom_event()
+
+    def custom_event(self):
+        scatter = self.figure.axes[0].collections[0]
+        edge_colors = scatter.get_facecolors().copy()
+        try:
+            edge_colors[list(self._current_selection)] = [0, 0, 0, 1]
+        except IndexError:
+            edge_colors = np.repeat(edge_colors, scatter._offsets.shape[0], axis=0)
+            edge_colors[list(self._current_selection)] = [0, 0, 0, 1]
+        scatter.set_edgecolors(edge_colors)
+        flush_figure(self.figure, True)
+        # print(self._stack, self._stack_pointer, self._current_selection)
+
+    def pick_event(self, event):
+        for index in event.ind:
+            if event.mouseevent.button == 1:
+                self.update_stack(index + 1)
+            if event.mouseevent.button == 3:
+                self.update_stack(-index - 1)
+        self.custom_event()
+
+    def update_stack(self, index):
+        if (index > 0) and (index - 1 in self._current_selection):
+            return
+        if (index < 0) and (-index - 1 not in self._current_selection):
+            return
+        self._stack = self._stack[:self._stack_pointer + 1]
+        self._stack.append(index)
+        self._stack_pointer += 1
+        self.update_current_selection(index)
+
+    def update_current_selection(self, index):
+        if index > 0:
+            self._current_selection.add(index - 1)
+        elif index < 0:
+            self._current_selection.remove(-index - 1)
+
+    def update_stack_pointer(self, direction=None, target=None):
+        if target is None:
+            target = self._stack_pointer + direction
+            target = max(-1, target)
+            target = min(len(self._stack) - 1, target)
+        direction = 1 if target > self._stack_pointer else -1
+        for i in range(abs(target - self._stack_pointer)):
+            index = self._stack[self._stack_pointer]
+            self.update_current_selection(direction * index)
+            self._stack_pointer += direction

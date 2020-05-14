@@ -1,129 +1,139 @@
 #!python
 
-# builtin
-import contextlib
-# external
-import numpy as np
-import matplotlib.pyplot as plt
-import PySimpleGUI as sg
-import matplotlib
-# local
-import ms_run_files
+import matplotlib.backend_tools
 
-plt.rcParams['toolbar'] = 'toolmanager'
-# matplotlib.use('TkAgg')
-
-
-class NetworkTool(matplotlib.backend_tools.ToolBase):
-    '''List all the tools controlled by the `ToolManager`'''
-    # keyboard shortcut
-    # default_keymap = 'I'
-    description = 'Select ion-network'
-    image = "../lib/browser_images/network.png"
-
-    def trigger(self, *args, **kwargs):
-        print(self.figure)
-        self.figure.select_network()
-
-
-# class PointerTool(matplotlib.backend_tools.ToolToggleBase):
-#     """Base class for `ToolZoom` and `ToolPan`"""
-#     description = 'Select nodes'
-#     image = "../lib/browser_images/pointer.png"
-#     radio_group = 'default'
-#
-#     def __init__(self, *args):
-#         super().__init__(*args)
-#         self._button_pressed = None
-#         self._xypress = None
-#         self._idPress = None
-#         self._idRelease = None
-#         self._idScroll = None
-#
-#     def enable(self, event):
-#         """Connect press/release events and lock the canvas"""
-#         self.figure.canvas.widgetlock(self)
-#         self._idPress = self.figure.canvas.mpl_connect('pick_event', onpick1)
-#
-#     def disable(self, event):
-#         """Release the canvas and disconnect press/release events"""
-#         self._cancel_action()
-#         self.figure.canvas.widgetlock.release(self)
-#         self.figure.canvas.mpl_disconnect(self._idPress)
-#
-#     def onpick1(event):
-#         print(event.ind)
 
 class PointerTool(matplotlib.backend_tools.ToolToggleBase):
-    """Base class for `ToolZoom` and `ToolPan`"""
-    description = 'Select nodes'
-    image = "../lib/browser_images/pointer.png"
+    description = 'Select nodes with left mouse, deselect with right, scroll to undo/redo'
+    image = "../lib/browser_images/pointer_25x25.png"
     radio_group = 'default'
+    default_keymap = 's'
 
     def __init__(self, *args):
         super().__init__(*args)
-        self._idSelect = None
+        self._pick_connection = None
+        self._zoom_connection = None
+        self._stack = []
+        self._stack_pointer = -1
+        self._current_selection = set()
 
     def enable(self, event):
-        # super().enable(event)
-        self.figure.canvas.widgetlock(self)
-        self._idSelect = self.figure.canvas.mpl_connect(
+        self._pick_connection = self.figure.canvas.mpl_connect(
             'pick_event',
-            self.select
+            self.pick_event
+        )
+        self._zoom_connection = self.figure.canvas.mpl_connect(
+            'scroll_event',
+            self.scroll_event
         )
 
     def disable(self, event):
-        # super().disable(event)
-        self._cancel_action()
-        self.figure.canvas.widgetlock.release(self)
-        self.figure.canvas.mpl_disconnect(self._idSelect)
+        self.figure.canvas.mpl_disconnect(self._zoom_connection)
+        self.figure.canvas.mpl_disconnect(self._pick_connection)
 
-    def select(event):
-        print(event.ind)
+    def scroll_event(self, event):
+        if event.button == "up":
+            self.update_stack_pointer(direction=1)
+        elif event.button == "down":
+            self.update_stack_pointer(direction=-1)
+        self.custom_event()
 
+    def custom_event(self):
+        scatter = self.figure.axes[0].collections[0]
+        edge_colors = scatter.get_facecolors()
+        try:
+            edge_colors[list(self._current_selection)] = [0,0,0,1]
+        except IndexError:
+            edge_colors = np.repeat(edge_colors, scatter._offsets.shape[0], axis=0)
+            edge_colors[list(self._current_selection)] = [0,0,0,1]
+        scatter.set_edgecolors(edge_colors)
+        plt.draw()
+        # print(self._stack, self._stack_pointer, self._current_selection)
 
-def select_network(self, *args, **kwargs):
-    file_name = sg.popup_get_file(
-        'Please select an ion-network',
-        file_types=(('Ion-network', '*.inet.hdf'),)
-    )
-    if file_name is None:
-        return
-    try:
-        ion_network = ms_run_files.Network(file_name)
-    except (OSError, ValueError):
-        sg.popup_error('This is not a valid ion_network')
-        return
-    try:
-        evidence = ms_run_files.Evidence(file_name)
-    except (OSError, ValueError):
-        sg.popup_error('This ion_network has no valid evidence')
-        return
-    if hasattr(self, "ion_network") and (self.ion_network == ion_network):
-        pass
-    else:
-        self.ion_network = ion_network
-        self.evidence = evidence
+    def pick_event(self, event):
+        for index in event.ind:
+            if event.mouseevent.button == 1:
+                self.update_stack(index + 1)
+            if event.mouseevent.button == 3:
+                self.update_stack(-index - 1)
+        self.custom_event()
 
+    def update_stack(self, index):
+        if (index > 0) and (index - 1 in self._current_selection):
+            return
+        if (index < 0) and (-index - 1 not in self._current_selection):
+            return
+        self._stack = self._stack[:self._stack_pointer + 1]
+        self._stack.append(index)
+        self._stack_pointer += 1
+        self.update_current_selection(index)
 
-matplotlib.pyplot.Figure.select_network = select_network
-fig = plt.figure("Ion-network browser")
+    def update_current_selection(self, index):
+        if index > 0:
+            self._current_selection.add(index - 1)
+        elif index < 0:
+            self._current_selection.remove(-index - 1)
 
-fig.add_subplot(111)
-fig.axes[0].scatter(np.random.random(10), np.random.random(10), picker=True)
+    def update_stack_pointer(self, direction=None, target=None):
+        if target is None:
+            target = self._stack_pointer + direction
+            target = max(0, target)
+            target = min(len(self._stack) - 1, target)
+        direction = 1 if target > self._stack_pointer else -1
+        for i in range(abs(target - self._stack_pointer)):
+            index = self._stack[self._stack_pointer]
+            self.update_current_selection(direction * index)
+            self._stack_pointer += direction
 
-# for tool in list(fig.canvas.manager.toolmanager.tools):
-#     print(tool)
-#     fig.canvas.manager.toolmanager.remove_tool(tool)
+if __name__ == "__main__":
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import matplotlib
+    matplotlib.use('TkAgg')
+    plt.rcParams['toolbar'] = 'toolmanager'
+    fig = plt.figure("Ion-network browser")
+    fig.add_subplot(111)
+    xs, ys = np.random.random(10), np.random.random(10)
+    fig.axes[0].scatter(xs, ys, picker=True)
+    fig.canvas.manager.toolmanager.add_tool('Select nodes', PointerTool)
+    fig.canvas.manager.toolbar.add_tool('Select nodes', 'navigation', 1)
+    plt.show()
+else:
+    pass
 
-fig.canvas.manager.toolmanager.remove_tool('forward')
-fig.canvas.manager.toolmanager.remove_tool('back')
-fig.canvas.manager.toolmanager.remove_tool('home')
-
-fig.canvas.manager.toolmanager.add_tool('Select nodes', PointerTool)
-fig.canvas.manager.toolbar.add_tool('Select nodes', 'navigation', 1)
-
-fig.canvas.manager.toolmanager.add_tool('Select ion-network', NetworkTool)
-fig.canvas.manager.toolbar.add_tool('Select ion-network', 'navigation', 1)
-
-plt.show()
+#
+# from sandbox_browser import PointerTool
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import matplotlib
+# # matplotlib.use('TkAgg')
+# plt.rcParams['toolbar'] = 'toolmanager'
+# fig = plt.figure("Ion-network browser")
+# fig.add_subplot(111)
+# xs, ys = np.random.random(10), np.random.random(10)
+# s = fig.axes[0].scatter(xs, ys, picker=True)
+# fig.canvas.manager.toolmanager.add_tool('Select nodes', PointerTool)
+# fig.canvas.manager.toolbar.add_tool('Select nodes', 'navigation', 1)
+# plt.show(block=False)
+# tool = fig.canvas.manager.toolmanager._tools['Select nodes']
+# def bind(instance, func, as_name=None):
+#     """
+#     Bind the function *func* to *instance*, with either provided name *as_name*
+#     or the existing name of *func*. The provided *func* should accept the
+#     instance as the first argument, i.e. "self".
+#     """
+#     if as_name is None:
+#         as_name = func.__name__
+#     bound_method = func.__get__(instance, instance.__class__)
+#     setattr(instance, as_name, bound_method)
+#     return bound_method
+#
+# def test(self):
+#     edges = ["None"] * s._offsets.shape[0]
+#     for i in self._current_selection:
+#         edges[i] = "black"
+#     s.set_edgecolors(edges)
+#     print("test", self._stack, self._stack_pointer, self._current_selection)
+#     plt.draw()
+#
+# tool.custom_event = bind(tool, test)
