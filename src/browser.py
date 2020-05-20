@@ -5,6 +5,7 @@ import contextlib
 import os
 # external
 import numpy as np
+import numexpr as ne
 import matplotlib.pyplot as plt
 import PySimpleGUI as sg
 import matplotlib
@@ -44,6 +45,16 @@ class Browser(object):
             "network": self.init_figure("network"),
             "evidence": self.init_figure("evidence"),
         }
+        self.figs["network"].canvas.manager.toolmanager.add_tool(
+            'node_select',
+            PointerTool,
+            callback_function=self.evidence_figure_update_axis_selection
+        )
+        self.figs["network"].canvas.manager.toolbar.add_tool(
+            'node_select',
+            'navigation',
+            1
+        )
         plt.show(block=False)
         if start:
             self.run()
@@ -115,8 +126,6 @@ class Browser(object):
                     key="Misc settings"
                 )
             ],
-            # Compare with other samples
-            # Other settings (bg color, save, export)
         ]
         self.evaluate_window["Main"] = self.evaluate_main_window
 
@@ -246,58 +255,81 @@ class Browser(object):
             ]
         )
         max_node_count = float(self.evidence.evidence_count)
-        self.min_positive_threshold = max_node_count
-        self.max_positive_threshold = max_node_count
+        self.edge_formula = "p - n"
+        self.min_edge_threshold = max_node_count
+        self.max_edge_threshold = max_node_count
         layout.append(
             [
-                sg.Text('POSITIVE EDGE EVIDENCE', size=(25, 1)),
+                sg.Text('EDGE EVIDENCE', size=(25, 1)),
                 sg.InputText(
-                    self.min_positive_threshold,
-                    key=f"min_positive_edge_count",
+                    self.edge_formula,
+                    key=f"edge_formula",
                     size=(10, 1),
                 ),
                 sg.InputText(
-                    self.max_positive_threshold,
-                    key=f"max_positive_edge_count",
+                    self.min_edge_threshold,
+                    key=f"min_edge_threshold",
+                    size=(10, 1),
+                ),
+                sg.InputText(
+                    self.max_edge_threshold,
+                    key=f"max_edge_threshold",
                     size=(10, 1),
                 ),
             ]
         )
-        self.min_negative_threshold = 0
-        self.max_negative_threshold = 0
-        layout.append(
-            [
-                sg.Text('NEGATIVE EDGE EVIDENCE', size=(25, 1)),
-                sg.InputText(
-                    self.min_negative_threshold,
-                    key=f"min_negative_edge_count",
-                    size=(10, 1),
-                ),
-                sg.InputText(
-                    self.max_negative_threshold,
-                    key=f"max_negative_edge_count",
-                    size=(10, 1),
-                ),
-            ]
-        )
-        self.min_summed_threshold = max_node_count
-        self.max_summed_threshold = max_node_count
-        layout.append(
-            [
-                sg.Text('SUMMED EDGE EVIDENCE', size=(25, 1)),
-                sg.InputText(
-                    self.min_summed_threshold,
-                    key=f"min_summed_edge_count",
-                    size=(10, 1),
-                ),
-                sg.InputText(
-                    self.max_summed_threshold,
-                    key=f"max_summed_edge_count",
-                    size=(10, 1),
-                ),
-            ]
-        )
-        self.edge_color = "SUMMED"
+        # self.min_positive_threshold = max_node_count
+        # self.max_positive_threshold = max_node_count
+        # layout.append(
+        #     [
+        #         sg.Text('POSITIVE EDGE EVIDENCE', size=(25, 1)),
+        #         sg.InputText(
+        #             self.min_positive_threshold,
+        #             key=f"min_positive_edge_count",
+        #             size=(10, 1),
+        #         ),
+        #         sg.InputText(
+        #             self.max_positive_threshold,
+        #             key=f"max_positive_edge_count",
+        #             size=(10, 1),
+        #         ),
+        #     ]
+        # )
+        # self.min_negative_threshold = 0
+        # self.max_negative_threshold = 0
+        # layout.append(
+        #     [
+        #         sg.Text('NEGATIVE EDGE EVIDENCE', size=(25, 1)),
+        #         sg.InputText(
+        #             self.min_negative_threshold,
+        #             key=f"min_negative_edge_count",
+        #             size=(10, 1),
+        #         ),
+        #         sg.InputText(
+        #             self.max_negative_threshold,
+        #             key=f"max_negative_edge_count",
+        #             size=(10, 1),
+        #         ),
+        #     ]
+        # )
+        # self.min_summed_threshold = max_node_count
+        # self.max_summed_threshold = max_node_count
+        # layout.append(
+        #     [
+        #         sg.Text('SUMMED EDGE EVIDENCE', size=(25, 1)),
+        #         sg.InputText(
+        #             self.min_summed_threshold,
+        #             key=f"min_summed_edge_count",
+        #             size=(10, 1),
+        #         ),
+        #         sg.InputText(
+        #             self.max_summed_threshold,
+        #             key=f"max_summed_edge_count",
+        #             size=(10, 1),
+        #         ),
+        #     ]
+        # )
+        self.edge_color = "EDGE EVIDENCE"
         # self.edge_color = "lightgrey"
         self.edge_color_c_map = "RdYlGn"
         self.edge_color_normalize = True
@@ -305,7 +337,8 @@ class Browser(object):
             [
                 sg.Text('EDGE COLOR', size=(25, 1)),
                 sg.Combo(
-                    ['POSITIVE', 'NEGATIVE', 'SUMMED'] + MATPLOTLIB_COLORS_FIXED,
+                    # ['POSITIVE', 'NEGATIVE', 'SUMMED'] + MATPLOTLIB_COLORS_FIXED,
+                    ['EDGE EVIDENCE'] + MATPLOTLIB_COLORS_FIXED,
                     size=(21, 1),
                     default_value=self.edge_color,
                     key="edge_color",
@@ -554,36 +587,49 @@ class Browser(object):
         if self.show_edges != values["show_edges"]:
             self.show_edges = values["show_edges"]
             update_edge_selection = True
-        if self.min_positive_threshold != values["min_positive_edge_count"]:
-            self.min_positive_threshold = float(
-                values["min_positive_edge_count"]
+        if self.min_edge_threshold != values["min_edge_threshold"]:
+            self.min_edge_threshold = float(
+                values["min_edge_threshold"]
             )
             update_edge_selection = True
-        if self.max_positive_threshold != values["max_positive_edge_count"]:
-            self.max_positive_threshold = float(
-                values["max_positive_edge_count"]
+        if self.max_edge_threshold != values["max_edge_threshold"]:
+            self.max_edge_threshold = float(
+                values["max_edge_threshold"]
             )
             update_edge_selection = True
-        if self.min_negative_threshold != values["min_negative_edge_count"]:
-            self.min_negative_threshold = float(
-                values["min_negative_edge_count"]
-            )
+        if self.edge_formula != values["edge_formula"]:
+            self.edge_formula = values["edge_formula"]
             update_edge_selection = True
-        if self.max_negative_threshold != values["max_negative_edge_count"]:
-            self.max_negative_threshold = float(
-                values["max_negative_edge_count"]
-            )
-            update_edge_selection = True
-        if self.min_summed_threshold != values["min_summed_edge_count"]:
-            self.min_summed_threshold = float(
-                values["min_summed_edge_count"]
-            )
-            update_edge_selection = True
-        if self.max_summed_threshold != values["max_summed_edge_count"]:
-            self.max_summed_threshold = float(
-                values["max_summed_edge_count"]
-            )
-            update_edge_selection = True
+        # if self.min_positive_threshold != values["min_positive_edge_count"]:
+        #     self.min_positive_threshold = float(
+        #         values["min_positive_edge_count"]
+        #     )
+        #     update_edge_selection = True
+        # if self.max_positive_threshold != values["max_positive_edge_count"]:
+        #     self.max_positive_threshold = float(
+        #         values["max_positive_edge_count"]
+        #     )
+        #     update_edge_selection = True
+        # if self.min_negative_threshold != values["min_negative_edge_count"]:
+        #     self.min_negative_threshold = float(
+        #         values["min_negative_edge_count"]
+        #     )
+        #     update_edge_selection = True
+        # if self.max_negative_threshold != values["max_negative_edge_count"]:
+        #     self.max_negative_threshold = float(
+        #         values["max_negative_edge_count"]
+        #     )
+        #     update_edge_selection = True
+        # if self.min_summed_threshold != values["min_summed_edge_count"]:
+        #     self.min_summed_threshold = float(
+        #         values["min_summed_edge_count"]
+        #     )
+        #     update_edge_selection = True
+        # if self.max_summed_threshold != values["max_summed_edge_count"]:
+        #     self.max_summed_threshold = float(
+        #         values["max_summed_edge_count"]
+        #     )
+        #     update_edge_selection = True
         if update_edge_selection:
             selected_edges = self.network_figure_update_edge_selection(flush=False)
             update_edge_colors = True
@@ -648,6 +694,7 @@ class Browser(object):
             colors = [matplotlib.colors.to_rgba(self.node_color)] * len(nodes)
         self.node_scatter.set_facecolor(colors)
         flush_figure(self.figs["network"], flush)
+        self.reset_selected_nodes()
 
     def network_figure_update_edge_colors(
         self,
@@ -677,13 +724,10 @@ class Browser(object):
             if len(selected_edges) == 0:
                 flush_figure(self.figs["network"], flush)
                 return
-            if self.edge_color in ['POSITIVE', 'NEGATIVE', 'SUMMED']:
-                if self.edge_color == 'POSITIVE':
-                    inds = self.positive_edge_evidence
-                if self.edge_color == 'NEGATIVE':
-                    inds = self.negative_edge_evidence
-                elif self.edge_color == 'SUMMED':
-                    inds = self.positive_edge_evidence - self.negative_edge_evidence
+            if self.edge_color in ['EDGE EVIDENCE']:
+                p = self.positive_edge_evidence
+                n = self.negative_edge_evidence
+                inds = ne.evaluate(self.edge_formula)
                 color_inds = inds[selected_edges]
                 if reorder:
                     offsets = np.array(self.edge_collection.get_segments())
@@ -736,19 +780,15 @@ class Browser(object):
                 )
             selected_neighbors = self.edges[nodes].T.tocsr()[nodes]
             a, b = selected_neighbors.nonzero()
-            positive_counts = self.positive_edge_evidence[
+            p = self.positive_edge_evidence[
                 selected_neighbors.data
             ]
-            negative_counts = self.negative_edge_evidence[
+            n = self.negative_edge_evidence[
                 selected_neighbors.data
             ]
-            summed_counts = positive_counts - negative_counts
-            selection = (positive_counts >= self.min_positive_threshold)
-            selection &= (positive_counts <= self.max_positive_threshold)
-            selection &= (negative_counts >= self.min_negative_threshold)
-            selection &= (negative_counts <= self.max_negative_threshold)
-            selection &= (summed_counts >= self.min_summed_threshold)
-            selection &= (summed_counts <= self.max_summed_threshold)
+            values = ne.evaluate(self.edge_formula)
+            selection = (values >= self.min_edge_threshold)
+            selection &= (values <= self.max_edge_threshold)
             a = a[selection]
             b = b[selection]
             start_edges = list(zip(x_coordinates[a], y_coordinates[a]))
@@ -774,12 +814,11 @@ class Browser(object):
                 x_coordinates,
                 y_coordinates,
                 marker=".",
-                picker=True
+                picker=True,
+                zorder=4
             )
         else:
             self.node_scatter.set_offsets(np.c_[x_coordinates, y_coordinates])
-        self.evidence_figure_update_axis_selection(flush=False)
-        flush_figure(self.figs["network"], flush)
         return nodes, x_coordinates, y_coordinates
 
     def evidence_figure_update_axis_selection(self, flush=True):
@@ -829,11 +868,6 @@ class Browser(object):
     def init_figure(self, title):
         fig = plt.figure()
         fig.add_subplot(111)
-        fig.canvas.manager.toolmanager.add_tool(
-            'node_select',
-            PointerTool
-        )
-        fig.canvas.manager.toolbar.add_tool('node_select', 'navigation', 1)
         fig.canvas.manager.toolmanager.remove_tool('back')
         fig.canvas.manager.toolmanager.remove_tool('forward')
         fig.canvas.manager.toolmanager.remove_tool('home')
@@ -968,7 +1002,7 @@ class Browser(object):
         return nodes[list(node_selection)]
 
     def reset_selected_nodes(self):
-        self.figs["network"].canvas.manager.toolmanager._tools['node_select'].reset()
+        self.figs["network"].canvas.manager.toolmanager._tools['node_select'].hard_reset()
 
     def init_network(self):
         file_name = sg.popup_get_file(
@@ -1076,27 +1110,22 @@ def bind(instance, func, as_name=None):
 
 
 class PointerTool(matplotlib.backend_tools.ToolToggleBase):
-    description = 'Select nodes with left mouse, deselect with right, scroll to undo/redo'
+    description = 'Select/deselected nodes with left/right mouseclick, single/double middle mouseclick to select none/all, scroll to undo/redo'
     image = os.path.join(DEFAULT_BROWSER_PATH, DEFAULT_BROWSER_IMAGES["pointer"])
     radio_group = 'default'
     default_keymap = 's'
 
-    def __init__(self, *args):
+    def __init__(self, *args, callback_function=None):
         super().__init__(*args)
         self._pick_connection = None
         self._zoom_connection = None
+        self._button_connection = None
+        self._modifiable = False
         self._stack = []
-        self._stack_pointer = -1
+        self._stack_pointer = 0
         self._current_selection = set()
-
-    def reset(self):
-        self._stack = []
-        self._stack_pointer = -1
-        self._current_selection = set()
-        scatter = self.figure.axes[0].collections[0]
-        edge_colors = scatter.get_facecolors().copy()
-        scatter.set_edgecolors(edge_colors)
-        flush_figure(self.figure, True)
+        self._scatter_to_update = False
+        self.callback_function = callback_function
 
     def enable(self, event):
         self._pick_connection = self.figure.canvas.mpl_connect(
@@ -1107,61 +1136,109 @@ class PointerTool(matplotlib.backend_tools.ToolToggleBase):
             'scroll_event',
             self.scroll_event
         )
+        self._button_connection = self.figure.canvas.mpl_connect(
+            'button_press_event',
+            self.button_event
+        )
+        self._modifiable = True
 
     def disable(self, event):
+        self._modifiable = False
+        self.figure.canvas.mpl_disconnect(self._button_connection)
         self.figure.canvas.mpl_disconnect(self._zoom_connection)
         self.figure.canvas.mpl_disconnect(self._pick_connection)
 
-    def scroll_event(self, event):
-        if event.button == "up":
-            self.update_stack_pointer(direction=1)
-        elif event.button == "down":
-            self.update_stack_pointer(direction=-1)
-        self.custom_event()
-
-    def custom_event(self):
-        scatter = self.figure.axes[0].collections[0]
-        edge_colors = scatter.get_facecolors().copy()
-        try:
-            edge_colors[list(self._current_selection)] = [0, 0, 0, 1]
-        except IndexError:
-            edge_colors = np.repeat(edge_colors, scatter._offsets.shape[0], axis=0)
-            edge_colors[list(self._current_selection)] = [0, 0, 0, 1]
-        scatter.set_edgecolors(edge_colors)
-        flush_figure(self.figure, True)
-        # print(self._stack, self._stack_pointer, self._current_selection)
-
     def pick_event(self, event):
-        for index in event.ind:
-            if event.mouseevent.button == 1:
-                self.update_stack(index + 1)
-            if event.mouseevent.button == 3:
-                self.update_stack(-index - 1)
-        self.custom_event()
+        if self._modifiable:
+            self._modifiable = False
+            for index in event.ind:
+                if event.mouseevent.button == 1:
+                    self.update_stack(index + 1)
+                if event.mouseevent.button == 3:
+                    self.update_stack(-index - 1)
+            self._modifiable = True
+            self.update_scatter()
+
+    def scroll_event(self, event):
+        if self._modifiable:
+            self._modifiable = False
+            if event.button == "up":
+                self.update_stack_pointer(direction="up")
+            elif event.button == "down":
+                self.update_stack_pointer(direction="down")
+            self._modifiable = True
+            self.update_scatter()
+
+    def button_event(self, event):
+        if self._modifiable:
+            self._modifiable = False
+            if event.button == 2:
+                if event.dblclick:
+                    self.set_all(mode="select")
+                else:
+                    self.set_all(mode="delete")
+            self._modifiable = True
+            self.update_scatter()
+
+    def hard_reset(self):
+        self._stack = []
+        self._stack_pointer = 0
+        self._current_selection = set()
+        self._scatter_to_update = True
+        self.update_scatter()
+
+    def set_all(self, mode="delete"):
+        if mode == "delete":
+            for index in list(self._current_selection):
+                self.update_stack(-(index - 1))
+        elif mode == "select":
+            try:
+                scatter_size = self.figure.axes[0].collections[0]._offsets.shape[0]
+            except IndexError:
+                return
+            for index in range(1, scatter_size + 1):
+                self.update_stack(index)
+        self.update_scatter()
 
     def update_stack(self, index):
         if (index > 0) and (index - 1 in self._current_selection):
             return
         if (index < 0) and (-index - 1 not in self._current_selection):
             return
-        self._stack = self._stack[:self._stack_pointer + 1]
+        self._stack = self._stack[:self._stack_pointer]
         self._stack.append(index)
-        self._stack_pointer += 1
-        self.update_current_selection(index)
+        self.update_stack_pointer("up")
+
+    def update_stack_pointer(self, direction="up"):
+        if direction == "up":
+            if self._stack_pointer < len(self._stack):
+                new_element = self._stack[self._stack_pointer]
+                self.update_current_selection(new_element)
+                self._stack_pointer += 1
+        elif direction == "down":
+            if self._stack_pointer > 0:
+                self._stack_pointer -= 1
+                new_element = self._stack[self._stack_pointer]
+                self.update_current_selection(-new_element)
 
     def update_current_selection(self, index):
         if index > 0:
             self._current_selection.add(index - 1)
         elif index < 0:
             self._current_selection.remove(-index - 1)
+        self._scatter_to_update = True
 
-    def update_stack_pointer(self, direction=None, target=None):
-        if target is None:
-            target = self._stack_pointer + direction
-            target = max(-1, target)
-            target = min(len(self._stack) - 1, target)
-        direction = 1 if target > self._stack_pointer else -1
-        for i in range(abs(target - self._stack_pointer)):
-            index = self._stack[self._stack_pointer]
-            self.update_current_selection(direction * index)
-            self._stack_pointer += direction
+    def update_scatter(self):
+        if self._scatter_to_update:
+            scatter = self.figure.axes[0].collections[0]
+            edge_colors = scatter.get_facecolors().copy()
+            try:
+                edge_colors[list(self._current_selection)] = [0, 0, 0, 1]
+            except IndexError:
+                edge_colors = np.repeat(edge_colors, scatter._offsets.shape[0], axis=0)
+                edge_colors[list(self._current_selection)] = [0, 0, 0, 1]
+            scatter.set_edgecolors(edge_colors)
+            flush_figure(self.figure, True)
+            if self.callback_function is not None:
+                self.callback_function()
+            self._scatter_to_update = False
