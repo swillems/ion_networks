@@ -14,19 +14,6 @@ import ms_utils
 class Database(ms_utils.HDF_File):
     # TODO: Docstring
 
-    def __init__(
-        self,
-        file_name,
-        is_read_only=True,
-        new_file=False,
-    ):
-        # TODO: Docstring
-        super().__init__(
-            file_name,
-            is_read_only=is_read_only,
-            new_file=new_file,
-        )
-
     def create_from_fastas(
         self,
         fasta_file_names,

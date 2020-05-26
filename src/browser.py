@@ -278,57 +278,6 @@ class Browser(object):
                 ),
             ]
         )
-        # self.min_positive_threshold = max_node_count
-        # self.max_positive_threshold = max_node_count
-        # layout.append(
-        #     [
-        #         sg.Text('POSITIVE EDGE EVIDENCE', size=(25, 1)),
-        #         sg.InputText(
-        #             self.min_positive_threshold,
-        #             key=f"min_positive_edge_count",
-        #             size=(10, 1),
-        #         ),
-        #         sg.InputText(
-        #             self.max_positive_threshold,
-        #             key=f"max_positive_edge_count",
-        #             size=(10, 1),
-        #         ),
-        #     ]
-        # )
-        # self.min_negative_threshold = 0
-        # self.max_negative_threshold = 0
-        # layout.append(
-        #     [
-        #         sg.Text('NEGATIVE EDGE EVIDENCE', size=(25, 1)),
-        #         sg.InputText(
-        #             self.min_negative_threshold,
-        #             key=f"min_negative_edge_count",
-        #             size=(10, 1),
-        #         ),
-        #         sg.InputText(
-        #             self.max_negative_threshold,
-        #             key=f"max_negative_edge_count",
-        #             size=(10, 1),
-        #         ),
-        #     ]
-        # )
-        # self.min_summed_threshold = max_node_count
-        # self.max_summed_threshold = max_node_count
-        # layout.append(
-        #     [
-        #         sg.Text('SUMMED EDGE EVIDENCE', size=(25, 1)),
-        #         sg.InputText(
-        #             self.min_summed_threshold,
-        #             key=f"min_summed_edge_count",
-        #             size=(10, 1),
-        #         ),
-        #         sg.InputText(
-        #             self.max_summed_threshold,
-        #             key=f"max_summed_edge_count",
-        #             size=(10, 1),
-        #         ),
-        #     ]
-        # )
         self.edge_color = "EDGE EVIDENCE"
         # self.edge_color = "lightgrey"
         self.edge_color_c_map = "RdYlGn"
@@ -600,36 +549,6 @@ class Browser(object):
         if self.edge_formula != values["edge_formula"]:
             self.edge_formula = values["edge_formula"]
             update_edge_selection = True
-        # if self.min_positive_threshold != values["min_positive_edge_count"]:
-        #     self.min_positive_threshold = float(
-        #         values["min_positive_edge_count"]
-        #     )
-        #     update_edge_selection = True
-        # if self.max_positive_threshold != values["max_positive_edge_count"]:
-        #     self.max_positive_threshold = float(
-        #         values["max_positive_edge_count"]
-        #     )
-        #     update_edge_selection = True
-        # if self.min_negative_threshold != values["min_negative_edge_count"]:
-        #     self.min_negative_threshold = float(
-        #         values["min_negative_edge_count"]
-        #     )
-        #     update_edge_selection = True
-        # if self.max_negative_threshold != values["max_negative_edge_count"]:
-        #     self.max_negative_threshold = float(
-        #         values["max_negative_edge_count"]
-        #     )
-        #     update_edge_selection = True
-        # if self.min_summed_threshold != values["min_summed_edge_count"]:
-        #     self.min_summed_threshold = float(
-        #         values["min_summed_edge_count"]
-        #     )
-        #     update_edge_selection = True
-        # if self.max_summed_threshold != values["max_summed_edge_count"]:
-        #     self.max_summed_threshold = float(
-        #         values["max_summed_edge_count"]
-        #     )
-        #     update_edge_selection = True
         if update_edge_selection:
             selected_edges = self.network_figure_update_edge_selection(flush=False)
             update_edge_colors = True
@@ -840,23 +759,20 @@ class Browser(object):
             alignment = self.evidence.get_alignment(
                 other=evidence
             )
-            self_ions = node_mask[alignment[:, 0]]
-            other_ions = alignment[:, 1]
+            selected = np.isin(alignment[:, 0], nodes)
+            self_ions = node_mask[alignment[selected, 0]]
+            other_ions = alignment[selected, 1]
             alignments[self_ions, i + 1] = evidence.ion_network.get_ion_coordinates(
                 self.evidence_axis,
                 other_ions
             )
-        if not hasattr(self, "evidence_plot"):
-            self.evidence_plot = self.figs["evidence"].axes[0].plot(
-                alignments.T
-            )
-        else:
+        if hasattr(self, "evidence_plot"):
             for i in self.evidence_plot:
                 i.remove()
             del self.evidence_plot[:]
-            self.evidence_plot = self.figs["evidence"].axes[0].plot(
-                alignments.T
-            )
+        self.evidence_plot = self.figs["evidence"].axes[0].plot(
+            alignments.T
+        )
         self.figs["evidence"].axes[0].set_ylim(
             [
                 np.min(alignments),
@@ -999,7 +915,7 @@ class Browser(object):
         node_selection = self.figs[
             "network"
         ].canvas.manager.toolmanager._tools['node_select']._current_selection
-        return nodes[list(node_selection)]
+        return nodes[sorted(node_selection)]
 
     def reset_selected_nodes(self):
         self.figs["network"].canvas.manager.toolmanager._tools['node_select'].hard_reset()

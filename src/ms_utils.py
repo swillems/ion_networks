@@ -525,7 +525,7 @@ class HDF_File(object):
                 hdf_file.attrs["creation_time"] = time.asctime()
                 # hdf_file.attrs["creation_version"] = ion_networks.__version__
                 hdf_file.attrs["original_file_name"] = self.__file_name
-                hdf_file.attrs["last_updated"] = time.asctime()
+                self.__update_timestamp(hdf_file)
         else:
             with h5py.File(self.file_name, "r") as hdf_file:
                 pass
@@ -570,6 +570,9 @@ class HDF_File(object):
         else:
             parent_group = hdf_file[parent_group_name]
         return parent_group
+
+    def __update_timestamp(self, hdf_file):
+        hdf_file.attrs["last_updated"] = time.asctime()
 
     def get_dataset(
         self,
@@ -632,7 +635,7 @@ class HDF_File(object):
             else:
                 return
             hdf_group.attrs["creation_time"] = time.asctime()
-            hdf_file.attrs["last_updated"] = time.asctime()
+            self.__update_timestamp(hdf_file)
 
     def create_attr(self, attr_key, attr_value, parent_group_name=""):
         # TODO: Docstring
@@ -649,7 +652,7 @@ class HDF_File(object):
                     parent_group.attrs[attr_key] = attr_value
                 else:
                     parent_group.attrs[attr_key] = str(attr_value)
-            hdf_file.attrs["last_updated"] = time.asctime()
+            self.__update_timestamp(hdf_file)
 
     def create_dataset(
         self,
@@ -697,4 +700,4 @@ class HDF_File(object):
                             compression=compression,
                         )
                     hdf_dataset.attrs["creation_time"] = time.asctime()
-                    hdf_file.attrs["last_updated"] = time.asctime()
+                    self.__update_timestamp(hdf_file)
