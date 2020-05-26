@@ -12,8 +12,11 @@ import numpy as np
 import pandas as pd
 import h5py
 import pyteomics.mgf
+# local
+import ion_networks
 
 
+VERSION = ion_networks.__version__
 BASE_PATH = os.path.dirname(os.path.dirname(__file__))
 LIB_PATH = os.path.join(BASE_PATH, "lib")
 DEFAULT_PARAMETER_PATH = os.path.join(LIB_PATH, "default_parameters")
@@ -505,6 +508,34 @@ def write_data_to_csv_file(
 class HDF_File(object):
     # TODO: Docstring
 
+    @property
+    def directory(self):
+        return os.path.dirname(self.file_name)
+
+    @property
+    def file_name(self):
+        return self.__file_name
+
+    @property
+    def original_file_name(self):
+        return self.read_attr("original_file_name")
+
+    @property
+    def creation_time(self):
+        return self.read_attr("creation_time")
+
+    @property
+    def last_updated(self):
+        return self.read_attr("last_updated")
+
+    @property
+    def version(self):
+        return self.read_attr("version")
+
+    @property
+    def is_read_only(self):
+        return self.__is_read_only
+
     def __init__(
         self,
         file_name,
@@ -523,33 +554,17 @@ class HDF_File(object):
                 os.makedirs(self.directory)
             with h5py.File(self.file_name, "w") as hdf_file:
                 hdf_file.attrs["creation_time"] = time.asctime()
-                # hdf_file.attrs["creation_version"] = ion_networks.__version__
+                hdf_file.attrs["version"] = VERSION
                 hdf_file.attrs["original_file_name"] = self.__file_name
                 self.__update_timestamp(hdf_file)
         else:
             with h5py.File(self.file_name, "r") as hdf_file:
-                pass
+                if self.version != VERSION:
+                    LOGGER.warning(
+                        f"WARNING: {self.file_name} was created with version"
+                        f" {self.version} instead of {VERSION}"
+                    )
         self.__is_read_only = is_read_only
-
-    @property
-    def directory(self):
-        return os.path.dirname(self.file_name)
-
-    @property
-    def file_name(self):
-        return self.__file_name
-
-    @property
-    def original_file_name(self):
-        return self.get_attr("original_file_name")
-
-    @property
-    def creation_time(self):
-        return self.get_attr("creation_time")
-
-    @property
-    def is_read_only(self):
-        return self.__is_read_only
 
     def __eq__(self, other):
         return self.file_name == other.file_name
@@ -564,7 +579,6 @@ class HDF_File(object):
         return str(self)
 
     def __get_parent_group(self, hdf_file, parent_group_name):
-        # TODO: Docstring
         if parent_group_name == "":
             parent_group = hdf_file
         else:
@@ -574,7 +588,24 @@ class HDF_File(object):
     def __update_timestamp(self, hdf_file):
         hdf_file.attrs["last_updated"] = time.asctime()
 
-    def get_dataset(
+    def read_group(self, parent_group_name=""):
+        # TODO: Docstring
+        with h5py.File(self.file_name, "r") as hdf_file:
+            parent_group = self.__get_parent_group(hdf_file, parent_group_name)
+            group = sorted(parent_group)
+        return group
+
+    def read_attr(self, attr_key=None, parent_group_name=""):
+        # TODO: Docstring
+        with h5py.File(self.file_name, "r") as hdf_file:
+            parent_group = self.__get_parent_group(hdf_file, parent_group_name)
+            if attr_key is not None:
+                attr = parent_group.attrs[attr_key]
+            else:
+                attr = sorted(parent_group.attrs)
+        return attr
+
+    def read_dataset(
         self,
         dataset_name,
         parent_group_name="",
@@ -600,28 +631,7 @@ class HDF_File(object):
                 array = array[...]
             return array[indices]
 
-    def get_attr(self, attr_key, parent_group_name=""):
-        # TODO: Docstring
-        with h5py.File(self.file_name, "r") as hdf_file:
-            parent_group = self.__get_parent_group(hdf_file, parent_group_name)
-            attr_value = parent_group.attrs[attr_key]
-        return attr_value
-
-    def get_group_list(self, parent_group_name=""):
-        # TODO: Docstring
-        with h5py.File(self.file_name, "r") as hdf_file:
-            parent_group = self.__get_parent_group(hdf_file, parent_group_name)
-            groups = sorted(parent_group)
-        return groups
-
-    def get_attr_list(self, parent_group_name=""):
-        # TODO: Docstring
-        with h5py.File(self.file_name, "r") as hdf_file:
-            parent_group = self.__get_parent_group(hdf_file, parent_group_name)
-            attrs = sorted(parent_group.attrs)
-        return attrs
-
-    def create_group(self, group_name, parent_group_name="", overwrite=False):
+    def write_group(self, group_name, parent_group_name="", overwrite=False):
         # TODO: Docstring
         if self.is_read_only:
             raise IOError(f"HDF {self.file_name} file is opened as read only")
@@ -637,7 +647,7 @@ class HDF_File(object):
             hdf_group.attrs["creation_time"] = time.asctime()
             self.__update_timestamp(hdf_file)
 
-    def create_attr(self, attr_key, attr_value, parent_group_name=""):
+    def write_attr(self, attr_key, attr_value, parent_group_name=""):
         # TODO: Docstring
         if self.is_read_only:
             raise IOError(f"HDF {self.file_name} file is opened as read only")
@@ -654,7 +664,7 @@ class HDF_File(object):
                     parent_group.attrs[attr_key] = str(attr_value)
             self.__update_timestamp(hdf_file)
 
-    def create_dataset(
+    def write_dataset(
         self,
         dataset_name,
         dataset,
@@ -666,9 +676,9 @@ class HDF_File(object):
         if self.is_read_only:
             raise IOError(f"HDF {self.file_name} file is opened as read only")
         if isinstance(dataset, pd.core.frame.DataFrame):
-            self.create_group(dataset_name, parent_group_name, overwrite)
+            self.write_group(dataset_name, parent_group_name, overwrite)
             for column in dataset.columns:
-                self.create_dataset(
+                self.write_dataset(
                     column,
                     dataset[column].values,
                     dataset_name,

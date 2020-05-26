@@ -95,12 +95,12 @@ class Network(HDF_MS_Run_File):
         regular_columns = [
             column for column in data.columns if not column.startswith("#")
         ]
-        self.create_dataset("nodes", data[regular_columns])
+        self.write_dataset("nodes", data[regular_columns])
         if len(regular_columns) != data.shape[1]:
             comment_columns = [
                 column for column in data.columns if column.startswith("#")
             ]
-            self.create_dataset("comments", data[comment_columns])
+            self.write_dataset("comments", data[comment_columns])
 
     def write_edges(self, parameters):
         """
@@ -115,7 +115,7 @@ class Network(HDF_MS_Run_File):
             ion-network.
         """
         ms_utils.LOGGER.info(f"Writing edges of ion-network {self.file_name}")
-        self.create_group("edges")
+        self.write_group("edges")
         dimensions = self.get_precursor_dimensions(
             remove_precursor_rt=True
         )
@@ -130,12 +130,12 @@ class Network(HDF_MS_Run_File):
             tuple(self.get_ion_coordinates(dimensions)),
             tuple(max_absolute_errors)
         )
-        self.create_dataset(
+        self.write_dataset(
             "indptr",
             indptr,
             parent_group_name="edges"
         )
-        self.create_dataset(
+        self.write_dataset(
             "indices",
             indices,
             parent_group_name="edges"
@@ -155,19 +155,19 @@ class Network(HDF_MS_Run_File):
         ms_utils.LOGGER.info(
             f"Writing parameters of ion-network {self.file_name}"
         )
-        self.create_attr(
+        self.write_attr(
             "node_count",
-            self.get_dataset("FRAGMENT_MZ", "nodes", return_length=True)
+            self.read_dataset("FRAGMENT_MZ", "nodes", return_length=True)
         )
-        self.create_attr(
+        self.write_attr(
             "edge_count",
-            self.get_dataset("indices", "edges", return_length=True)
+            self.read_dataset("indices", "edges", return_length=True)
         )
         for parameter_key, parameter_value in parameters.items():
             if parameter_key.startswith("max_edge_absolute_error"):
                 if parameter_key[19:] not in self.dimensions:
                     continue
-            self.create_attr(parameter_key, parameter_value)
+            self.write_attr(parameter_key, parameter_value)
 
     def get_ion_coordinates(self, dimensions=None, indices=...):
         """
@@ -688,23 +688,23 @@ class Network(HDF_MS_Run_File):
 
     @property
     def dimensions(self):
-        return self.get_group_list("nodes")
+        return self.read_group("nodes")
 
     @property
     def comment_dimensions(self):
-        if "comments" in self.get_group_list():
-            dimensions = self.get_group_list("comments")
+        if "comments" in self.read_group():
+            dimensions = self.read_group("comments")
         else:
             dimensions = []
         return dimensions
 
     @property
     def node_count(self):
-        return self.get_attr("node_count")
+        return self.read_attr("node_count")
 
     @property
     def edge_count(self):
-        return self.get_attr("edge_count")
+        return self.read_attr("edge_count")
 
 
 class Evidence(HDF_MS_Run_File):
@@ -785,7 +785,7 @@ class Evidence(HDF_MS_Run_File):
 
     def is_evidenced_with(self, other):
         # TODO: Docstring
-        return other.run_name in self.get_group_list()
+        return other.run_name in self.read_group()
 
     def align_edges(
         self,
@@ -803,7 +803,7 @@ class Evidence(HDF_MS_Run_File):
             f"{other.ion_network.file_name}"
         )
         parent_group_name = other.ion_network.run_name
-        self.create_group(parent_group_name)
+        self.write_group(parent_group_name)
         positive = pairwise_alignment * other_edges * pairwise_alignment_T
         positive = (positive + positive.T).multiply(self_edges)
         positive_mask = (self_edges.astype(np.int8) + positive).data == 2
@@ -814,17 +814,17 @@ class Evidence(HDF_MS_Run_File):
         ] & alignment_mask[
             right_node_indices
         ] & ~positive_mask
-        self.create_dataset(
+        self.write_dataset(
             "positive_edges",
             positive_mask,
             parent_group_name=parent_group_name,
         )
-        self.create_dataset(
+        self.write_dataset(
             "negative_edges",
             negative_mask,
             parent_group_name=parent_group_name,
         )
-        self.create_dataset(
+        self.write_dataset(
             "aligned_nodes",
             aligned_ion_indices,
             parent_group_name=parent_group_name,
@@ -836,7 +836,7 @@ class Evidence(HDF_MS_Run_File):
             if parameter_key.startswith("max_alignment_absolute_error_"):
                 if parameter_key[24:] not in dimension_overlap:
                     continue
-            self.create_attr(
+            self.write_attr(
                 parameter_key,
                 parameter_value,
                 parent_group_name=parent_group_name
@@ -892,14 +892,14 @@ class Evidence(HDF_MS_Run_File):
         # TODO: Docstring
         if group_name == "":
             ions = np.zeros(self.ion_network.node_count, dtype=np.int)
-            for group_name in self.get_group_list():
-                ion_mask = self.get_dataset(
+            for group_name in self.read_group():
+                ion_mask = self.read_dataset(
                     "aligned_nodes",
                     parent_group_name=group_name,
                 )
                 ions[ion_mask] += 1
         else:
-            ions = self.get_dataset(
+            ions = self.read_dataset(
                 "aligned_nodes",
                 parent_group_name=group_name,
             )
@@ -917,13 +917,13 @@ class Evidence(HDF_MS_Run_File):
             mask_name = "negative_edges"
         if group_name == "":
             edges = np.zeros(self.ion_network.edge_count, dtype=np.int)
-            for group_name in self.get_group_list():
-                edges += self.get_dataset(
+            for group_name in self.read_group():
+                edges += self.read_dataset(
                     mask_name,
                     parent_group_name=group_name,
                 )
         else:
-            edges = self.get_dataset(
+            edges = self.read_dataset(
                 mask_name,
                 parent_group_name=group_name,
             )
@@ -946,7 +946,7 @@ class Evidence(HDF_MS_Run_File):
         list[str]
             A sorted list with the keys of all ion-network.
         """
-        return self.get_group_list()
+        return self.read_group()
 
     @property
     def evidence_count(self):
@@ -992,9 +992,9 @@ class Annotation(HDF_MS_Run_File):
     def write_parameters(self, database, parameters):
         # TODO: Docstring
         ms_utils.LOGGER.info(f"Writing parameters to {self.file_name}")
-        self.create_attr("database_file_name", database.file_name)
+        self.write_attr("database_file_name", database.file_name)
         for key, value in parameters.items():
-            self.create_attr(key, value)
+            self.write_attr(key, value)
 
     def write_candidates(self, database, parameters):
         # TODO: Docstring
@@ -1006,13 +1006,13 @@ class Annotation(HDF_MS_Run_File):
             database,
             parameters
         )
-        self.create_group("node_candidates")
-        self.create_dataset(
+        self.write_group("node_candidates")
+        self.write_dataset(
             "low_peptide_indices",
             low_peptide_indices,
             parent_group_name="node_candidates"
         )
-        self.create_dataset(
+        self.write_dataset(
             "high_peptide_indices",
             high_peptide_indices,
             parent_group_name="node_candidates"
@@ -1025,13 +1025,13 @@ class Annotation(HDF_MS_Run_File):
             low_peptide_indices,
             high_peptide_indices
         )
-        self.create_group("edge_candidates")
-        self.create_dataset(
+        self.write_group("edge_candidates")
+        self.write_dataset(
             "indptr",
             edge_indptr,
             parent_group_name="edge_candidates"
         )
-        self.create_dataset(
+        self.write_dataset(
             "indices",
             edge_indices,
             parent_group_name="edge_candidates"

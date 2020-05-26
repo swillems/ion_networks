@@ -33,9 +33,9 @@ class Database(ms_utils.HDF_File):
     def write_parameters(self, fasta_file_names, parameters):
         # TODO: Docstring
         ms_utils.LOGGER.info(f"Writing parameters to {self.file_name}")
-        self.create_attr("fasta_file_names", fasta_file_names)
+        self.write_attr("fasta_file_names", fasta_file_names)
         for key, value in parameters.items():
-            self.create_attr(key, value)
+            self.write_attr(key, value)
 
     def read_proteins_and_peptides_from_fasta(
         self,
@@ -159,7 +159,7 @@ class Database(ms_utils.HDF_File):
             columns=["protein"] + columns
         )
         protrec.set_index("index", inplace=True)
-        self.create_dataset("proteins", protrec)
+        self.write_dataset("proteins", protrec)
 
     def write_peptides(
         self,
@@ -223,7 +223,7 @@ class Database(ms_utils.HDF_File):
         )
         peprec["index"] = np.arange(peprec.shape[0])
         peprec.set_index("index", inplace=True)
-        self.create_dataset("peptides", peprec)
+        self.write_dataset("peptides", peprec)
         return peprec
 
     def write_fragments(
@@ -303,7 +303,7 @@ class Database(ms_utils.HDF_File):
         fragrec["index"] = np.arange(fragrec.shape[0])
         fragrec.set_index("index", inplace=True)
         ms_utils.LOGGER.info(f"Writing fragments to {self.file_name}")
-        self.create_dataset("fragments", fragrec)
+        self.write_dataset("fragments", fragrec)
 
     @staticmethod
     def generate_ptm_combinations_recursively(ptms, selected=[]):
@@ -349,17 +349,17 @@ class Database(ms_utils.HDF_File):
     def get_fragment_coordinates(self, dimensions=None, indices=...):
         # TODO: Docstring
         if isinstance(dimensions, str):
-            return self.get_dataset(
+            return self.read_dataset(
                 dimensions,
                 parent_group_name="fragments",
                 indices=indices
             )
         elif dimensions is None:
-            dimensions = self.get_group_list(
+            dimensions = self.read_group(
                 parent_group_name="fragments"
             )
         return [
-            self.get_dataset(
+            self.read_dataset(
                 dimension,
                 parent_group_name="fragments",
                 indices=indices
@@ -369,17 +369,17 @@ class Database(ms_utils.HDF_File):
     def get_peptide_coordinates(self, dimensions=None, indices=...):
         # TODO: Docstring
         if isinstance(dimensions, str):
-            return self.get_dataset(
+            return self.read_dataset(
                 dimensions,
                 parent_group_name="peptides",
                 indices=indices
             )
         elif dimensions is None:
-            dimensions = self.get_group_list(
+            dimensions = self.read_group(
                 parent_group_name="peptides"
             )
         return [
-            self.get_dataset(
+            self.read_dataset(
                 dimension,
                 parent_group_name="peptides",
                 indices=indices

@@ -756,9 +756,7 @@ class Browser(object):
         )
         for i, other_run in enumerate(self.evidence.network_keys):
             evidence = self.evidence.get_other_run(other_run)
-            alignment = self.evidence.get_alignment(
-                other=evidence
-            )
+            alignment = self.evidence.get_alignment(other=evidence)
             selected = np.isin(alignment[:, 0], nodes)
             self_ions = node_mask[alignment[selected, 0]]
             other_ions = alignment[selected, 1]
