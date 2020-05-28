@@ -2,6 +2,8 @@
 
 # builtin
 import os
+import ast
+import multiprocessing.pool
 # external
 import numpy as np
 import scipy
@@ -25,15 +27,11 @@ class HDF_MS_Run_File(ms_utils.HDF_File):
             except AttributeError:
                 raise ValueError("Invalid reference for HDF file")
         reference_components = reference.split(".")
-        if not (
-            (
-                len(reference_components) >= 3
-            ) and (
-                reference_components[-1] in ["hdf", "csv"]
-            ) and (
-                reference_components[-2] in ["inet", "evidence", "annotation"]
-            )
-        ):
+        if len(reference_components) < 3:
+            raise ValueError("Invalid reference for HDF file")
+        if reference_components[-1] not in ["hdf", "csv"]:
+            raise ValueError("Invalid reference for HDF file")
+        if reference_components[-2] not in ["inet", "evidence", "annotation"]:
             raise ValueError("Invalid reference for HDF file")
         return ".".join(reference_components[:-2])
 
@@ -49,6 +47,30 @@ class Network(HDF_MS_Run_File):
     fragments as edges.
     """
 
+    @property
+    def dimensions(self):
+        return ast.literal_eval(self.read_attr("dimensions"))
+
+    @property
+    def precursor_dimensions(self):
+        return [d for d in self.dimensions if d.startswith("PRECURSOR_")]
+
+    @property
+    def ion_comments(self):
+        return ast.literal_eval(self.read_attr("ion_comments"))
+
+    @property
+    def node_count(self):
+        return self.read_attr("node_count")
+
+    @property
+    def edge_count(self):
+        return self.read_attr("edge_count")
+
+    @property
+    def centroids_file_name(self):
+        return self.read_attr("centroids_file_name")
+
     def __init__(
         self,
         reference,
@@ -56,29 +78,41 @@ class Network(HDF_MS_Run_File):
         new_file=False,
     ):
         # TODO: Docstring
-        file_name = self.convert_reference_to_trimmed_file_name(reference)
+        file_name_prefix = self.convert_reference_to_trimmed_file_name(
+            reference
+        )
         super().__init__(
-            f"{file_name}.inet.hdf",
+            f"{file_name_prefix}.inet.hdf",
             is_read_only=is_read_only,
             new_file=new_file,
         )
 
-    def create_from_data(self, data, parameters):
+    def create_from_data(
+        self,
+        centroids_file_name,
+        parameters
+    ):
         """
         Creates a .hdf file with nodes and edges from a pd.DataFrame.
 
         Parameters
         ----------
-        data : pd.Dataframe
-            A pd.Dataframe with centroided ion peaks.
+        dataframe : pd.Dataframe
+            A pd.Dataframe with centroided fragment ion coordinates.
         parameters : dict
             A dictionary with optional parameters for the creation of an
             ion-network.
         """
-        ms_utils.LOGGER.info(f"Creating ion-network {self.file_name}")
-        self.write_nodes(data)
+        ms_utils.LOGGER.info(
+            f"Creating ion-network {self.file_name}..."
+        )
+        dataframe = ms_utils.read_centroided_csv_file(
+            centroids_file_name,
+            parameters,
+        )
+        self.write_attr("centroids_file_name", centroids_file_name)
+        self.write_nodes(dataframe)
         self.write_edges(parameters)
-        self.write_parameters(parameters)
 
     def write_nodes(self, data):
         """
@@ -91,16 +125,26 @@ class Network(HDF_MS_Run_File):
         data : pd.Dataframe
             A pd.Dataframe with centroided ion peaks.
         """
-        ms_utils.LOGGER.info(f"Writing nodes of ion-network {self.file_name}")
+        ms_utils.LOGGER.info(
+            f"Writing nodes of ion-network {self.file_name}..."
+        )
+        precursor_rts = data["PRECURSOR_RT"].values
+        if np.any(precursor_rts[:-1] > precursor_rts[1:]):
+            data = data[np.argsort(precursor_rts)]
         regular_columns = [
             column for column in data.columns if not column.startswith("#")
         ]
         self.write_dataset("nodes", data[regular_columns])
+        self.write_attr("node_count", data.shape[0])
+        self.write_attr("dimensions", sorted(regular_columns))
         if len(regular_columns) != data.shape[1]:
             comment_columns = [
                 column for column in data.columns if column.startswith("#")
             ]
-            self.write_dataset("comments", data[comment_columns])
+            self.write_dataset("ion_comments", data[comment_columns])
+            self.write_attr("ion_comments", sorted(comment_columns))
+        else:
+            self.write_attr("ion_comments", "[]")
 
     def write_edges(self, parameters):
         """
@@ -115,21 +159,42 @@ class Network(HDF_MS_Run_File):
             ion-network.
         """
         ms_utils.LOGGER.info(f"Writing edges of ion-network {self.file_name}")
+        thread_count = parameters["threads"]
+        errors = parameters["precursor_errors"]
+        precursor_coordinates = np.stack(
+            self.get_ion_coordinates(self.precursor_dimensions)
+        ).T
+        max_errors = np.array(
+            [errors[dimension] for dimension in self.precursor_dimensions]
+        )
+        rt_coordinates = self.get_ion_coordinates("PRECURSOR_RT")
+        lower_limits = np.arange(len(rt_coordinates)) + 1
+        upper_limits = np.searchsorted(
+            rt_coordinates,
+            rt_coordinates + errors["PRECURSOR_RT"],
+            "right"
+        )
+        with multiprocessing.pool.ThreadPool(thread_count) as p:
+            results = p.starmap(
+                determine_precursor_edges,
+                [
+                    (
+                        np.arange(
+                            (i * self.node_count) // thread_count,
+                            ((i + 1) * self.node_count) // thread_count
+                        ),
+                        lower_limits,
+                        upper_limits,
+                        precursor_coordinates,
+                        max_errors
+                    ) for i in range(thread_count)
+                ]
+            )
+        indptr = np.empty(self.node_count + 1, np.int64)
+        indptr[0] = 0
+        indptr[1:] = np.cumsum(np.concatenate([r[0] for r in results]))
+        indices = np.concatenate([r[1] for r in results])
         self.write_group("edges")
-        dimensions = self.get_precursor_dimensions(
-            remove_precursor_rt=True
-        )
-        max_absolute_errors = [
-            parameters[
-                f"max_edge_absolute_error_{dimension}"
-            ] for dimension in dimensions
-        ]
-        indptr, indices = self.create_sparse_edges(
-            self.get_ion_coordinates("PRECURSOR_RT"),
-            parameters[f"max_edge_absolute_error_PRECURSOR_RT"],
-            tuple(self.get_ion_coordinates(dimensions)),
-            tuple(max_absolute_errors)
-        )
         self.write_dataset(
             "indptr",
             indptr,
@@ -140,34 +205,15 @@ class Network(HDF_MS_Run_File):
             indices,
             parent_group_name="edges"
         )
-
-    def write_parameters(self, parameters):
-        """
-        Saves all parameters of an ion-network. They are saved in an .hdf
-        file as attributes of 'parameters' group.
-
-        Parameters
-        ----------
-        parameters : dict
-            A dictionary with optional parameters for the creation of an
-            ion-network.
-        """
-        ms_utils.LOGGER.info(
-            f"Writing parameters of ion-network {self.file_name}"
-        )
+        self.write_attr("edge_count", len(indices))
         self.write_attr(
-            "node_count",
-            self.read_dataset("FRAGMENT_MZ", "nodes", return_length=True)
+            "precursor_errors",
+            {
+                dimension: errors[
+                    dimension
+                ] for dimension in self.precursor_dimensions
+            }
         )
-        self.write_attr(
-            "edge_count",
-            self.read_dataset("indices", "edges", return_length=True)
-        )
-        for parameter_key, parameter_value in parameters.items():
-            if parameter_key.startswith("max_edge_absolute_error"):
-                if parameter_key[19:] not in self.dimensions:
-                    continue
-            self.write_attr(parameter_key, parameter_value)
 
     def get_ion_coordinates(self, dimensions=None, indices=...):
         """
@@ -299,88 +345,6 @@ class Network(HDF_MS_Run_File):
                 np.diff(indptr)
             )
             return second_indices, indices
-
-    @staticmethod
-    @numba.njit(cache=True)
-    def create_sparse_edges(
-        rt_coordinate_array,
-        max_rt_absolute_error,
-        coordinate_arrays,
-        max_absolute_errors,
-        symmetric=False
-    ):
-        """
-        Create all edges of an ion-network and return as indpt and indices of
-        a sparse matrix.
-
-        Parameters
-        ----------
-        rt_coordinate_array : np.ndarray
-            An array with the individual rt coordinates of each ion.
-        max_rt_absolute_error : float
-            The maximum allowed rt error between two ions.
-        coordinate_arrays : tuple[np.ndarray]
-            A tuple with the individual coordinates of each ion per dimension.
-        max_absolute_errors : typle[float]
-            A tuple with the maximum allowed errors for each dimension.
-        symmetric : bool
-            If False, only create edges in one direction so that they satisfy
-            rt1 <= rt2.
-
-        Returns
-        -------
-        tuple[np.ndarray]
-            A tuple with as first element the indptr and as second
-            element the indices, equal to those of a scipy.csr.matrix.
-        """
-        if not symmetric:
-            lower_limits = np.arange(len(rt_coordinate_array)) + 1
-        else:
-            lower_limits = np.searchsorted(
-                rt_coordinate_array,
-                rt_coordinate_array - max_rt_absolute_error,
-                "left"
-            )
-        upper_limits = np.searchsorted(
-            rt_coordinate_array,
-            rt_coordinate_array + max_rt_absolute_error,
-            "right"
-        )
-        neighbors = []
-        for index, (low_limit, high_limit) in enumerate(
-            zip(
-                lower_limits,
-                upper_limits
-            )
-        ):
-            small_absolute_errors = np.repeat(True, high_limit - low_limit)
-            for max_absolute_error, coordinate_array in zip(
-                max_absolute_errors,
-                coordinate_arrays
-            ):
-                neighbor_coordinates = coordinate_array[
-                    low_limit: high_limit
-                ]
-                local_coordinate = coordinate_array[index]
-                small_coordinate_absolute_errors = np.abs(
-                    neighbor_coordinates - local_coordinate
-                ) <= max_absolute_error
-                small_absolute_errors = np.logical_and(
-                    small_absolute_errors,
-                    small_coordinate_absolute_errors
-                )
-            local_neighbors = low_limit + np.flatnonzero(small_absolute_errors)
-            neighbors.append(local_neighbors)
-        indptr = np.empty(len(neighbors) + 1, np.int64)
-        lens = np.empty(len(neighbors), np.int64)
-        for i, n in enumerate(neighbors):
-            lens[i] = len(n)
-        indptr[0] = 0
-        indptr[1:] = np.cumsum(lens)
-        indices = np.empty(indptr[-1], np.int64)
-        for s, e, n in zip(indptr[:-1], indptr[1:], neighbors):
-            indices[s: e] = n
-        return indptr, indices
 
     def align_nodes(self, other, parameters, return_as_scipy_csr=True):
         # TODO: Docstring
@@ -624,32 +588,6 @@ class Network(HDF_MS_Run_File):
             dimensions.remove("PRECURSOR_RT")
         return sorted(dimensions)
 
-    def get_precursor_dimensions(
-        self,
-        remove_precursor_rt=False
-    ):
-        """
-        Get the precursor dimensions of this ion-network.
-
-        Parameters
-        ----------
-        remove_precursor_rt : bool
-            If True, remove 'PRECURSOR_RT' from the dimensions.
-
-        Returns
-        -------
-        list[str]
-            A sorted list with all the precursor dimensions.
-        """
-        dimensions = set(
-            [
-                dim for dim in self.dimensions if dim.startswith("PRECURSOR")
-            ]
-        )
-        if remove_precursor_rt:
-            dimensions.remove("PRECURSOR_RT")
-        return sorted(dimensions)
-
     def dimension_overlap(
         self,
         other,
@@ -685,26 +623,6 @@ class Network(HDF_MS_Run_File):
         if remove_precursor_rt:
             dimensions.remove("PRECURSOR_RT")
         return sorted(dimensions)
-
-    @property
-    def dimensions(self):
-        return self.read_group("nodes")
-
-    @property
-    def comment_dimensions(self):
-        if "comments" in self.read_group():
-            dimensions = self.read_group("comments")
-        else:
-            dimensions = []
-        return dimensions
-
-    @property
-    def node_count(self):
-        return self.read_attr("node_count")
-
-    @property
-    def edge_count(self):
-        return self.read_attr("edge_count")
 
 
 class Evidence(HDF_MS_Run_File):
@@ -1179,3 +1097,43 @@ def longest_increasing_subsequence(sequence):
         longest_increasing_subsequence[current_index] = index
         index = P[index]
     return longest_increasing_subsequence
+
+
+@numba.njit(cache=True, nogil=True)
+def increase_buffer(buffer, max_batch=10**7):
+    new_buffer = np.empty(buffer.shape[0] + max_batch, np.int64)
+    new_buffer[:len(buffer)] = buffer
+    return new_buffer
+
+
+@numba.njit(cache=True, nogil=True)
+def determine_precursor_edges(
+    queries,
+    lower_limits,
+    upper_limits,
+    coordinates,
+    max_errors,
+):
+    indptr = np.zeros(len(queries), np.int64)
+    indices = np.empty(10**7, np.int64)
+    total = 0
+    for index, query in enumerate(queries):
+        low_limit = lower_limits[query]
+        high_limit = upper_limits[query]
+        candidate_count = high_limit - low_limit
+        if candidate_count == 0:
+            continue
+        elif (candidate_count + total) >= len(indices):
+            indices = increase_buffer(indices)
+        dists = coordinates[low_limit: high_limit] - coordinates[query]
+        dists /= max_errors
+#         TODO: what if error==0?
+        dists = dists**2
+        projected_dists = np.sum(dists, axis=1)
+        projected_dists = np.sqrt(projected_dists)
+        candidates = low_limit + np.flatnonzero(projected_dists <= 1)
+        candidate_count = len(candidates)
+        indices[total: total + candidate_count] = candidates
+        indptr[index] = candidate_count
+        total += candidate_count
+    return (indptr, indices[:total])

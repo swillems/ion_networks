@@ -145,9 +145,7 @@ def parallelizedGenerator(
         in_queue.put(element)
     processes = []
     for process_index in range(process_count):
-        process = mp.Process(
-            target=_parallel_function,
-        )
+        process = mp.Process(target=_parallel_function,)
         in_queue.put(None)
         process.start()
         processes.append(process)

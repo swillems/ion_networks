@@ -152,10 +152,10 @@ class Interface(object):
             logger.info(f"parameter_file_name: {parameter_file_name}")
             logger.info(f"log_file_name: {log_file_name}")
             logger.info("")
-            for csv_file_name in input_file_names:
-                local_file_name = os.path.basename(csv_file_name)
+            for centroids_file_name in input_file_names:
+                local_file_name = os.path.basename(centroids_file_name)
                 if output_directory == "":
-                    output_path = os.path.dirname(csv_file_name)
+                    output_path = os.path.dirname(centroids_file_name)
                 else:
                     output_path = output_directory
                 ion_network_file_name = os.path.join(
@@ -166,11 +166,10 @@ class Interface(object):
                     ion_network_file_name,
                     new_file=True,
                 )
-                data = ms_utils.read_centroided_csv_file(
-                    csv_file_name,
-                    parameters,
+                network.create_from_data(
+                    centroids_file_name=centroids_file_name,
+                    parameters=parameters
                 )
-                network.create_from_data(data, parameters)
 
     @staticmethod
     def evidence_ion_networks(

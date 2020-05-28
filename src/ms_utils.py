@@ -13,10 +13,9 @@ import pandas as pd
 import h5py
 import pyteomics.mgf
 # local
-import ion_networks
+from _version import __version__ as VERSION
 
 
-VERSION = ion_networks.__version__
 BASE_PATH = os.path.dirname(os.path.dirname(__file__))
 LIB_PATH = os.path.join(BASE_PATH, "lib")
 DEFAULT_PARAMETER_PATH = os.path.join(LIB_PATH, "default_parameters")
