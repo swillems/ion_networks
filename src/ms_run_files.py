@@ -8,7 +8,6 @@ import multiprocessing.pool
 import numpy as np
 import scipy
 import numba
-import h5py
 import scipy.sparse
 # local
 import ms_database
@@ -87,7 +86,115 @@ class Network(HDF_MS_Run_File):
             new_file=new_file,
         )
 
-    def create_from_data(
+    def __write_nodes(self, data):
+        """
+        Saves all data as individual arrays to an .hdf file. Each array
+        will be placed in a 'nodes' group and names according to its column
+        name.
+
+        Parameters
+        ----------
+        data : pd.Dataframe
+            A pd.Dataframe with centroided ion peaks.
+        """
+        ms_utils.LOGGER.info(
+            f"Writing nodes of ion-network {self.file_name}..."
+        )
+        precursor_rts = data["PRECURSOR_RT"].values
+        if np.any(precursor_rts[:-1] > precursor_rts[1:]):
+            data = data[np.argsort(precursor_rts)]
+        regular_columns = [
+            column for column in data.columns if not column.startswith("#")
+        ]
+        self.write_dataset("nodes", data[regular_columns])
+        self.write_attr("node_count", data.shape[0])
+        self.write_attr("dimensions", sorted(regular_columns))
+        comment_columns = [
+            column for column in data.columns if column.startswith("#")
+        ]
+        if len(comment_columns) > 0:
+            self.write_dataset("ion_comments", data[comment_columns])
+            self.write_attr("ion_comments", sorted(comment_columns))
+        else:
+            self.write_group("ion_comments")
+            self.write_attr("ion_comments", "[]")
+
+    def __create_edges(self, parameters):
+        """
+        Creates and saves all edges of an ion-network. They are saved in an
+        .hdf file as indptr and indices of a scipy.sparse.csr matrix in an
+        'edge' group. Edges are always saved such that rt1 <= rt2.
+
+        Parameters
+        ----------
+        parameters : dict
+            A dictionary with optional parameters for the creation of an
+            ion-network.
+        """
+        ms_utils.LOGGER.info(f"Creating edges of ion-network {self.file_name}")
+        thread_count = parameters["threads"]
+        errors = parameters["precursor_errors"]
+        precursor_coordinates = np.stack(
+            self.get_ion_coordinates(self.precursor_dimensions)
+        ).T
+        max_errors = np.array(
+            [errors[dimension] for dimension in self.precursor_dimensions]
+        )
+        rt_coordinates = self.get_ion_coordinates("PRECURSOR_RT")
+        lower_limits = np.arange(len(rt_coordinates)) + 1
+        upper_limits = np.searchsorted(
+            rt_coordinates,
+            rt_coordinates + errors["PRECURSOR_RT"],
+            "right"
+        )
+        with multiprocessing.pool.ThreadPool(thread_count) as p:
+            results = p.starmap(
+                align_coordinates,
+                [
+                    (
+                        np.arange(
+                            (i * self.node_count) // thread_count,
+                            ((i + 1) * self.node_count) // thread_count
+                        ),
+                        lower_limits,
+                        upper_limits,
+                        precursor_coordinates,
+                        precursor_coordinates,
+                        max_errors,
+                    ) for i in range(thread_count)
+                ]
+            )
+        indptr = np.empty(self.node_count + 1, np.int64)
+        indptr[0] = 0
+        indptr[1:] = np.cumsum(np.concatenate([r[0] for r in results]))
+        indices = np.concatenate([r[1] for r in results])
+        precursor_errors = {
+            dimension: errors[
+                dimension
+            ] for dimension in self.precursor_dimensions
+        }
+        self.__write_edges(indptr, indices, precursor_errors)
+
+    def __write_edges(self, indptr, indices, precursor_errors):
+        ms_utils.LOGGER.info(f"Writing edges of ion-network {self.file_name}")
+        self.write_group("edges")
+        self.write_dataset(
+            "indptr",
+            indptr,
+            parent_group_name="edges"
+        )
+        self.write_dataset(
+            "indices",
+            indices,
+            parent_group_name="edges"
+        )
+        self.write_attr("edge_count", len(indices))
+        self.write_attr(
+            "precursor_errors",
+            precursor_errors
+        )
+
+    def create(
         self,
         centroids_file_name,
         parameters
@@ -111,109 +218,8 @@ class Network(HDF_MS_Run_File):
             parameters,
         )
         self.write_attr("centroids_file_name", centroids_file_name)
-        self.write_nodes(dataframe)
-        self.write_edges(parameters)
-
-    def write_nodes(self, data):
-        """
-        Saves all data as individual arrays to an .hdf file. Each array
-        will be placed in a 'nodes' group and names according to its column
-        name.
-
-        Parameters
-        ----------
-        data : pd.Dataframe
-            A pd.Dataframe with centroided ion peaks.
-        """
-        ms_utils.LOGGER.info(
-            f"Writing nodes of ion-network {self.file_name}..."
-        )
-        precursor_rts = data["PRECURSOR_RT"].values
-        if np.any(precursor_rts[:-1] > precursor_rts[1:]):
-            data = data[np.argsort(precursor_rts)]
-        regular_columns = [
-            column for column in data.columns if not column.startswith("#")
-        ]
-        self.write_dataset("nodes", data[regular_columns])
-        self.write_attr("node_count", data.shape[0])
-        self.write_attr("dimensions", sorted(regular_columns))
-        if len(regular_columns) != data.shape[1]:
-            comment_columns = [
-                column for column in data.columns if column.startswith("#")
-            ]
-            self.write_dataset("ion_comments", data[comment_columns])
-            self.write_attr("ion_comments", sorted(comment_columns))
-        else:
-            self.write_attr("ion_comments", "[]")
-
-    def write_edges(self, parameters):
-        """
-        Creates and saves all edges of an ion-network. They are saved in an
-        .hdf file as indptr and indices of a scipy.sparse.csr matrix in an
-        'edge' group. Edges are always saved such that rt1 <= rt2.
-
-        Parameters
-        ----------
-        parameters : dict
-            A dictionary with optional parameters for the creation of an
-            ion-network.
-        """
-        ms_utils.LOGGER.info(f"Writing edges of ion-network {self.file_name}")
-        thread_count = parameters["threads"]
-        errors = parameters["precursor_errors"]
-        precursor_coordinates = np.stack(
-            self.get_ion_coordinates(self.precursor_dimensions)
-        ).T
-        max_errors = np.array(
-            [errors[dimension] for dimension in self.precursor_dimensions]
-        )
-        rt_coordinates = self.get_ion_coordinates("PRECURSOR_RT")
-        lower_limits = np.arange(len(rt_coordinates)) + 1
-        upper_limits = np.searchsorted(
-            rt_coordinates,
-            rt_coordinates + errors["PRECURSOR_RT"],
-            "right"
-        )
-        with multiprocessing.pool.ThreadPool(thread_count) as p:
-            results = p.starmap(
-                determine_precursor_edges,
-                [
-                    (
-                        np.arange(
-                            (i * self.node_count) // thread_count,
-                            ((i + 1) * self.node_count) // thread_count
-                        ),
-                        lower_limits,
-                        upper_limits,
-                        precursor_coordinates,
-                        max_errors
-                    ) for i in range(thread_count)
-                ]
-            )
-        indptr = np.empty(self.node_count + 1, np.int64)
-        indptr[0] = 0
-        indptr[1:] = np.cumsum(np.concatenate([r[0] for r in results]))
-        indices = np.concatenate([r[1] for r in results])
-        self.write_group("edges")
-        self.write_dataset(
-            "indptr",
-            indptr,
-            parent_group_name="edges"
-        )
-        self.write_dataset(
-            "indices",
-            indices,
-            parent_group_name="edges"
-        )
-        self.write_attr("edge_count", len(indices))
-        self.write_attr(
-            "precursor_errors",
-            {
-                dimension: errors[
-                    dimension
-                ] for dimension in self.precursor_dimensions
-            }
-        )
+        self.__write_nodes(dataframe)
+        self.__create_edges(parameters)
 
     def get_ion_coordinates(self, dimensions=None, indices=...):
         """
@@ -241,19 +247,13 @@ class Network(HDF_MS_Run_File):
         single_dimension = isinstance(dimensions, str)
         if single_dimension:
             dimensions = [dimensions]
-        arrays = []
-        try:
-            iter(indices)
-            fancy_indices = True
-        except TypeError:
-            fancy_indices = False
-        with h5py.File(self.file_name, "r") as network_file:
-            for dimension in dimensions:
-                array = network_file["nodes"][dimension]
-                if fancy_indices:
-                    array = array[...]
-                array = array[indices]
-                arrays.append(array)
+        arrays = [
+            self.read_dataset(
+                dimension,
+                parent_group_name="nodes",
+                indices=indices
+            ) for dimension in dimensions
+        ]
         if single_dimension:
             return arrays[0]
         else:
@@ -286,343 +286,52 @@ class Network(HDF_MS_Run_File):
         single_dimension = isinstance(dimensions, str)
         if single_dimension:
             dimensions = [dimensions]
-        arrays = []
-        try:
-            iter(indices)
-            fancy_indices = True
-        except TypeError:
-            fancy_indices = False
-        with h5py.File(self.file_name, "r") as network_file:
-            for dimension in dimensions:
-                array = network_file["comments"][dimension]
-                if fancy_indices:
-                    array = array[...]
-                array = array[indices]
-                arrays.append(array)
+        arrays = [
+            self.read_dataset(
+                dimension,
+                parent_group_name="comments",
+                indices=indices
+            ) for dimension in dimensions
+        ]
         if single_dimension:
             return arrays[0]
         else:
             return arrays
-        # TODO make generic factory function with wrappers?
 
     def get_edges(
         self,
-        return_as_scipy_csr=True,
         symmetric=False,
-        data_as_index=False,
-        indptr_and_indices=False,
+        return_pointers=False,
+        return_as_scipy_csr=False,
+        return_as_pairs=False,
     ):
         # TODO: Docstring
-        with h5py.File(self.file_name, "r") as network_file:
-            indptr = network_file["edges"]["indptr"][...]
-            indices = network_file["edges"]["indices"][...]
-        if indptr_and_indices:
-            return indptr, indices
-        if return_as_scipy_csr or symmetric:
-            matrix = scipy.sparse.csr_matrix(
+        indptr = self.read_dataset("indptr", "edges")
+        indices = self.read_dataset("indices", "edges")
+        if symmetric:
+            indptr, indices, pointers = make_symmetric(indptr, indices)
+        elif return_pointers:
+            pointers = np.arange(self.edge_count)
+        if return_as_scipy_csr:
+            if not return_pointers:
+                pointers = np.ones(self.edge_count, dtype=np.bool)
+            return scipy.sparse.csr_matrix(
                 (
-                    np.ones(self.edge_count, dtype=np.bool),
+                    pointers,
                     indices,
                     indptr
                 ),
                 shape=(self.node_count, self.node_count)
             )
-            if symmetric and return_as_scipy_csr:
-                return matrix + matrix.T
-            elif return_as_scipy_csr:
-                if data_as_index:
-                    matrix.data = np.arange(matrix.nnz)
-                return matrix
-            else:
-                second_indices = np.repeat(
-                    np.arange(self.node_count),
-                    np.diff(matrix.indptr)
-                )
-                return second_indices, matrix.indices
-        else:
-            second_indices = np.repeat(
+        if return_as_pairs:
+            indptr = np.repeat(
                 np.arange(self.node_count),
                 np.diff(indptr)
             )
-            return second_indices, indices
-
-    def align_nodes(self, other, parameters, return_as_scipy_csr=True):
-        # TODO: Docstring
-        ms_utils.LOGGER.info(f"Aligning {self.file_name} with {other.file_name}")
-        dimensions = self.dimension_overlap(
-            other,
-            remove_fragment_mz=True,
-            remove_fragment_logint=True,
-            remove_precursor_rt=parameters["calibrate_PRECURSOR_RT"]
-        )
-        self_mz = self.get_ion_coordinates("FRAGMENT_MZ")
-        other_mz = other.get_ion_coordinates("FRAGMENT_MZ")
-        self_mz_order = np.argsort(self_mz)
-        other_mz_order = np.argsort(other_mz)
-        self_coordinates = [
-            self_coordinate[
-                self_mz_order
-            ] for self_coordinate in self.get_ion_coordinates(dimensions)
-        ]
-        other_coordinates = [
-            other_coordinate[
-                other_mz_order
-            ] for other_coordinate in other.get_ion_coordinates(dimensions)
-        ]
-        max_absolute_errors = [
-            parameters[
-                f"max_alignment_absolute_error_{dimension}"
-            ] for dimension in dimensions
-        ]
-        ppm = parameters["max_alignment_ppm_FRAGMENT_MZ"]
-        max_mz_diff = 1 + ppm * 10**-6
-        if parameters["calibrate_PRECURSOR_RT"]:
-            self_coordinates += [
-                self.get_ion_coordinates("PRECURSOR_RT")[
-                    self_mz_order
-                ]
-            ]
-            other_coordinates += [
-                other.calibrate_precursor_rt(self, parameters)[
-                    other_mz_order
-                ]
-            ]
-            max_absolute_errors += [
-                parameters["max_alignment_absolute_error_PRECURSOR_RT"]
-            ]
-        self_coordinates = tuple(self_coordinates)
-        other_coordinates = tuple(other_coordinates)
-        max_absolute_errors = tuple(max_absolute_errors)
-        # TODO: Move to seperate function and define type
-        ms_utils.LOGGER.info(
-            f"Matching ion coordinates from "
-            f"{self.file_name} and {other.file_name}"
-        )
-        @numba.njit(cache=True)
-        def numba_wrapper():
-            low_limits = np.searchsorted(
-                other_mz[other_mz_order],
-                self_mz[self_mz_order] / max_mz_diff,
-                "left"
-            )
-            high_limits = np.searchsorted(
-                other_mz[other_mz_order],
-                self_mz[self_mz_order] * max_mz_diff,
-                "right"
-            )
-            results = []
-            for index, (low_limit, high_limit) in enumerate(
-                zip(
-                    low_limits,
-                    high_limits
-                )
-            ):
-                small_absolute_errors = np.repeat(True, high_limit - low_limit)
-                for (
-                    max_absolute_error,
-                    self_coordinate,
-                    other_coordinate
-                ) in zip(
-                    max_absolute_errors,
-                    self_coordinates,
-                    other_coordinates
-                ):
-                    local_coordinate = self_coordinate[index]
-                    alignment_coordinates = other_coordinate[
-                        low_limit: high_limit
-                    ]
-                    small_coordinate_absolute_errors = np.abs(
-                        alignment_coordinates - local_coordinate
-                    ) <= max_absolute_error
-                    small_absolute_errors = np.logical_and(
-                        small_absolute_errors,
-                        small_coordinate_absolute_errors
-                    )
-                matches = other_mz_order[
-                    low_limit + np.flatnonzero(small_absolute_errors)
-                ]
-                results.append(matches)
-            return results
-        results = numba_wrapper()
-        self_indices = np.repeat(self_mz_order, [len(l) for l in results])
-        other_indices = np.concatenate(results)
-        if return_as_scipy_csr:
-            return scipy.sparse.csr_matrix(
-                (
-                    np.ones(self_indices.shape[0], dtype=np.bool),
-                    (self_indices, other_indices)
-                ),
-                shape=(self.node_count, other.node_count)
-            )
-        return self_indices, other_indices
-
-    @staticmethod
-    @numba.njit(cache=True)
-    def quick_align(
-        self_mzs,
-        other_mzs,
-        self_mz_order,
-        other_mz_order,
-        other_rt_order,
-        ppm
-    ):
-        # TODO: Docstring
-        max_mz_diff = 1 + ppm * 10**-6
-        low_limits = np.searchsorted(
-            self_mzs[self_mz_order],
-            other_mzs[other_mz_order] / max_mz_diff,
-            "left"
-        )[other_rt_order]
-        high_limits = np.searchsorted(
-            self_mzs[self_mz_order],
-            other_mzs[other_mz_order] * max_mz_diff,
-            "right"
-        )[other_rt_order]
-        diffs = high_limits - low_limits
-        ends = np.cumsum(diffs)
-        self_indices = np.empty(ends[-1], np.int64)
-        for l, h, e, d in zip(low_limits, high_limits, ends, diffs):
-            self_indices[e - d: e] = self_mz_order[l: h]
-        other_indices = np.repeat(
-            np.arange(len(other_rt_order)),
-            high_limits - low_limits
-        )
-        selection = longest_increasing_subsequence(self_indices)
-        self_indices_mask = np.empty(len(selection) + 2, np.int64)
-        self_indices_mask[0] = 0
-        self_indices_mask[1: -1] = self_indices[selection]
-        self_indices_mask[-1] = len(self_mzs) - 1
-        other_indices_mask = np.empty(len(selection) + 2, np.int64)
-        other_indices_mask[0] = 0
-        other_indices_mask[1: -1] = other_indices[selection]
-        other_indices_mask[-1] = len(other_mzs) - 1
-        return self_indices_mask, other_indices_mask
-
-    def calibrate_precursor_rt(self, other, parameters):
-        # TODO: Docstring
-        ms_utils.LOGGER.info(
-            f"Calibrating PRECURSOR_RT of {self.file_name} with "
-            f"{other.file_name}"
-        )
-        self_mzs = self.get_ion_coordinates("FRAGMENT_MZ")
-        other_mzs = other.get_ion_coordinates("FRAGMENT_MZ")
-        self_mz_order = np.argsort(self_mzs)
-        other_mz_order = np.argsort(other_mzs)
-        other_rt_order = np.argsort(other_mz_order)
-        # TODO index rts (ordered 0-1, allow e.g. 0.1 distance)?
-        self_indices, other_indices = self.quick_align(
-            self_mzs,
-            other_mzs,
-            self_mz_order,
-            other_mz_order,
-            other_rt_order,
-            parameters["calibration_ppm_FRAGMENT_MZ"]
-        )
-        self_rts = self.get_ion_coordinates("PRECURSOR_RT")
-        other_rts = other.get_ion_coordinates(
-            "PRECURSOR_RT",
-            indices=other_indices
-        )
-        calibrated_self_rts = []
-        for (
-            self_start_index,
-            self_end_index,
-            other_rt_start,
-            other_rt_end
-        ) in zip(
-            self_indices[:-1],
-            self_indices[1:],
-            other_rts[:-1],
-            other_rts[1:]
-        ):
-            self_rt_start = self_rts[self_start_index]
-            self_rt_end = self_rts[self_end_index]
-            if self_rt_start == self_rt_end:
-                new_rts = np.repeat(
-                    other_rt_start,
-                    self_end_index - self_start_index
-                )
-            else:
-                slope = (
-                    other_rt_end - other_rt_start
-                ) / (
-                    self_rt_end - self_rt_start
-                )
-                new_rts = other_rt_start + slope * (
-                    self_rts[self_start_index: self_end_index] - self_rt_start
-                )
-            calibrated_self_rts.append(new_rts)
-        calibrated_self_rts.append([other_rts[-1]])
-        calibrated_self_rts = np.concatenate(calibrated_self_rts)
-        return calibrated_self_rts
-
-    def get_dimensions(
-        self,
-        remove_fragment_mz=False,
-        remove_fragment_logint=False,
-        remove_precursor_rt=False
-    ):
-        """
-        Get the dimensions of this ion-network.
-
-        Parameters
-        ----------
-        remove_fragment_mz : bool
-            If True, remove 'FRAGMENT_MZ' from the dimensions.
-        remove_fragment_logint : bool
-            If True, remove 'FRAGMENT_LOGINT' from the dimensions.
-        remove_precursor_rt : bool
-            If True, remove 'PRECURSOR_RT' from the dimensions.
-
-        Returns
-        -------
-        list[str]
-            A sorted list with all the dimensions.
-        """
-        dimensions = set(self.dimensions)
-        if remove_fragment_mz:
-            dimensions.remove("FRAGMENT_MZ")
-        if remove_fragment_logint:
-            dimensions.remove("FRAGMENT_LOGINT")
-        if remove_precursor_rt:
-            dimensions.remove("PRECURSOR_RT")
-        return sorted(dimensions)
-
-    def dimension_overlap(
-        self,
-        other,
-        remove_fragment_mz=False,
-        remove_fragment_logint=False,
-        remove_precursor_rt=False
-    ):
-        """
-        Get the overlapping dimensions of this ion-network with another
-        ion-network.
-
-        Parameters
-        ----------
-        other : ion_network
-            The second ion-network.
-        remove_fragment_mz : bool
-            If True, remove 'FRAGMENT_MZ' from the overlapping dimensions.
-        remove_fragment_logint : bool
-            If True, remove 'FRAGMENT_LOGINT' from the overlapping dimensions.
-        remove_precursor_rt : bool
-            If True, remove 'PRECURSOR_RT' from the overlapping dimensions.
-
-        Returns
-        -------
-        list[str]
-            A sorted list with all the overlapping dimensions.
-        """
-        dimensions = set(self.dimensions + other.dimensions)
-        if remove_fragment_mz:
-            dimensions.remove("FRAGMENT_MZ")
-        if remove_fragment_logint:
-            dimensions.remove("FRAGMENT_LOGINT")
-        if remove_precursor_rt:
-            dimensions.remove("PRECURSOR_RT")
-        return sorted(dimensions)
+        if return_pointers:
+            return indptr, indices, pointers
+        else:
+            return indptr, indices
 
 
 class Evidence(HDF_MS_Run_File):
@@ -630,6 +339,14 @@ class Evidence(HDF_MS_Run_File):
     An evidence set containing positive and negative edge evidence, as well as
     node evidence.
     """
+
+    @property
+    def evidence_runs(self):
+        return self.read_group("runs")
+
+    @property
+    def evidence_count(self):
+        return self.read_attr("evidence_count")
 
     def __init__(
         self,
@@ -644,121 +361,422 @@ class Evidence(HDF_MS_Run_File):
             is_read_only=is_read_only,
             new_file=new_file,
         )
+        if new_file:
+            self.write_group("runs")
+            self.write_attr("evidence_count", 0)
         self.ion_network = Network(reference)
         self.ion_network.evidence = self
 
-    def mutual_collect_evidence_from(
+    def __contains__(self, other):
+        return other.run_name in self.evidence_runs
+
+    def __getitem__(self, key):
+        if key not in self:
+            raise KeyError("Evidence {key} is missing from {self}")
+        full_file_name = os.path.join(
+            self.directory,
+            key + ".evidence.hdf"
+        )
+        return Evidence(full_file_name)
+
+    def __align_nodes(self, other, parameters):
+        # TODO: Docstring
+        ms_utils.LOGGER.info(
+            f"Aligning nodes of {self.file_name} and {other.file_name}"
+        )
+        thread_count = parameters["threads"]
+        errors = parameters["fragment_errors"]
+        dimensions = sorted(
+            set(self.ion_network.dimensions) & set(other.ion_network.dimensions)
+        )
+        dimensions.remove("FRAGMENT_LOGINT")
+        self_mz = self.ion_network.get_ion_coordinates("FRAGMENT_MZ")
+        other_mz = other.ion_network.get_ion_coordinates("FRAGMENT_MZ")
+        self_mz_order = np.argsort(self_mz)
+        other_mz_order = np.argsort(other_mz)
+        max_mz_diff = 1 + errors["FRAGMENT_MZ"] * 10**-6
+        lower_limits = np.searchsorted(
+            other_mz[other_mz_order],
+            self_mz[self_mz_order] / max_mz_diff,
+            "left"
+        )
+        upper_limits = np.searchsorted(
+            other_mz[other_mz_order],
+            self_mz[self_mz_order] * max_mz_diff,
+            "right"
+        )
+        self_coordinates = np.stack(
+            self.ion_network.get_ion_coordinates(dimensions)
+        ).T[self_mz_order]
+        other_coordinates = np.stack(
+            other.ion_network.get_ion_coordinates(dimensions)
+        ).T[other_mz_order]
+        # TODO Express precursor ppm mzs in absolute?
+        self_coordinates[dimensions.index("FRAGMENT_MZ")] = np.log(
+            self_coordinates[dimensions.index("FRAGMENT_MZ")]
+        ) * 10**6
+        other_coordinates[dimensions.index("FRAGMENT_MZ")] = np.log(
+            other_coordinates[dimensions.index("FRAGMENT_MZ")]
+        ) * 10**6
+        # if parameters["calibrate_PRECURSOR_RT"]:
+        #     other_rts = other.ion_network.calibrate_precursor_rt(
+        #         self, parameters
+        #     )[other_mz_order]
+        #     other_coordinates[dimensions.index("PRECURSOR_RT")] = other_rts
+        max_errors = np.array([errors[dimension] for dimension in dimensions])
+        with multiprocessing.pool.ThreadPool(thread_count) as p:
+            results = p.starmap(
+                align_coordinates,
+                [
+                    (
+                        np.arange(
+                            (i * self.ion_network.node_count) // thread_count,
+                            ((i + 1) * self.ion_network.node_count) // thread_count
+                        ),
+                        lower_limits,
+                        upper_limits,
+                        self_coordinates,
+                        other_coordinates,
+                        max_errors,
+                    ) for i in range(thread_count)
+                ]
+            )
+        indptr = np.empty(self.ion_network.node_count + 1, np.int64)
+        indptr[0] = 0
+        indptr[1:] = np.cumsum(np.concatenate([r[0] for r in results]))
+        self_indices = np.repeat(self_mz_order, np.diff(indptr))
+        other_indices = other_mz_order[np.concatenate([r[1] for r in results])]
+        fragment_errors = {
+            dimension: errors[dimension] for dimension in dimensions
+        }
+        self_unique = np.bincount(self_indices) == 1
+        other_unique = np.bincount(other_indices) == 1
+        unique = self_unique[self_indices] & other_unique[other_indices]
+        self_intensities = self.ion_network.get_ion_coordinates(
+            "FRAGMENT_LOGINT",
+            self_indices[unique]
+        )
+        other_median_intensity = other.ion_network.get_ion_coordinates(
+            "FRAGMENT_LOGINT",
+            other_indices[unique]
+        )
+        intensity_correction = np.median(
+            self_intensities - other_median_intensity
+        )
+        self.__write_nodes(
+            other,
+            self_indices,
+            unique,
+            fragment_errors,
+            intensity_correction
+        )
+        other.__write_nodes(
+            self,
+            other_indices,
+            unique,
+            fragment_errors,
+            -intensity_correction
+        )
+
+    def __write_nodes(
         self,
         other,
-        parameters={},
+        self_indices,
+        unique,
+        fragment_errors,
+        intensity_correction,
+    ):
+        ms_utils.LOGGER.info(
+            f"Writing aligned nodes from {self.file_name} with {other.file_name}"
+        )
+        self.write_group("nodes", parent_group_name=f"runs/{other.run_name}")
+        self.write_dataset(
+            "unique",
+            self_indices[unique],
+            parent_group_name=f"runs/{other.run_name}/nodes"
+        )
+        self.write_dataset(
+            "ambiguous",
+            self_indices[~unique],
+            parent_group_name=f"runs/{other.run_name}/nodes"
+        )
+        self.write_attr(
+            "fragment_errors",
+            fragment_errors,
+            parent_group_name=f"runs/{other.run_name}/nodes"
+        )
+        self.write_attr(
+            "unique_count",
+            np.sum(unique),
+            parent_group_name=f"runs/{other.run_name}/nodes"
+        )
+        self.write_attr(
+            "ambiguous_count",
+            np.sum(~unique),
+            parent_group_name=f"runs/{other.run_name}/nodes"
+        )
+        total = np.ones(self.ion_network.node_count, np.bool_)
+        total[self_indices] = False
+        self.write_attr(
+            "unaligned_count",
+            np.sum(total),
+            parent_group_name=f"runs/{other.run_name}/nodes"
+        )
+        self.write_attr(
+            "median_intensity_correction",
+            intensity_correction,
+            parent_group_name=f"runs/{other.run_name}/nodes"
+        )
+
+    def __align_edges(
+        self,
+        other,
+        parameters,
+        self_indptr_=None,
+        self_indices_=None,
+        self_pointers_=None,
+    ):
+        ms_utils.LOGGER.info(
+            f"Aligning edges of {self.file_name} and {other.file_name}"
+        )
+        if (self_indptr_ is None) or (self_indices_ is None) or (self_pointers_ is None):
+            self_indptr_, self_indices_, self_pointers_ = self.ion_network.get_edges(
+                symmetric=True,
+                return_pointers=True
+            )
+        thread_count = parameters["threads"]
+        other_indptr, other_indices = other.ion_network.get_edges()
+        self_alignment = self.get_aligned_nodes_from_group(
+            other=other,
+            return_as_mask=False,
+            kind="unique",
+            symmetric=False
+        )
+        other_alignment = other.get_aligned_nodes_from_group(
+            other=self,
+            return_as_mask=False,
+            kind="unique",
+            symmetric=False
+        )
+        self_alignment_mask = np.zeros(self.ion_network.node_count, np.bool_)
+        self_alignment_mask[self_alignment] = True
+        alignment = np.empty_like(self_indptr_)
+        alignment[self_alignment] = other_alignment
+        with multiprocessing.pool.ThreadPool(thread_count) as p:
+            results = p.starmap(
+                align_edges,
+                [
+                    (
+                        self_alignment[i::thread_count],
+                        self_indptr_,
+                        self_indices_,
+                        self_pointers_,
+                        other_indptr,
+                        other_indices,
+                        alignment,
+                        self_alignment_mask,
+                    ) for i in range(thread_count)
+                ]
+            )
+        self_positive_pointers = np.concatenate([r[0] for r in results])
+        other_positive_pointers = np.concatenate([r[1] for r in results])
+        self_indptr, self_indices = self.ion_network.get_edges()
+        self_negative_mask = np.repeat(
+            self_alignment_mask,
+            np.diff(self_indptr)
+        )
+        self_negative_mask &= self_alignment_mask[self_indices]
+        self_negative_mask[self_positive_pointers] = False
+        other_alignment_mask = np.zeros(other.ion_network.node_count, np.bool_)
+        other_alignment_mask[other_alignment] = True
+        other_negative_mask = np.repeat(
+            other_alignment_mask,
+            np.diff(other_indptr)
+        )
+        other_negative_mask &= other_alignment_mask[other_indices]
+        other_negative_mask[other_positive_pointers] = False
+        self.__write_edges(
+            other,
+            self_positive_pointers,
+            np.flatnonzero(self_negative_mask),
+        )
+        other.__write_edges(
+            self,
+            other_positive_pointers,
+            np.flatnonzero(other_negative_mask),
+        )
+
+    def __write_edges(
+        self,
+        other,
+        positive_pointers,
+        negative_pointers,
+    ):
+        ms_utils.LOGGER.info(
+            f"Writing aligned edges from {self.file_name} with {other.file_name}"
+        )
+        self.write_group("edges", parent_group_name=f"runs/{other.run_name}")
+        self.write_dataset(
+            "positive",
+            positive_pointers,
+            parent_group_name=f"runs/{other.run_name}/edges"
+        )
+        self.write_dataset(
+            "negative",
+            negative_pointers,
+            parent_group_name=f"runs/{other.run_name}/edges"
+        )
+        positive_count = positive_pointers.shape[0]
+        self.write_attr(
+            "positive_count",
+            positive_count,
+            parent_group_name=f"runs/{other.run_name}/edges"
+        )
+        negative_count = negative_pointers.shape[0]
+        self.write_attr(
+            "negative_count",
+            negative_count,
+            parent_group_name=f"runs/{other.run_name}/edges"
+        )
+        self.write_attr(
+            "unaligned_count",
+            self.ion_network.edge_count - negative_count - positive_count,
+            parent_group_name=f"runs/{other.run_name}/edges"
+        )
+
+    def align(
+        self,
+        other,
+        parameters,
+        indptr=None,
+        indices=None,
+        pointers=None,
         **kwargs,
     ):
         # TODO: Docstring
-        if not self.need_to_set_evidence(other, parameters):
-            return
-        pairwise_alignment = self.ion_network.align_nodes(
-            other.ion_network,
-            parameters
-        )
-        pairwise_alignment_T = pairwise_alignment.T.tocsr()
-        if "edges" in kwargs:
-            self_edges = kwargs["edges"]
-        else:
-            self_edges = self.ion_network.get_edges()
-        other_edges = other.ion_network.get_edges()
-        self_ion_indices, other_ion_indices = pairwise_alignment.nonzero()
-        self.align_edges(
-            other,
-            pairwise_alignment,
-            pairwise_alignment_T,
-            self_ion_indices,
-            self_edges,
-            other_edges,
-            parameters
-        )
-        other.align_edges(
-            self,
-            pairwise_alignment_T,
-            pairwise_alignment,
-            other_ion_indices,
-            other_edges,
-            self_edges,
-            parameters
-        )
-
-    def need_to_set_evidence(self, other, parameters):
-        # TODO: Docstring
-        if self.is_evidenced_with(other) or other.is_evidenced_with(self):
-            if parameters["force_overwrite"]:
-                pass
-                # self.remove_evidence_from(other)
-                # other.remove_evidence_from(self)
-            else:
+        if not parameters["force_overwrite"]:
+            if (self in other) and (other in self):
                 ms_utils.LOGGER.info(
-                    f"Evidence for {self.file_name} and {other.file_name} "
-                    f"has already been collected"
+                    f"{self.ion_network.file_name} and "
+                    f"{other.ion_network.file_name} have already been aligned"
                 )
-                return False
-        return True
-
-    def is_evidenced_with(self, other):
-        # TODO: Docstring
-        return other.run_name in self.read_group()
-
-    def align_edges(
-        self,
-        other,
-        pairwise_alignment,
-        pairwise_alignment_T,
-        aligned_ion_indices,
-        self_edges,
-        other_edges,
-        parameters
-    ):
-        # TODO: Docstring
+                return
         ms_utils.LOGGER.info(
-            f"Collecting evidence for {self.ion_network.file_name} from "
+            f"Aligning {self.ion_network.file_name} and "
             f"{other.ion_network.file_name}"
         )
-        parent_group_name = other.ion_network.run_name
-        self.write_group(parent_group_name)
-        positive = pairwise_alignment * other_edges * pairwise_alignment_T
-        positive = (positive + positive.T).multiply(self_edges)
-        positive_mask = (self_edges.astype(np.int8) + positive).data == 2
-        alignment_mask = np.diff(pairwise_alignment.indptr) != 0
-        left_node_indices, right_node_indices = self_edges.nonzero()
-        negative_mask = alignment_mask[
-            left_node_indices
-        ] & alignment_mask[
-            right_node_indices
-        ] & ~positive_mask
-        self.write_dataset(
-            "positive_edges",
-            positive_mask,
-            parent_group_name=parent_group_name,
+        self.write_group(other.run_name, parent_group_name="runs")
+        other.write_group(self.run_name, parent_group_name="runs")
+        self.write_attr("evidence_count", self.evidence_count + 1)
+        other.write_attr("evidence_count", other.evidence_count + 1)
+        self.__align_nodes(other, parameters)
+        self.__align_edges(
+            other,
+            parameters,
+            self_indptr_=indptr,
+            self_indices_=indices,
+            self_pointers_=pointers,
         )
-        self.write_dataset(
-            "negative_edges",
-            negative_mask,
-            parent_group_name=parent_group_name,
-        )
-        self.write_dataset(
-            "aligned_nodes",
-            aligned_ion_indices,
-            parent_group_name=parent_group_name,
-        )
-        dimension_overlap = self.ion_network.dimension_overlap(
-            other.ion_network
-        )
-        for parameter_key, parameter_value in parameters.items():
-            if parameter_key.startswith("max_alignment_absolute_error_"):
-                if parameter_key[24:] not in dimension_overlap:
-                    continue
-            self.write_attr(
-                parameter_key,
-                parameter_value,
-                parent_group_name=parent_group_name
-            )
+
+    # @staticmethod
+    # @numba.njit(cache=True)
+    # def quick_align(
+    #     self_mzs,
+    #     other_mzs,
+    #     self_mz_order,
+    #     other_mz_order,
+    #     other_rt_order,
+    #     ppm
+    # ):
+    #     # TODO: Docstring
+    #     max_mz_diff = 1 + ppm * 10**-6
+    #     low_limits = np.searchsorted(
+    #         self_mzs[self_mz_order],
+    #         other_mzs[other_mz_order] / max_mz_diff,
+    #         "left"
+    #     )[other_rt_order]
+    #     high_limits = np.searchsorted(
+    #         self_mzs[self_mz_order],
+    #         other_mzs[other_mz_order] * max_mz_diff,
+    #         "right"
+    #     )[other_rt_order]
+    #     diffs = high_limits - low_limits
+    #     ends = np.cumsum(diffs)
+    #     self_indices = np.empty(ends[-1], np.int64)
+    #     for l, h, e, d in zip(low_limits, high_limits, ends, diffs):
+    #         self_indices[e - d: e] = self_mz_order[l: h]
+    #     other_indices = np.repeat(
+    #         np.arange(len(other_rt_order)),
+    #         high_limits - low_limits
+    #     )
+    #     selection = longest_increasing_subsequence(self_indices)
+    #     self_indices_mask = np.empty(len(selection) + 2, np.int64)
+    #     self_indices_mask[0] = 0
+    #     self_indices_mask[1: -1] = self_indices[selection]
+    #     self_indices_mask[-1] = len(self_mzs) - 1
+    #     other_indices_mask = np.empty(len(selection) + 2, np.int64)
+    #     other_indices_mask[0] = 0
+    #     other_indices_mask[1: -1] = other_indices[selection]
+    #     other_indices_mask[-1] = len(other_mzs) - 1
+    #     return self_indices_mask, other_indices_mask
+    #
+    # def calibrate_precursor_rt(self, other, parameters):
+    #     # TODO: Docstring
+    #     ms_utils.LOGGER.info(
+    #         f"Calibrating PRECURSOR_RT of {self.file_name} with "
+    #         f"{other.file_name}"
+    #     )
+    #     self_mzs = self.get_ion_coordinates("FRAGMENT_MZ")
+    #     other_mzs = other.get_ion_coordinates("FRAGMENT_MZ")
+    #     self_mz_order = np.argsort(self_mzs)
+    #     other_mz_order = np.argsort(other_mzs)
+    #     other_rt_order = np.argsort(other_mz_order)
+    #     # TODO index rts (ordered 0-1, allow e.g. 0.1 distance)?
+    #     self_indices, other_indices = self.quick_align(
+    #         self_mzs,
+    #         other_mzs,
+    #         self_mz_order,
+    #         other_mz_order,
+    #         other_rt_order,
+    #         parameters["calibration_ppm_FRAGMENT_MZ"]
+    #     )
+    #     self_rts = self.get_ion_coordinates("PRECURSOR_RT")
+    #     other_rts = other.get_ion_coordinates(
+    #         "PRECURSOR_RT",
+    #         indices=other_indices
+    #     )
+    #     calibrated_self_rts = []
+    #     for (
+    #         self_start_index,
+    #         self_end_index,
+    #         other_rt_start,
+    #         other_rt_end
+    #     ) in zip(
+    #         self_indices[:-1],
+    #         self_indices[1:],
+    #         other_rts[:-1],
+    #         other_rts[1:]
+    #     ):
+    #         self_rt_start = self_rts[self_start_index]
+    #         self_rt_end = self_rts[self_end_index]
+    #         if self_rt_start == self_rt_end:
+    #             new_rts = np.repeat(
+    #                 other_rt_start,
+    #                 self_end_index - self_start_index
+    #             )
+    #         else:
+    #             slope = (
+    #                 other_rt_end - other_rt_start
+    #             ) / (
+    #                 self_rt_end - self_rt_start
+    #             )
+    #             new_rts = other_rt_start + slope * (
+    #                 self_rts[self_start_index: self_end_index] - self_rt_start
+    #             )
+    #         calibrated_self_rts.append(new_rts)
+    #     calibrated_self_rts.append([other_rts[-1]])
+    #     calibrated_self_rts = np.concatenate(calibrated_self_rts)
+    #     return calibrated_self_rts
 
     def get_alignment(
         self,
@@ -806,25 +824,39 @@ class Evidence(HDF_MS_Run_File):
             )
         return np.stack([self_ions, other_ions]).T
 
-    def get_aligned_nodes_from_group(self, group_name="", return_as_mask=True):
+    def get_aligned_nodes_from_group(
+        self,
+        other=None,
+        return_as_mask=True,
+        kind="unique",
+        symmetric=False
+    ):
         # TODO: Docstring
-        if group_name == "":
+        if other is None:
             ions = np.zeros(self.ion_network.node_count, dtype=np.int)
-            for group_name in self.read_group():
+            for other in self.evidence_runs:
                 ion_mask = self.read_dataset(
-                    "aligned_nodes",
-                    parent_group_name=group_name,
+                    kind,
+                    parent_group_name=f"runs/{other}/nodes",
                 )
                 ions[ion_mask] += 1
         else:
             ions = self.read_dataset(
-                "aligned_nodes",
-                parent_group_name=group_name,
+                kind,
+                parent_group_name=f"runs/{other.run_name}/nodes",
             )
             if return_as_mask:
-                mask = np.repeat(False, self.ion_network.node_count)
+                mask = np.empty(self.ion_network.node_count, np.bool_)
                 mask[ions] = True
                 ions = mask
+            if symmetric:
+                ions2 = other.get_aligned_nodes_from_group(
+                    self,
+                    return_as_mask,
+                    kind,
+                    symmetric
+                )
+                ions = np.stack([ions, ions2]).T
         return ions
 
     def get_edge_mask_from_group(self, group_name="", positive=True):
@@ -846,37 +878,6 @@ class Evidence(HDF_MS_Run_File):
                 parent_group_name=group_name,
             )
         return edges
-
-    def get_other_run(self, group_name):
-        probable_file_name = os.path.join(
-            self.directory,
-            group_name + ".evidence.hdf"
-        )
-        return Evidence(probable_file_name)
-
-    @property
-    def network_keys(self):
-        """
-        Get a sorted list with all the ion-network keys providing evidence.
-
-        Returns
-        -------
-        list[str]
-            A sorted list with the keys of all ion-network.
-        """
-        return self.read_group()
-
-    @property
-    def evidence_count(self):
-        """
-        Get the number of ion-network providing evidence.
-
-        Returns
-        -------
-        int
-            The number of ion-network providing evidence.
-        """
-        return len(self.network_keys)
 
 
 class Annotation(HDF_MS_Run_File):
@@ -1071,7 +1072,7 @@ class Annotation(HDF_MS_Run_File):
         return low_limits[inv_order], high_limits[inv_order]
 
 
-@numba.njit(fastmath=True, cache=True)
+@numba.njit(cache=True, nogil=True)
 def longest_increasing_subsequence(sequence):
     # TODO:Docstring
     M = np.zeros(len(sequence) + 1, np.int64)
@@ -1107,12 +1108,14 @@ def increase_buffer(buffer, max_batch=10**7):
 
 
 @numba.njit(cache=True, nogil=True)
-def determine_precursor_edges(
+def align_coordinates(
     queries,
     lower_limits,
     upper_limits,
-    coordinates,
+    self_coordinates,
+    other_coordinates,
     max_errors,
+    # kind="euclidean"
 ):
     indptr = np.zeros(len(queries), np.int64)
     indices = np.empty(10**7, np.int64)
@@ -1125,15 +1128,103 @@ def determine_precursor_edges(
             continue
         elif (candidate_count + total) >= len(indices):
             indices = increase_buffer(indices)
-        dists = coordinates[low_limit: high_limit] - coordinates[query]
+        dists = other_coordinates[low_limit: high_limit] - self_coordinates[query]
+        # TODO: what if error==0?
+        # if kind == "euclidean":
         dists /= max_errors
-#         TODO: what if error==0?
         dists = dists**2
         projected_dists = np.sum(dists, axis=1)
         projected_dists = np.sqrt(projected_dists)
         candidates = low_limit + np.flatnonzero(projected_dists <= 1)
+        # elif kind == "manhattan":
+        #     projected_dists = np.all(dists < max_errors, axis=1)
+        #     candidates = low_limit + np.flatnonzero(projected_dists)
         candidate_count = len(candidates)
         indices[total: total + candidate_count] = candidates
         indptr[index] = candidate_count
         total += candidate_count
     return (indptr, indices[:total])
+
+
+@numba.njit(cache=True, nogil=True)
+def make_symmetric(indptr, indices):
+    offsets = np.cumsum(np.bincount(indices))
+    indptr_ = indptr.copy()
+    indptr_[1:1 + offsets.shape[0]] += offsets
+    indices_ = np.empty(indptr_[-1], np.int64)
+    pointers_ = np.empty_like(indices_)
+    offsets = indptr_[:-1] + np.diff(indptr)
+    for index in range(indptr.shape[0] - 1):
+        start = indptr[index]
+        end = indptr[index + 1]
+        current_indices = indices[start: end]
+        pointers = np.arange(start, end)
+        start_ = indptr_[index]
+        end_ = start_ + current_indices.shape[0]
+        indices_[start_: end_] = current_indices
+        pointers_[start_: end_] = pointers
+        current_offsets = offsets[current_indices]
+        indices_[current_offsets] = index
+        pointers_[current_offsets] = pointers
+        offsets[current_indices] += 1
+    return indptr_, indices_, pointers_
+
+
+@numba.njit(cache=True, nogil=True)
+def align_edges(
+    queries,
+    self_indptr,
+    self_indices,
+    self_pointers,
+    other_indptr,
+    other_indices,
+    alignment,
+    alignment_mask,
+):
+    self_pointers_ = np.empty(10**7, np.int64)
+    other_pointers_ = np.empty(10**7, np.int64)
+    pointer_offset = 0
+    for index in queries:
+        possible_start = self_indptr[index]
+        possible_end = self_indptr[index + 1]
+        if possible_start == possible_end:
+            continue
+        current_index = alignment[index]
+        current_start = other_indptr[current_index]
+        current_end = other_indptr[current_index + 1]
+        if current_start == current_end:
+            continue
+        possible_indices = self_indices[possible_start: possible_end]
+        possible_mask = alignment_mask[possible_indices]
+        if not np.any(possible_mask):
+            continue
+        possible_indices = alignment[possible_indices[possible_mask]]
+        possible_pointers = self_pointers[possible_start: possible_end][
+            possible_mask
+        ]
+        current_indices = other_indices[current_start: current_end]
+        candidates1 = np.searchsorted(
+            current_indices,
+            possible_indices,
+            "left"
+        )
+        candidates2 = np.searchsorted(
+            current_indices,
+            possible_indices,
+            "right"
+        )
+        overlap = np.flatnonzero(candidates2 != candidates1)
+        overlap_count = len(overlap)
+        if len(overlap) == 0:
+            continue
+        elif (overlap_count + pointer_offset) >= len(self_pointers_):
+            self_pointers_ = increase_buffer(self_pointers_)
+            other_pointers_ = increase_buffer(other_pointers_)
+        self_pointers_[
+            pointer_offset: pointer_offset + overlap_count
+        ] = possible_pointers[overlap]
+        other_pointers_[
+            pointer_offset: pointer_offset + overlap_count
+        ] = current_start + candidates1[overlap]
+        pointer_offset += overlap_count
+    return self_pointers_[:pointer_offset], other_pointers_[:pointer_offset]

@@ -58,22 +58,20 @@ def open_logger(log_file_name, log_level=logging.INFO):
         file_handler.setFormatter(formatter)
         LOGGER.addHandler(file_handler)
     LOGGER.info("=" * 50)
-    LOGGER.info(
-        "ion_networks.py " + " ".join(sys.argv[1:])
-    )
-    if log_file_name != "":
-        LOGGER.info(
-            f"This log is being saved as: {log_file_name}"
-        )
+    LOGGER.info(f"COMMAND: ion_networks.py {' '.join(sys.argv[1:])}")
+    LOGGER.info(f"VERSION: {VERSION}")
+    LOGGER.info(f"LOGFILE: {log_file_name}")
     LOGGER.info("")
     try:
         yield LOGGER
         LOGGER.info("")
         LOGGER.info("Successfully finished execution")
-        LOGGER.info(f"Time taken: {time.time() - start_time}")
     except:
+        LOGGER.info("")
         LOGGER.exception("Something went wrong, execution incomplete!")
     finally:
+        LOGGER.info(f"Time taken: {time.time() - start_time}")
+        LOGGER.info("=" * 50)
         if LOGGER.hasHandlers():
             LOGGER.handlers.clear()
 
@@ -545,7 +543,7 @@ class HDF_File(object):
         self.__file_name = os.path.abspath(file_name)
         if not isinstance(new_file, bool):
             raise ValueError(
-                f"HDF {self.file_name} file is not defined as (un)existing"
+                f"HDF File {self.file_name} file is not defined as (un)existing"
             )
         if new_file:
             is_read_only = False

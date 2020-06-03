@@ -13,360 +13,361 @@ import ms_utils
 import browser
 
 
-class Interface(object):
+def convert_data_formats_to_csvs(
+    input_path,
+    data_type,
+    output_directory,
+    parameter_file_name,
+    log_file_name
+):
+    """
+    Convert centroided MSMS data to a unified csv that can be read as an
+    ion-network.
 
-    @staticmethod
-    def convert_data_formats_to_csvs(
-        input_path,
-        data_type,
-        output_directory,
-        parameter_file_name,
-        log_file_name
-    ):
-        """
-        Convert centroided MSMS data to a unified csv that can be read as an
-        ion-network.
-
-        Parameters
-        ----------
-        input_path : iterable[str]
-            An iterable with file and/or folder names.
-        output_directory : str or None
-            If provided, all new files will be saved in this directory.
-        data_type : str
-            The data type of the input files. Options are:
-                'DDA'
-                'SONAR'
-                'HDMSE'
-                'SWIMDIA'
-                'DIAPASEF'
-        parameter_file_name : str or None
-            If provided, parameters will be read from this file.
-        log_file_name : str or None
-            If provided, all logs will be written to this file.
-        """
-        if parameter_file_name is None:
-            parameter_file_name = ""
-        if parameter_file_name != "":
-            parameter_file_name = os.path.abspath(parameter_file_name)
-        if output_directory is None:
-            output_directory = ""
+    Parameters
+    ----------
+    input_path : iterable[str]
+        An iterable with file and/or folder names.
+    output_directory : str or None
+        If provided, all new files will be saved in this directory.
+    data_type : str
+        The data type of the input files. Options are:
+            'DDA'
+            'SONAR'
+            'HDMSE'
+            'SWIMDIA'
+            'DIAPASEF'
+    parameter_file_name : str or None
+        If provided, parameters will be read from this file.
+    log_file_name : str or None
+        If provided, all logs will be written to this file.
+    """
+    if parameter_file_name is None:
+        parameter_file_name = ""
+    if parameter_file_name != "":
+        parameter_file_name = os.path.abspath(parameter_file_name)
+    if output_directory is None:
+        output_directory = ""
+    if output_directory != "":
+        output_directory = os.path.abspath(output_directory)
+    parameters = ms_utils.read_parameters_from_json_file(
+        file_name=parameter_file_name,
+        default="convert"
+    )
+    # TODO: Proper parsing of empty log...?
+    if (log_file_name is None) or (log_file_name == ""):
+        log_file_name = parameters["log_file_name"]
+    if log_file_name != "":
+        log_file_name = os.path.abspath(log_file_name)
+    with ms_utils.open_logger(log_file_name) as logger:
+        logger.info(f"Converting to generic input csvs")
+        input_file_names = ms_utils.get_file_names_with_extension(
+            input_path,
+            extension=ms_utils.DATA_TYPE_FILE_EXTENSIONS[data_type]
+        )
+        file_count = len(input_file_names)
+        logger.info(
+            f"{file_count} input_file{'s' if file_count != 1 else ''}"
+            f": {input_file_names}"
+        )
+        logger.info(f"data_type: {data_type}")
+        logger.info(f"output_directory: {output_directory}")
+        logger.info(f"parameter_file_name: {parameter_file_name}")
+        logger.info("")
         if output_directory != "":
-            output_directory = os.path.abspath(output_directory)
-        parameters = ms_utils.read_parameters_from_json_file(
-            file_name=parameter_file_name,
-            default="convert"
-        )
-        # TODO: Proper parsing of empty log...?
-        if (log_file_name is None) or (log_file_name == ""):
-            log_file_name = parameters["log_file_name"]
-        if log_file_name != "":
-            log_file_name = os.path.abspath(log_file_name)
-        with ms_utils.open_logger(log_file_name) as logger:
-            logger.info(f"Command: convert")
-            input_file_names = ms_utils.get_file_names_with_extension(
-                input_path,
-                extension=ms_utils.DATA_TYPE_FILE_EXTENSIONS[data_type]
+            if not os.path.exists(output_directory):
+                os.makedirs(output_directory)
+        for input_file_name in sorted(input_file_names):
+            data = ms_utils.read_data_from_file(
+                data_type,
+                input_file_name,
             )
-            file_count = len(input_file_names)
-            logger.info(
-                f"{file_count} input_file_name{'s' if file_count != 1 else ''}"
-                f": {input_file_names}"
-            )
-            logger.info(f"data_type: {data_type}")
-            logger.info(f"output_directory: {output_directory}")
-            logger.info(f"parameter_file_name: {parameter_file_name}")
-            logger.info(f"log_file_name: {log_file_name}")
-            logger.info("")
-            if output_directory != "":
-                if not os.path.exists(output_directory):
-                    os.makedirs(output_directory)
-            for input_file_name in sorted(input_file_names):
-                data = ms_utils.read_data_from_file(
-                    data_type,
-                    input_file_name,
-                )
-                file_name_base = os.path.basename(input_file_name)[
-                    :-len(ms_utils.DATA_TYPE_FILE_EXTENSIONS[data_type])
-                ]
-                if output_directory == "":
-                    output_path = os.path.dirname(input_file_name)
-                else:
-                    output_path = output_directory
-                output_file_name = os.path.join(
-                    output_path,
-                    f"{file_name_base}.inet.csv"
-                )
-                ms_utils.write_data_to_csv_file(data, output_file_name)
-
-    @staticmethod
-    def create_ion_networks(
-        input_path,
-        output_directory,
-        parameter_file_name,
-        log_file_name
-    ):
-        """
-        Create ion-networks from unified csv files.
-
-        Parameters
-        ----------
-        input_path : iterable[str]
-            An iterable with file and/or folder names.
-        output_directory : str or None
-            If provided, all new files will be saved in this directory.
-        parameter_file_name : str or None
-            If provided, parameters will be read from this file.
-        log_file_name : str or None
-            If provided, all logs will be written to this file.
-        """
-        if parameter_file_name is None:
-            parameter_file_name = ""
-        if parameter_file_name != "":
-            parameter_file_name = os.path.abspath(parameter_file_name)
-        if output_directory is None:
-            output_directory = ""
-        if output_directory != "":
-            output_directory = os.path.abspath(output_directory)
-        parameters = ms_utils.read_parameters_from_json_file(
-            file_name=parameter_file_name,
-            default="create"
-        )
-        # TODO: Proper parsing of empty log...?
-        if (log_file_name is None) or (log_file_name == ""):
-            log_file_name = parameters["log_file_name"]
-        if log_file_name != "":
-            log_file_name = os.path.abspath(log_file_name)
-        with ms_utils.open_logger(log_file_name) as logger:
-            logger.info(f"Command: create")
-            input_file_names = ms_utils.get_file_names_with_extension(
-                input_path,
-                ".inet.csv"
-            )
-            file_count = len(input_file_names)
-            logger.info(
-                f"{file_count} input_file_name{'s' if file_count != 1 else ''}"
-                f": {input_file_names}"
-            )
-            logger.info(f"output_directory: {output_directory}")
-            logger.info(f"parameter_file_name: {parameter_file_name}")
-            logger.info(f"log_file_name: {log_file_name}")
-            logger.info("")
-            for centroids_file_name in input_file_names:
-                local_file_name = os.path.basename(centroids_file_name)
-                if output_directory == "":
-                    output_path = os.path.dirname(centroids_file_name)
-                else:
-                    output_path = output_directory
-                ion_network_file_name = os.path.join(
-                    output_path,
-                    f"{local_file_name[:-9]}.inet.hdf"
-                )
-                network = ms_run_files.Network(
-                    ion_network_file_name,
-                    new_file=True,
-                )
-                network.create_from_data(
-                    centroids_file_name=centroids_file_name,
-                    parameters=parameters
-                )
-
-    @staticmethod
-    def evidence_ion_networks(
-        input_path,
-        parameter_file_name,
-        log_file_name
-    ):
-        """
-        Evidence ion-networks with each other.
-
-        Parameters
-        ----------
-        input_path : iterable[str]
-            An iterable with file and/or folder names.
-        parameter_file_name : str or None
-            If provided, parameters will be read from this file.
-        log_file_name : str or None
-            If provided, all logs will be written to this file.
-        """
-        if parameter_file_name is None:
-            parameter_file_name = ""
-        if parameter_file_name != "":
-            parameter_file_name = os.path.abspath(parameter_file_name)
-        parameters = ms_utils.read_parameters_from_json_file(
-            file_name=parameter_file_name,
-            default="evidence"
-        )
-        # TODO: Proper parsing of empty log...?
-        if (log_file_name is None) or (log_file_name == ""):
-            log_file_name = parameters["log_file_name"]
-        if log_file_name != "":
-            log_file_name = os.path.abspath(log_file_name)
-        with ms_utils.open_logger(log_file_name) as logger:
-            logger.info(f"Command: evidence")
-            input_file_names = ms_utils.get_file_names_with_extension(
-                input_path,
-                ".inet.hdf"
-            )
-            file_count = len(input_file_names)
-            logger.info(
-                f"{file_count} input_file_name{'s' if file_count != 1 else ''}"
-                f": {input_file_names}"
-            )
-            logger.info(f"parameter_file_name: {parameter_file_name}")
-            logger.info(f"log_file_name: {log_file_name}")
-            logger.info("")
-            evidence_files = [
-                ms_run_files.Evidence(
-                    file_name,
-                    new_file=True,
-                ) for file_name in input_file_names
+            file_name_base = os.path.basename(input_file_name)[
+                :-len(ms_utils.DATA_TYPE_FILE_EXTENSIONS[data_type])
             ]
-            for index, evidence_file in enumerate(evidence_files[:-1]):
-                edges = evidence_file.ion_network.get_edges()
-                for secondary_evidence_file in evidence_files[index + 1:]:
-                    evidence_file.mutual_collect_evidence_from(
-                        secondary_evidence_file,
-                        parameters=parameters,
-                        edges=edges,
-                    )
-
-    @staticmethod
-    def show_ion_network(
-        parameter_file_name,
-        log_file_name
-    ):
-        # TODO: Docstring
-        # TODO: Implementation updates
-        if parameter_file_name is None:
-            parameter_file_name = ""
-        if parameter_file_name != "":
-            parameter_file_name = os.path.abspath(parameter_file_name)
-        parameters = ms_utils.read_parameters_from_json_file(
-            file_name=parameter_file_name,
-        )
-        # TODO: Proper parsing of empty log...?
-        if (log_file_name is None) or (log_file_name == ""):
-            log_file_name = parameters["log_file_name"]
-        if log_file_name != "":
-            log_file_name = os.path.abspath(log_file_name)
-        with ms_utils.open_logger(log_file_name) as logger:
-            logger.info(f"Command: show")
-            logger.info("")
-            with browser.Browser() as browser_object:
-                browser_object.run()
-
-    @staticmethod
-    def run_ion_network_gui():
-        # TODO: Docstring
-        with GUI() as gui:
-            gui.run()
-
-    @staticmethod
-    def create_database(
-        input_path,
-        output_directory,
-        parameter_file_name,
-        log_file_name
-    ):
-        # TODO: Docstring
-        if parameter_file_name is None:
-            parameter_file_name = ""
-        if parameter_file_name != "":
-            parameter_file_name = os.path.abspath(parameter_file_name)
-        if output_directory is None:
-            output_directory = ""
-        if output_directory != "":
-            output_directory = os.path.abspath(output_directory)
-        parameters = ms_utils.read_parameters_from_json_file(
-            file_name=parameter_file_name,
-            default="database"
-        )
-        # TODO: Proper parsing of empty log...?
-        if (log_file_name is None) or (log_file_name == ""):
-            log_file_name = parameters["log_file_name"]
-        if log_file_name != "":
-            log_file_name = os.path.abspath(log_file_name)
-        # TODO: turn off ms2pip logger?
-        with ms_utils.open_logger(log_file_name) as logger:
-            logger.info(f"Command: database")
-            input_file_names = ms_utils.get_file_names_with_extension(
-                input_path,
-                extension=".fasta"
-            )
-            file_count = len(input_file_names)
-            logger.info(
-                f"{file_count} input_file_name{'s' if file_count != 1 else ''}"
-                f": {input_file_names}"
-            )
-            logger.info(f"output_directory: {output_directory}")
-            logger.info(f"parameter_file_name: {parameter_file_name}")
-            logger.info(f"log_file_name: {log_file_name}")
-            logger.info("")
-            base_name = "_".join(
-                [
-                    ".".join(
-                        os.path.basename(fasta_file_name).split(".")[:-1]
-                    ) for fasta_file_name in input_file_names
-                ]
-            )
-            database_file_name = os.path.join(output_directory, base_name)
-            if parameters["create_targets"]:
-                if parameters["create_decoys"]:
-                    database_file_name = f"{database_file_name}_concatenated_decoy.hdf"
-                else:
-                    database_file_name = f"{database_file_name}.hdf"
+            if output_directory == "":
+                output_path = os.path.dirname(input_file_name)
             else:
-                database_file_name = f"{database_file_name}_decoy.hdf"
-            db = ms_database.Database(
-                database_file_name,
+                output_path = output_directory
+            output_file_name = os.path.join(
+                output_path,
+                f"{file_name_base}.inet.csv"
+            )
+            ms_utils.write_data_to_csv_file(data, output_file_name)
+
+
+def create_ion_networks(
+    input_path,
+    output_directory,
+    parameter_file_name,
+    log_file_name
+):
+    """
+    Create ion-networks from unified csv files.
+
+    Parameters
+    ----------
+    input_path : iterable[str]
+        An iterable with file and/or folder names.
+    output_directory : str or None
+        If provided, all new files will be saved in this directory.
+    parameter_file_name : str or None
+        If provided, parameters will be read from this file.
+    log_file_name : str or None
+        If provided, all logs will be written to this file.
+    """
+    if parameter_file_name is None:
+        parameter_file_name = ""
+    if parameter_file_name != "":
+        parameter_file_name = os.path.abspath(parameter_file_name)
+    if output_directory is None:
+        output_directory = ""
+    if output_directory != "":
+        output_directory = os.path.abspath(output_directory)
+    parameters = ms_utils.read_parameters_from_json_file(
+        file_name=parameter_file_name,
+        default="create"
+    )
+    # TODO: Proper parsing of empty log...?
+    if (log_file_name is None) or (log_file_name == ""):
+        log_file_name = parameters["log_file_name"]
+    if log_file_name != "":
+        log_file_name = os.path.abspath(log_file_name)
+    with ms_utils.open_logger(log_file_name) as logger:
+        logger.info(f"Creating ion-networks")
+        input_file_names = ms_utils.get_file_names_with_extension(
+            input_path,
+            ".inet.csv"
+        )
+        file_count = len(input_file_names)
+        logger.info(
+            f"{file_count} input_file{'s' if file_count != 1 else ''}"
+            f": {input_file_names}"
+        )
+        logger.info(f"output_directory: {output_directory}")
+        logger.info(f"parameter_file_name: {parameter_file_name}")
+        logger.info("")
+        for centroids_file_name in input_file_names:
+            local_file_name = os.path.basename(centroids_file_name)
+            if output_directory == "":
+                output_path = os.path.dirname(centroids_file_name)
+            else:
+                output_path = output_directory
+            ion_network_file_name = os.path.join(
+                output_path,
+                f"{local_file_name[:-9]}.inet.hdf"
+            )
+            network = ms_run_files.Network(
+                ion_network_file_name,
                 new_file=True,
             )
-            db.create_from_fastas(input_file_names, parameters)
+            network.create(
+                centroids_file_name=centroids_file_name,
+                parameters=parameters
+            )
 
-    @staticmethod
-    def annotate_ion_network(
-        input_path,
-        database_file_name,
-        parameter_file_name,
-        log_file_name
-    ):
-        # TODO: Docstring
-        if parameter_file_name is None:
-            parameter_file_name = ""
-        if parameter_file_name != "":
-            parameter_file_name = os.path.abspath(parameter_file_name)
-        parameters = ms_utils.read_parameters_from_json_file(
-            file_name=parameter_file_name,
-            default="annotation"
+
+def evidence_ion_networks(
+    input_path,
+    parameter_file_name,
+    log_file_name
+):
+    """
+    Evidence ion-networks with each other.
+
+    Parameters
+    ----------
+    input_path : iterable[str]
+        An iterable with file and/or folder names.
+    parameter_file_name : str or None
+        If provided, parameters will be read from this file.
+    log_file_name : str or None
+        If provided, all logs will be written to this file.
+    """
+    if parameter_file_name is None:
+        parameter_file_name = ""
+    if parameter_file_name != "":
+        parameter_file_name = os.path.abspath(parameter_file_name)
+    parameters = ms_utils.read_parameters_from_json_file(
+        file_name=parameter_file_name,
+        default="evidence"
+    )
+    # TODO: Proper parsing of empty log...?
+    if (log_file_name is None) or (log_file_name == ""):
+        log_file_name = parameters["log_file_name"]
+    if log_file_name != "":
+        log_file_name = os.path.abspath(log_file_name)
+    with ms_utils.open_logger(log_file_name) as logger:
+        logger.info(f"Evidencing ion-networks")
+        input_file_names = ms_utils.get_file_names_with_extension(
+            input_path,
+            ".inet.hdf"
         )
-        # TODO: Proper parsing of empty log...?
-        if (log_file_name is None) or (log_file_name == ""):
-            log_file_name = parameters["log_file_name"]
-        if log_file_name != "":
-            log_file_name = os.path.abspath(log_file_name)
-        with ms_utils.open_logger(log_file_name) as logger:
-            logger.info(f"Command: annotate")
-            input_file_names = ms_utils.get_file_names_with_extension(
-                input_path,
-                # extension=".evidence.hdf"
-                extension=".inet.hdf"
+        file_count = len(input_file_names)
+        logger.info(
+            f"{file_count} input_file{'s' if file_count != 1 else ''}"
+            f": {input_file_names}"
+        )
+        logger.info(f"parameter_file_name: {parameter_file_name}")
+        logger.info("")
+        evidence_files = [
+            ms_run_files.Evidence(
+                file_name,
+                new_file=True,
+            ) for file_name in input_file_names
+        ]
+        for index, evidence_file in enumerate(evidence_files[:-1]):
+            logger.info(f"Caching edges of {evidence_file.file_name}")
+            indptr, indices, pointers = evidence_file.ion_network.get_edges(
+                symmetric=True,
+                return_pointers=True
             )
-            file_count = len(input_file_names)
-            logger.info(
-                f"{file_count} input_file_name{'s' if file_count != 1 else ''}"
-                f": {input_file_names}"
-            )
-            logger.info(f"database_file_name: {database_file_name}")
-            logger.info(f"parameter_file_name: {parameter_file_name}")
-            logger.info(f"log_file_name: {log_file_name}")
-            logger.info("")
-            for file_name in input_file_names:
-                ani = ms_run_files.Annotation(
-                    file_name,
-                    new_file=True,
+            for secondary_evidence_file in evidence_files[index + 1:]:
+                evidence_file.align(
+                    secondary_evidence_file,
+                    parameters=parameters,
+                    indptr=indptr,
+                    indices=indices,
+                    pointers=pointers,
                 )
-                ani.create_annotations(database_file_name, parameters)
+            del indptr, indices, pointers
+
+
+def show_ion_network(
+    parameter_file_name,
+    log_file_name
+):
+    # TODO: Docstring
+    # TODO: Implementation updates
+    if parameter_file_name is None:
+        parameter_file_name = ""
+    if parameter_file_name != "":
+        parameter_file_name = os.path.abspath(parameter_file_name)
+    parameters = ms_utils.read_parameters_from_json_file(
+        file_name=parameter_file_name,
+    )
+    # TODO: Proper parsing of empty log...?
+    if (log_file_name is None) or (log_file_name == ""):
+        log_file_name = parameters["log_file_name"]
+    if log_file_name != "":
+        log_file_name = os.path.abspath(log_file_name)
+    with ms_utils.open_logger(log_file_name) as logger:
+        logger.info(f"Showing ion-networks")
+        logger.info("")
+        with browser.Browser() as browser_object:
+            browser_object.run()
+
+
+def run_ion_network_gui():
+    # TODO: Docstring
+    with GUI() as gui:
+        gui.run()
+
+
+def create_database(
+    input_path,
+    output_directory,
+    parameter_file_name,
+    log_file_name
+):
+    # TODO: Docstring
+    if parameter_file_name is None:
+        parameter_file_name = ""
+    if parameter_file_name != "":
+        parameter_file_name = os.path.abspath(parameter_file_name)
+    if output_directory is None:
+        output_directory = ""
+    if output_directory != "":
+        output_directory = os.path.abspath(output_directory)
+    parameters = ms_utils.read_parameters_from_json_file(
+        file_name=parameter_file_name,
+        default="database"
+    )
+    # TODO: Proper parsing of empty log...?
+    if (log_file_name is None) or (log_file_name == ""):
+        log_file_name = parameters["log_file_name"]
+    if log_file_name != "":
+        log_file_name = os.path.abspath(log_file_name)
+    # TODO: turn off ms2pip logger?
+    with ms_utils.open_logger(log_file_name) as logger:
+        logger.info(f"Creating database")
+        input_file_names = ms_utils.get_file_names_with_extension(
+            input_path,
+            extension=".fasta"
+        )
+        file_count = len(input_file_names)
+        logger.info(
+            f"{file_count} input_file{'s' if file_count != 1 else ''}"
+            f": {input_file_names}"
+        )
+        logger.info(f"output_directory: {output_directory}")
+        # TODO: Refer to default parameter file if necessary
+        logger.info(f"parameter_file_name: {parameter_file_name}")
+        # TODO: include relevant individual parameters?
+        logger.info("")
+        base_name = "_".join(
+            [
+                ".".join(
+                    os.path.basename(fasta_file_name).split(".")[:-1]
+                ) for fasta_file_name in input_file_names
+            ]
+        )
+        database_file_name = os.path.join(output_directory, base_name)
+        if parameters["create_targets"]:
+            if parameters["create_decoys"]:
+                database_file_name = f"{database_file_name}_concatenated_decoy.hdf"
+            else:
+                database_file_name = f"{database_file_name}.hdf"
+        else:
+            database_file_name = f"{database_file_name}_decoy.hdf"
+        db = ms_database.Database(
+            database_file_name,
+            new_file=True,
+        )
+        db.create_from_fastas(input_file_names, parameters)
+
+
+def annotate_ion_network(
+    input_path,
+    database_file_name,
+    parameter_file_name,
+    log_file_name
+):
+    # TODO: Docstring
+    if parameter_file_name is None:
+        parameter_file_name = ""
+    if parameter_file_name != "":
+        parameter_file_name = os.path.abspath(parameter_file_name)
+    parameters = ms_utils.read_parameters_from_json_file(
+        file_name=parameter_file_name,
+        default="annotation"
+    )
+    # TODO: Proper parsing of empty log...?
+    if (log_file_name is None) or (log_file_name == ""):
+        log_file_name = parameters["log_file_name"]
+    if log_file_name != "":
+        log_file_name = os.path.abspath(log_file_name)
+    with ms_utils.open_logger(log_file_name) as logger:
+        logger.info(f"Annotating ion-networks")
+        input_file_names = ms_utils.get_file_names_with_extension(
+            input_path,
+            # extension=".evidence.hdf"
+            extension=".inet.hdf"
+        )
+        file_count = len(input_file_names)
+        logger.info(
+            f"{file_count} input_file{'s' if file_count != 1 else ''}"
+            f": {input_file_names}"
+        )
+        logger.info(f"database_file_name: {database_file_name}")
+        logger.info(f"parameter_file_name: {parameter_file_name}")
+        logger.info("")
+        for file_name in input_file_names:
+            ani = ms_run_files.Annotation(
+                file_name,
+                new_file=True,
+            )
+            ani.create_annotations(database_file_name, parameters)
 
 
 class GUI(object):
@@ -479,7 +480,7 @@ class GUI(object):
         # TODO: Docstring
         if event == "Show":
             self.swap_active_window("")
-            Interface.show_ion_network(
+            show_ion_network(
                 "",
                 ""
             )
@@ -491,7 +492,7 @@ class GUI(object):
         # TODO: Docstring
         if event == "Submit":
             self.run_terminal_command(
-                Interface.convert_data_formats_to_csvs,
+                convert_data_formats_to_csvs,
                 values["input_path"].split(";"),
                 values["data_type"],
                 values["output_directory"],
@@ -503,7 +504,7 @@ class GUI(object):
         # TODO: Docstring
         if event == "Submit":
             self.run_terminal_command(
-                Interface.create_ion_networks,
+                create_ion_networks,
                 values["input_path"].split(";"),
                 values["output_directory"],
                 values["parameter_file_name"],
@@ -514,7 +515,7 @@ class GUI(object):
         # TODO: Docstring
         if event == "Submit":
             self.run_terminal_command(
-                Interface.evidence_ion_networks,
+                evidence_ion_networks,
                 values["input_path"].split(";"),
                 values["parameter_file_name"],
                 values["log_file_name"]
@@ -760,7 +761,7 @@ class CLI(object):
         parameter_file_name,
         log_file_name
     ):
-        Interface.convert_data_formats_to_csvs(
+        convert_data_formats_to_csvs(
             input_path,
             data_type,
             output_directory,
@@ -830,7 +831,7 @@ class CLI(object):
         parameter_file_name,
         log_file_name
     ):
-        Interface.create_ion_networks(
+        create_ion_networks(
             input_path,
             output_directory,
             parameter_file_name,
@@ -877,7 +878,7 @@ class CLI(object):
         parameter_file_name,
         log_file_name
     ):
-        Interface.evidence_ion_networks(
+        evidence_ion_networks(
             input_path,
             parameter_file_name,
             log_file_name
@@ -912,7 +913,7 @@ class CLI(object):
         parameter_file_name,
         log_file_name
     ):
-        Interface.show_ion_network(
+        show_ion_network(
             parameter_file_name,
             log_file_name
         )
@@ -923,7 +924,7 @@ class CLI(object):
         help="Graphical user interface to analyse ion-networks.",
     )
     def gui():
-        Interface.run_ion_network_gui()
+        run_ion_network_gui()
 
     @staticmethod
     @click.command(
@@ -977,7 +978,7 @@ class CLI(object):
         parameter_file_name,
         log_file_name
     ):
-        Interface.create_database(
+        create_database(
             input_path,
             output_directory,
             parameter_file_name,
@@ -1032,7 +1033,7 @@ class CLI(object):
         parameter_file_name,
         log_file_name
     ):
-        Interface.annotate_ion_network(
+        annotate_ion_network(
             input_path,
             database_file_name,
             parameter_file_name,
