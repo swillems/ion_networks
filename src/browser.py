@@ -155,11 +155,11 @@ class Browser(object):
                 ),
             ]
             layout.append(row)
-        max_node_count = float(self.evidence.evidence_count)
+        max_node_count = float(self.evidence.run_count)
         self.node_dimensions["node_evidence"] = [max_node_count, max_node_count]
         self.node_threshold = 2 * len(self.node_dimensions)
         self.node_mask = np.repeat(self.node_threshold, self.ion_network.node_count)
-        node_evidence = self.evidence.get_aligned_nodes_from_group()
+        node_evidence = self.evidence.get_nodes()
         self.node_mask -= node_evidence < max_node_count
         layout.append(
             [
@@ -239,9 +239,12 @@ class Browser(object):
         except AttributeError:
             pass
         layout = []
-        self.edges = self.ion_network.get_edges(data_as_index=True)
-        self.positive_edge_evidence = self.evidence.get_edge_mask_from_group()
-        self.negative_edge_evidence = self.evidence.get_edge_mask_from_group(
+        self.edges = self.ion_network.get_edges(
+            return_as_scipy_csr=True,
+            return_pointers=True
+        )
+        self.positive_edge_evidence = self.evidence.get_edges()
+        self.negative_edge_evidence = self.evidence.get_edges(
             positive=False
         )
         self.show_edges = False
@@ -254,7 +257,7 @@ class Browser(object):
                 ),
             ]
         )
-        max_node_count = float(self.evidence.evidence_count)
+        max_node_count = float(self.evidence.run_count)
         self.edge_formula = "p - n"
         self.min_edge_threshold = max_node_count
         self.max_edge_threshold = max_node_count
@@ -325,10 +328,10 @@ class Browser(object):
         )
         layout.append(self.add_main_menu_and_continue_buttons_to_layout())
         self.figs["evidence"].axes[0].set_xticks(
-            list(range(self.evidence.evidence_count + 1))
+            list(range(self.evidence.run_count + 1))
         )
         self.figs["evidence"].axes[0].set_xticklabels(
-            [self.ion_network.run_name] + self.evidence.network_keys,
+            [self.ion_network.run_name] + self.evidence.runs,
             rotation=45,
             ha="right"
         )
@@ -336,7 +339,7 @@ class Browser(object):
         self.figs["evidence"].axes[0].set_xlim(
             [
                 0,
-                len(self.evidence.network_keys),
+                len(self.evidence.runs),
             ]
         )
         flush_figure(self.figs["evidence"], True)
@@ -451,7 +454,7 @@ class Browser(object):
             if key == "node_evidence":
                 if low != float(values["min_node_count"]):
                     update_node_selection = True
-                    node_count = self.evidence.get_aligned_nodes_from_group()
+                    node_count = self.evidence.get_nodes()
                     self.node_mask -= node_count >= low
                     self.node_mask += node_count >= float(values["min_node_count"])
                     self.node_dimensions["node_evidence"][0] = float(
@@ -459,7 +462,7 @@ class Browser(object):
                     )
                 if high != float(values["max_node_count"]):
                     update_node_selection = True
-                    node_count = self.evidence.get_aligned_nodes_from_group()
+                    node_count = self.evidence.get_nodes()
                     self.node_mask -= node_count <= high
                     self.node_mask += node_count <= float(values["max_node_count"])
                     self.node_dimensions["node_evidence"][1] = float(
@@ -582,7 +585,7 @@ class Browser(object):
             if self.node_color in self.ion_network.dimensions:
                 inds = self.ion_network.get_ion_coordinates(self.node_color)
             elif self.node_color == 'NODE EVIDENCE':
-                inds = self.evidence.get_aligned_nodes_from_group()
+                inds = self.evidence.get_nodes()
             color_inds = inds[nodes]
             if reorder:
                 offsets = np.array(self.node_scatter.get_offsets())
@@ -644,9 +647,13 @@ class Browser(object):
                 flush_figure(self.figs["network"], flush)
                 return
             if self.edge_color in ['EDGE EVIDENCE']:
-                p = self.positive_edge_evidence
-                n = self.negative_edge_evidence
-                inds = ne.evaluate(self.edge_formula)
+                positive_counts = self.positive_edge_evidence
+                negative_counts = self.negative_edge_evidence
+                inds = ne.evaluate(
+                    self.edge_formula,
+                    local_dict={"p": positive_counts, "n": negative_counts},
+                    global_dict={},
+                )
                 color_inds = inds[selected_edges]
                 if reorder:
                     offsets = np.array(self.edge_collection.get_segments())
@@ -699,21 +706,38 @@ class Browser(object):
                 )
             selected_neighbors = self.edges[nodes].T.tocsr()[nodes]
             a, b = selected_neighbors.nonzero()
-            p = self.positive_edge_evidence[
+            positive_counts = self.positive_edge_evidence[
                 selected_neighbors.data
             ]
-            n = self.negative_edge_evidence[
+            negative_counts = self.negative_edge_evidence[
                 selected_neighbors.data
             ]
-            values = ne.evaluate(self.edge_formula)
-            selection = (values >= self.min_edge_threshold)
-            selection &= (values <= self.max_edge_threshold)
-            a = a[selection]
-            b = b[selection]
-            start_edges = list(zip(x_coordinates[a], y_coordinates[a]))
-            end_edges = list(zip(x_coordinates[b], y_coordinates[b]))
-            edges = np.array(list(zip(start_edges, end_edges)))
-            selected_edges = selected_neighbors.data[selection]
+            try:
+                values = ne.evaluate(
+                    self.edge_formula,
+                    local_dict={"p": positive_counts, "n": negative_counts},
+                    global_dict={},
+                )
+                selection = (values >= self.min_edge_threshold)
+                selection &= (values <= self.max_edge_threshold)
+                a = a[selection]
+                b = b[selection]
+                start_edges = list(zip(x_coordinates[a], y_coordinates[a]))
+                end_edges = list(zip(x_coordinates[b], y_coordinates[b]))
+                edges = np.array(list(zip(start_edges, end_edges)))
+                selected_edges = selected_neighbors.data[selection]
+            except NotImplementedError:
+                sg.popup_error(
+                    f"The edge formula '{self.edge_formula}' is not valid"
+                )
+                edges = []
+                selected_edges = []
+            except KeyError:
+                sg.popup_error(
+                    f"The edge formula '{self.edge_formula}' is not valid"
+                )
+                edges = []
+                selected_edges = []
         else:
             edges = []
             selected_edges = []
@@ -749,21 +773,26 @@ class Browser(object):
             flush_figure(self.figs["evidence"], flush)
             return
         node_mask[nodes] = np.arange(len(nodes))
-        alignments = np.zeros((len(nodes), self.evidence.evidence_count + 1))
+        alignments = np.zeros((len(nodes), self.evidence.run_count + 1))
         alignments[:, 0] = self.ion_network.get_ion_coordinates(
             self.evidence_axis,
             nodes
         )
-        for i, other_run in enumerate(self.evidence.network_keys):
-            evidence = self.evidence.get_other_run(other_run)
-            alignment = self.evidence.get_alignment(other=evidence)
-            selected = np.isin(alignment[:, 0], nodes)
-            self_ions = node_mask[alignment[selected, 0]]
-            other_ions = alignment[selected, 1]
-            alignments[self_ions, i + 1] = evidence.ion_network.get_ion_coordinates(
+        for i, other_evidence in enumerate(self.evidence):
+            self_alignment = self.evidence.get_nodes(other_evidence)
+            other_alignment = other_evidence.get_nodes(self.evidence)
+            selected = np.isin(self_alignment, nodes)
+            self_ions = node_mask[self_alignment[selected]]
+            other_ions = other_alignment[selected]
+            alignments[self_ions, i + 1] = other_evidence.ion_network.get_ion_coordinates(
                 self.evidence_axis,
                 other_ions
             )
+            if self.evidence_axis == "FRAGMENT_LOGINT":
+                alignments[self_ions, i + 1] += self.evidence.read_attr(
+                    "median_intensity_correction",
+                    parent_group_name=f"runs/{other_evidence.run_name}/nodes"
+                )
         if hasattr(self, "evidence_plot"):
             for i in self.evidence_plot:
                 i.remove()

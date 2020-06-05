@@ -132,7 +132,7 @@ class Network(HDF_MS_Run_File):
             ion-network.
         """
         ms_utils.LOGGER.info(f"Creating edges of ion-network {self.file_name}")
-        thread_count = parameters["threads"]
+        thread_count = ms_utils.MAX_THREADS
         errors = parameters["precursor_errors"]
         precursor_coordinates = np.stack(
             self.get_ion_coordinates(self.precursor_dimensions)
@@ -168,6 +168,7 @@ class Network(HDF_MS_Run_File):
         indptr[0] = 0
         indptr[1:] = np.cumsum(np.concatenate([r[0] for r in results]))
         indices = np.concatenate([r[1] for r in results])
+        del results
         precursor_errors = {
             dimension: errors[
                 dimension
@@ -341,12 +342,12 @@ class Evidence(HDF_MS_Run_File):
     """
 
     @property
-    def evidence_runs(self):
+    def runs(self):
         return self.read_group("runs")
 
     @property
-    def evidence_count(self):
-        return self.read_attr("evidence_count")
+    def run_count(self):
+        return self.read_attr("run_count")
 
     def __init__(
         self,
@@ -361,14 +362,33 @@ class Evidence(HDF_MS_Run_File):
             is_read_only=is_read_only,
             new_file=new_file,
         )
-        if new_file:
-            self.write_group("runs")
-            self.write_attr("evidence_count", 0)
         self.ion_network = Network(reference)
         self.ion_network.evidence = self
+        if new_file:
+            self.write_group("runs")
+            self.write_group("total")
+            self.write_dataset(
+                "positive_edges",
+                np.zeros(self.ion_network.edge_count, np.int16),
+                parent_group_name="total"
+            )
+            self.write_dataset(
+                "negative_edges",
+                np.zeros(self.ion_network.edge_count, np.int16),
+                parent_group_name="total"
+            )
+            self.write_dataset(
+                "nodes",
+                np.zeros(self.ion_network.node_count, np.int16),
+                parent_group_name="total"
+            )
+            self.write_attr("run_count", 0)
 
     def __contains__(self, other):
-        return other.run_name in self.evidence_runs
+        if isinstance(other, str):
+            return other in self.runs
+        else:
+            return other.run_name in self.runs
 
     def __getitem__(self, key):
         if key not in self:
@@ -379,12 +399,24 @@ class Evidence(HDF_MS_Run_File):
         )
         return Evidence(full_file_name)
 
+    def __iter__(self):
+        self.__iterator_pointer = 0
+        return self
+
+    def __next__(self):
+        if self.__iterator_pointer < self.run_count:
+            run_name = self.runs[self.__iterator_pointer]
+            self.__iterator_pointer += 1
+            return self[run_name]
+        else:
+            raise StopIteration
+
     def __align_nodes(self, other, parameters):
         # TODO: Docstring
         ms_utils.LOGGER.info(
             f"Aligning nodes of {self.file_name} and {other.file_name}"
         )
-        thread_count = parameters["threads"]
+        thread_count = ms_utils.MAX_THREADS
         errors = parameters["fragment_errors"]
         dimensions = sorted(
             set(self.ion_network.dimensions) & set(other.ion_network.dimensions)
@@ -446,6 +478,7 @@ class Evidence(HDF_MS_Run_File):
         indptr[1:] = np.cumsum(np.concatenate([r[0] for r in results]))
         self_indices = np.repeat(self_mz_order, np.diff(indptr))
         other_indices = other_mz_order[np.concatenate([r[1] for r in results])]
+        del results
         fragment_errors = {
             dimension: errors[dimension] for dimension in dimensions
         }
@@ -515,17 +548,29 @@ class Evidence(HDF_MS_Run_File):
             np.sum(~unique),
             parent_group_name=f"runs/{other.run_name}/nodes"
         )
-        total = np.ones(self.ion_network.node_count, np.bool_)
-        total[self_indices] = False
+        total_mask = np.ones(self.ion_network.node_count, np.bool_)
+        total_mask[self_indices] = False
         self.write_attr(
             "unaligned_count",
-            np.sum(total),
+            np.sum(total_mask),
             parent_group_name=f"runs/{other.run_name}/nodes"
         )
         self.write_attr(
             "median_intensity_correction",
             intensity_correction,
             parent_group_name=f"runs/{other.run_name}/nodes"
+        )
+        total = self.get_nodes()
+        total[self_indices[unique]] += 1
+        self.write_dataset(
+            "nodes",
+            total,
+            parent_group_name=f"total"
+        )
+        self.write_attr(
+            "count",
+            np.sum(total),
+            parent_group_name=f"total/nodes"
         )
 
     def __align_edges(
@@ -544,20 +589,10 @@ class Evidence(HDF_MS_Run_File):
                 symmetric=True,
                 return_pointers=True
             )
-        thread_count = parameters["threads"]
+        thread_count = ms_utils.MAX_THREADS
         other_indptr, other_indices = other.ion_network.get_edges()
-        self_alignment = self.get_aligned_nodes_from_group(
-            other=other,
-            return_as_mask=False,
-            kind="unique",
-            symmetric=False
-        )
-        other_alignment = other.get_aligned_nodes_from_group(
-            other=self,
-            return_as_mask=False,
-            kind="unique",
-            symmetric=False
-        )
+        self_alignment = self.get_nodes(other)
+        other_alignment = other.get_nodes(self)
         self_alignment_mask = np.zeros(self.ion_network.node_count, np.bool_)
         self_alignment_mask[self_alignment] = True
         alignment = np.empty_like(self_indptr_)
@@ -580,6 +615,7 @@ class Evidence(HDF_MS_Run_File):
             )
         self_positive_pointers = np.concatenate([r[0] for r in results])
         other_positive_pointers = np.concatenate([r[1] for r in results])
+        del results
         self_indptr, self_indices = self.ion_network.get_edges()
         self_negative_mask = np.repeat(
             self_alignment_mask,
@@ -643,6 +679,30 @@ class Evidence(HDF_MS_Run_File):
             self.ion_network.edge_count - negative_count - positive_count,
             parent_group_name=f"runs/{other.run_name}/edges"
         )
+        total_positive = self.get_edges()
+        total_positive[positive_pointers] += 1
+        self.write_dataset(
+            "positive_edges",
+            total_positive,
+            parent_group_name=f"total"
+        )
+        self.write_attr(
+            "count",
+            np.sum(total_positive),
+            parent_group_name=f"total/positive_edges"
+        )
+        total_negative = self.get_edges(positive=False)
+        total_negative[negative_pointers] += 1
+        self.write_dataset(
+            "negative_edges",
+            total_negative,
+            parent_group_name=f"total"
+        )
+        self.write_attr(
+            "count",
+            np.sum(total_negative),
+            parent_group_name=f"total/negative_edges"
+        )
 
     def align(
         self,
@@ -667,8 +727,8 @@ class Evidence(HDF_MS_Run_File):
         )
         self.write_group(other.run_name, parent_group_name="runs")
         other.write_group(self.run_name, parent_group_name="runs")
-        self.write_attr("evidence_count", self.evidence_count + 1)
-        other.write_attr("evidence_count", other.evidence_count + 1)
+        self.write_attr("run_count", self.run_count + 1)
+        other.write_attr("run_count", other.run_count + 1)
         self.__align_nodes(other, parameters)
         self.__align_edges(
             other,
@@ -778,68 +838,18 @@ class Evidence(HDF_MS_Run_File):
     #     calibrated_self_rts = np.concatenate(calibrated_self_rts)
     #     return calibrated_self_rts
 
-    def get_alignment(
-        self,
-        other,
-        return_as_scipy_csr=False
-    ):
-        """
-        Get the pairwise alignment between two ion-networks.
-
-        Parameters
-        ----------
-        other : evidence
-            The other evidence set against which to align.
-        return_as_scipy_csr : bool
-            If True, return the alignment as a scipy.sparse.csr_matrix,
-            otherwise, return the alignment as a 2-dimensional np.ndarray.
-
-        Returns
-        ----------
-        np.ndarray or scipy.sparse.csr_matrix(bool)
-            A 2-dimensional array of shape (2, n) with n the number of nodes
-            aligned. The first column are the indices of the first ion-network
-            and the second column contains the indices of the second
-            ion-network. If return_as_scipy_csr is True, a sparse csr matrix
-            is created from this array before it is returned.
-        """
-        self_ions = self.get_aligned_nodes_from_group(
-            other.ion_network.run_name,
-            return_as_mask=False
-        )
-        other_ions = other.get_aligned_nodes_from_group(
-            self.ion_network.run_name,
-            return_as_mask=False
-        )
-        if return_as_scipy_csr:
-            return scipy.sparse.csr_matrix(
-                (
-                    np.ones(self_ions.shape[0], dtype=np.bool),
-                    (self_ions, other_ions)
-                ),
-                shape=(
-                    self.ion_network.node_count,
-                    other.ion_network.node_count
-                )
-            )
-        return np.stack([self_ions, other_ions]).T
-
-    def get_aligned_nodes_from_group(
+    def get_nodes(
         self,
         other=None,
-        return_as_mask=True,
-        kind="unique",
-        symmetric=False
+        return_as_mask=False,
+        kind="unique"
     ):
         # TODO: Docstring
         if other is None:
-            ions = np.zeros(self.ion_network.node_count, dtype=np.int)
-            for other in self.evidence_runs:
-                ion_mask = self.read_dataset(
-                    kind,
-                    parent_group_name=f"runs/{other}/nodes",
-                )
-                ions[ion_mask] += 1
+            return self.read_dataset(
+                "nodes",
+                parent_group_name="total",
+            )
         else:
             ions = self.read_dataset(
                 kind,
@@ -849,35 +859,30 @@ class Evidence(HDF_MS_Run_File):
                 mask = np.empty(self.ion_network.node_count, np.bool_)
                 mask[ions] = True
                 ions = mask
-            if symmetric:
-                ions2 = other.get_aligned_nodes_from_group(
-                    self,
-                    return_as_mask,
-                    kind,
-                    symmetric
-                )
-                ions = np.stack([ions, ions2]).T
-        return ions
+            return ions
 
-    def get_edge_mask_from_group(self, group_name="", positive=True):
+    def get_edges(
+        self,
+        other=None,
+        return_as_mask=False,
+        positive=True
+    ):
         # TODO: Docstring
-        if positive:
-            mask_name = "positive_edges"
-        else:
-            mask_name = "negative_edges"
-        if group_name == "":
-            edges = np.zeros(self.ion_network.edge_count, dtype=np.int)
-            for group_name in self.read_group():
-                edges += self.read_dataset(
-                    mask_name,
-                    parent_group_name=group_name,
-                )
+        if other is None:
+            return self.read_dataset(
+                "positive_edges" if positive else "negative_edges",
+                parent_group_name="total",
+            )
         else:
             edges = self.read_dataset(
-                mask_name,
-                parent_group_name=group_name,
+                "positive" if positive else "negative",
+                parent_group_name="runs/{other.run_name}/edges",
             )
-        return edges
+            if return_as_mask:
+                mask = np.empty(self.ion_network.edge_count, np.bool_)
+                mask[edges] = True
+                edges = mask
+            return edges
 
 
 class Annotation(HDF_MS_Run_File):
@@ -1148,6 +1153,7 @@ def align_coordinates(
 
 @numba.njit(cache=True, nogil=True)
 def make_symmetric(indptr, indices):
+    # TODO: multithread?
     offsets = np.cumsum(np.bincount(indices))
     indptr_ = indptr.copy()
     indptr_[1:1 + offsets.shape[0]] += offsets

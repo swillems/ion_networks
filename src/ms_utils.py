@@ -35,6 +35,7 @@ DATA_TYPE_FILE_EXTENSIONS = {
     "DIAPASEF": "_centroids.hdf",
 }
 LOGGER = logging.getLogger("Ion-networks")
+MAX_THREADS = 1
 
 
 @contextlib.contextmanager
@@ -112,6 +113,9 @@ def read_parameters_from_json_file(file_name="", default=""):
         parameters.update(user_defined_parameters)
     # TODO: Numba expects proper floats or integers, not a mixture
     # TODO: e.g. DT_error = 2.0, instead of DT_error = 2
+    if "threads" in parameters:
+        global MAX_THREADS
+        MAX_THREADS = parameters["threads"]
     return parameters
 
 
