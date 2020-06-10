@@ -233,6 +233,169 @@ def generate_in_parallel(cpu_count=0):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def calculate(
+    inet,
+    to_select_per_sample,
+    ppm = 10,
+    calibration_prior_estimates = {
+        "PRECURSOR_RT": 0.5,
+        "PRECURSOR_MZ": 5,
+    },
+    calibration_mzs = {
+        "target": 113.084064,
+        "decoy": 2*113.084064,
+    },
+    min_window = 100,
+    usable = (0.1, 0.5),
+):
+    calibration_diffs = {
+        "target": {},
+        "decoy": {},
+    }
+    random_diffs = {
+        "target": {},
+        "decoy": {},
+    }
+    estimations = {}
+    fints, fmzs = inet.get_ion_coordinates(
+        ["FRAGMENT_LOGINT", "FRAGMENT_MZ"]
+    )
+    result_coordinates = {}
+    precursor_arrays = {
+        dimension: inet.get_ion_coordinates(dimension) for dimension in inet.precursor_dimensions
+    }
+    c = np.argpartition(fints, - to_select_per_sample)[-to_select_per_sample:]
+    c = c[np.argsort(fmzs[c])]
+    mzs = fmzs[c]
+    for selection, mz_distance in calibration_mzs.items():
+        if mz_distance > 0:
+            lower_limits = np.searchsorted(
+                mzs,
+                (mzs + mz_distance) / (1 + ppm * 10**-6),
+                "left"
+            )
+        else:
+            lower_limits = np.arange(len(mzs)) + 1
+        upper_limits = np.searchsorted(
+            mzs,
+            (mzs + mz_distance) * (1 + ppm * 10**-6),
+            "right"
+        )
+        indptr = np.zeros(inet.node_count + 1, np.int64)
+        indptr[c + 1] = upper_limits - lower_limits
+        indptr = np.cumsum(indptr)
+        order = np.argsort(c)
+        indices = np.concatenate(
+            [
+                c[low: high] for low, high in zip(lower_limits[order], upper_limits[order])
+            ]
+        )
+        for dimension, prior_estimate in calibration_prior_estimates.items():
+            calibration_diffs[selection][dimension] = np.abs(
+                np.repeat(
+                    precursor_arrays[dimension],
+                    np.diff(indptr)
+                ) - precursor_arrays[dimension][indices]
+            )
+            random_diffs[selection][dimension] = np.sum(
+                calibration_diffs[selection][dimension] > prior_estimate
+            )
+    for dimension in precursor_arrays:
+        x = np.concatenate(
+            [
+                calibration_diffs["target"][dimension],
+                calibration_diffs["decoy"][dimension],
+            ]
+        )
+        y = np.repeat(
+            [
+                1,
+                -random_diffs["target"][dimension] / random_diffs["decoy"][dimension]
+            ],
+            [
+                calibration_diffs["target"][dimension].shape[0],
+                calibration_diffs["decoy"][dimension].shape[0]
+            ]
+        )
+        o = np.argsort(x)
+        x = x[o]
+        y = np.cumsum(y[o])
+        result_coordinates[dimension] = (x, y)
+    for dimension in precursor_arrays:
+        x=np.sort(calibration_diffs["target"][dimension])
+        use_slice = slice(
+            int(x.shape[0]*usable[0]),
+            int(x.shape[0]*usable[1])
+        )
+        # offset = np.max(
+        #     x[min_window:]-x[:-min_window]
+        # )
+        offset = np.max(
+            x[use_slice][min_window:]-x[use_slice][:-min_window]
+        )
+        # offset=0.001
+#         print(offset)
+        l = np.searchsorted(x, x - offset)
+        r = np.searchsorted(x, x)
+        y = r-l
+        x, y = x[l>0],y[l>0]
+        # plt.plot(x,np.cumsum(y)/np.arange(y.shape[0]))
+#         plt.plot(x,y)
+        ransac = sklearn.linear_model.RANSACRegressor()
+        ransac.fit(
+            x[use_slice].reshape(-1, 1),
+            y[use_slice].reshape(-1, 1),
+        )
+#         plt.plot(
+#             x[[0,-1]],
+#             ransac.predict(x[[0,-1]].reshape(-1, 1))
+#         )
+#         plt.plot(
+#             x[use_slice],
+#             y[use_slice]
+#         )
+        min_index = np.argmin(
+            ransac.predict(x.reshape(-1, 1)).flatten() < y
+        )
+#         plt.title(f"{dimension}: {x[min_index]}")
+        estimations[dimension] = x[min_index]
+    return result_coordinates, calibration_diffs, estimations
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # for f in /media/proteomics2/RAW/Synapt/HDMSe/Covid19_eSwab_Dilution/*blanco*; do apex3d -pRawDirName "$f" -outputDirName /home/sander/data/covid_eswab_hdmse/ -lockMassZ2 785.8426 -lockmassToleranceAMU 0.25 -bCSVOutput 1 -writeFuncCsvFiles 0 -leThresholdCounts 1 -heThresholdCounts 1 -apexTrackSNRThreshold 1 -bEnableCentroids 0; done
 
 

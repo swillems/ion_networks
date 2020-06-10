@@ -9,6 +9,7 @@ import numpy as np
 import scipy
 import numba
 import scipy.sparse
+import sklearn.linear_model
 # local
 import ms_database
 import ms_utils
@@ -133,18 +134,36 @@ class Network(HDF_MS_Run_File):
         """
         ms_utils.LOGGER.info(f"Creating edges of ion-network {self.file_name}")
         thread_count = ms_utils.MAX_THREADS
-        errors = parameters["precursor_errors"]
         precursor_coordinates = np.stack(
             self.get_ion_coordinates(self.precursor_dimensions)
         ).T
+        precursor_errors = {
+            dimension: parameters["precursor_errors"][
+                dimension
+            ] for dimension in self.precursor_dimensions
+        }
+        if parameters["precursor_errors_auto_tune"]:
+            precursor_errors.update(
+                self.__tune_precursor_errors(
+                    parameters["precursor_errors_auto_tune_ion_count"],
+                    parameters["precursor_errors_auto_tune_ppm"],
+                    parameters["precursor_errors_auto_tune_target_mz"],
+                    parameters["precursor_errors_auto_tune_smoother"],
+                    parameters["precursor_errors_auto_tune_noise_range"],
+                )
+            )
         max_errors = np.array(
-            [errors[dimension] for dimension in self.precursor_dimensions]
+            [
+                precursor_errors[
+                    dimension
+                ] for dimension in self.precursor_dimensions
+            ]
         )
         rt_coordinates = self.get_ion_coordinates("PRECURSOR_RT")
         lower_limits = np.arange(len(rt_coordinates)) + 1
         upper_limits = np.searchsorted(
             rt_coordinates,
-            rt_coordinates + errors["PRECURSOR_RT"],
+            rt_coordinates + parameters["precursor_errors"]["PRECURSOR_RT"],
             "right"
         )
         with multiprocessing.pool.ThreadPool(thread_count) as p:
@@ -169,11 +188,6 @@ class Network(HDF_MS_Run_File):
         indptr[1:] = np.cumsum(np.concatenate([r[0] for r in results]))
         indices = np.concatenate([r[1] for r in results])
         del results
-        precursor_errors = {
-            dimension: errors[
-                dimension
-            ] for dimension in self.precursor_dimensions
-        }
         self.__write_edges(indptr, indices, precursor_errors)
 
     def __write_edges(self, indptr, indices, precursor_errors):
@@ -194,6 +208,99 @@ class Network(HDF_MS_Run_File):
             "precursor_errors",
             precursor_errors
         )
+
+    def __tune_precursor_errors(
+        self,
+        to_select_per_sample,
+        ppm,
+        mz_distance,
+        min_window,
+        usable,
+    ):
+        ms_utils.LOGGER.info(
+            f"Tuning precursor errors of ion-network {self.file_name}"
+        )
+        estimations = {}
+        selected_indices = np.argpartition(
+            self.get_ion_coordinates("FRAGMENT_LOGINT"),
+            - to_select_per_sample
+        )[-to_select_per_sample:]
+        fragment_mzs = self.get_ion_coordinates("FRAGMENT_MZ")
+        selected_indices = selected_indices[
+            np.argsort(fragment_mzs[selected_indices])
+        ]
+        fragment_mzs = fragment_mzs[selected_indices]
+        lower_limits = np.searchsorted(
+            fragment_mzs,
+            (fragment_mzs + mz_distance) / (1 + ppm * 10**-6),
+            "left"
+        )
+        upper_limits = np.searchsorted(
+            fragment_mzs,
+            (fragment_mzs + mz_distance) * (1 + ppm * 10**-6),
+            "right"
+        )
+        indptr = np.zeros(self.node_count + 1, np.int64)
+        indptr[selected_indices + 1] = upper_limits - lower_limits
+        indptr = np.cumsum(indptr)
+        order = np.argsort(selected_indices)
+        indices = np.concatenate(
+            [
+                selected_indices[low: high] for low, high in zip(
+                    lower_limits[order],
+                    upper_limits[order]
+                )
+            ]
+        )
+        use_slice = slice(
+            int(indices.shape[0] * usable[0]),
+            int(indices.shape[0] * usable[1])
+        )
+        for dimension in self.precursor_dimensions:
+            precursor_array = self.get_ion_coordinates(dimension)
+            precursor_differences = np.sort(
+                np.abs(
+                    np.repeat(
+                        precursor_array,
+                        np.diff(indptr)
+                    ) - precursor_array[indices]
+                )
+            )
+            bandwidth = np.max(
+                precursor_differences[use_slice][min_window:] - precursor_differences[use_slice][:-min_window]
+            )
+            frequency = np.searchsorted(
+                precursor_differences,
+                precursor_differences + bandwidth
+            ) - np.searchsorted(
+                precursor_differences,
+                precursor_differences - bandwidth
+            )
+            max_frequency_index = np.argmax(frequency)
+            precursor_differences = precursor_differences[max_frequency_index:]
+            frequency = frequency[max_frequency_index:]
+            if max_frequency_index > indices.shape[0] * usable[0]:
+                ms_utils.LOGGER.info(
+                    f"Tuning of {dimension} error of ion-network "
+                    f"{self.file_name} failed"
+                )
+                continue
+            ransac_regressor = sklearn.linear_model.RANSACRegressor()
+            ransac_regressor.fit(
+                precursor_differences[use_slice].reshape(-1, 1),
+                frequency[use_slice].reshape(-1, 1),
+            )
+            min_index = np.argmin(
+                ransac_regressor.predict(
+                    precursor_differences.reshape(-1, 1)
+                ).flatten() < frequency
+            )
+            estimations[dimension] = precursor_differences[min_index]
+            ms_utils.LOGGER.info(
+                f"Tuning of {dimension} error of ion-network "
+                f"{self.file_name}: {precursor_differences[min_index]}"
+            )
+        return estimations
 
     def create(
         self,
