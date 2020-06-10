@@ -3,14 +3,14 @@
     "output_directory": "",
     "threads": 0,
     "precursor_errors": {
-        "PRECURSOR_RT": 0.1,
+        "PRECURSOR_RT": 0.2,
         "PRECURSOR_DT": 2.0,
         "PRECURSOR_MZ": 5.0
     },
     "precursor_errors_auto_tune": true,
     "precursor_errors_auto_tune_ion_count": 100000,
     "precursor_errors_auto_tune_ppm": 10,
+    "precursor_errors_auto_tune_bandwidth": 10,
     "precursor_errors_auto_tune_target_mz": 113.084064,
-    "precursor_errors_auto_tune_smoother": 100,
     "precursor_errors_auto_tune_noise_range": [0.1, 0.5]
 }

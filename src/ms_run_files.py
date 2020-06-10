@@ -142,14 +142,15 @@ class Network(HDF_MS_Run_File):
                 dimension
             ] for dimension in self.precursor_dimensions
         }
-        if parameters["precursor_errors_auto_tune"]:
+        tuned = parameters["precursor_errors_auto_tune"]
+        if tuned:
             precursor_errors.update(
                 self.__tune_precursor_errors(
                     parameters["precursor_errors_auto_tune_ion_count"],
                     parameters["precursor_errors_auto_tune_ppm"],
                     parameters["precursor_errors_auto_tune_target_mz"],
-                    # parameters["precursor_errors_auto_tune_smoother"],
                     precursor_errors,
+                    parameters["precursor_errors_auto_tune_bandwidth"],
                     parameters["precursor_errors_auto_tune_noise_range"],
                 )
             )
@@ -189,9 +190,9 @@ class Network(HDF_MS_Run_File):
         indptr[1:] = np.cumsum(np.concatenate([r[0] for r in results]))
         indices = np.concatenate([r[1] for r in results])
         del results
-        self.__write_edges(indptr, indices, precursor_errors)
+        self.__write_edges(indptr, indices, precursor_errors, tuned)
 
-    def __write_edges(self, indptr, indices, precursor_errors):
+    def __write_edges(self, indptr, indices, precursor_errors, tuned):
         ms_utils.LOGGER.info(f"Writing edges of ion-network {self.file_name}")
         self.write_group("edges")
         self.write_dataset(
@@ -209,14 +210,18 @@ class Network(HDF_MS_Run_File):
             "precursor_errors",
             precursor_errors
         )
+        self.write_attr(
+            "precursor_errors_tuned",
+            tuned
+        )
 
     def __tune_precursor_errors(
         self,
         to_select_per_sample,
         ppm,
         mz_distance,
-        # min_window,
-        precursor_bandwidth,
+        prior_errors,
+        precursor_bandwidth_tune,
         usable,
     ):
         ms_utils.LOGGER.info(
@@ -268,10 +273,7 @@ class Network(HDF_MS_Run_File):
                     ) - precursor_array[indices]
                 )
             )
-            # bandwidth = np.max(
-            #     precursor_differences[use_slice][min_window:] - precursor_differences[use_slice][:-min_window]
-            # )
-            bandwidth = precursor_bandwidth[dimension] / 10
+            bandwidth = prior_errors[dimension] / precursor_bandwidth_tune
             frequency = np.searchsorted(
                 precursor_differences,
                 precursor_differences + bandwidth
@@ -301,6 +303,12 @@ class Network(HDF_MS_Run_File):
                 ).flatten() < frequency
             )
             tuning = precursor_differences[min_index]
+            if tuning > prior_errors[dimension]:
+                ms_utils.LOGGER.info(
+                    f"Tuning of {dimension} error of ion-network "
+                    f"{self.file_name} failed"
+                )
+                continue
             estimations[dimension] = tuning
             ms_utils.LOGGER.info(
                 f"Tuning of {dimension} error of ion-network "
