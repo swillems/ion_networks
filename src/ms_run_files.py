@@ -295,10 +295,10 @@ class Network(HDF_MS_Run_File):
                 precursor_differences[use_slice].reshape(-1, 1),
                 frequency[use_slice].reshape(-1, 1),
             )
-            min_index = np.argmin(
+            min_index = max_frequency_index + np.argmin(
                 ransac_regressor.predict(
-                    precursor_differences.reshape(-1, 1)
-                ).flatten() < frequency
+                    precursor_differences[max_frequency_index:].reshape(-1, 1)
+                ).flatten() < frequency[max_frequency_index:]
             )
             if max_frequency_index > min_index:
                 ms_utils.LOGGER.info(
