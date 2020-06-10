@@ -285,7 +285,9 @@ class Network(HDF_MS_Run_File):
                     f"{self.file_name} failed"
                 )
                 continue
-            ransac_regressor = sklearn.linear_model.RANSACRegressor()
+            ransac_regressor = sklearn.linear_model.RANSACRegressor(
+                random_state=1
+            )
             ransac_regressor.fit(
                 precursor_differences[use_slice].reshape(-1, 1),
                 frequency[use_slice].reshape(-1, 1),
