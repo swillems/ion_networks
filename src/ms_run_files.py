@@ -569,17 +569,17 @@ class Evidence(HDF_MS_Run_File):
             other.ion_network.get_ion_coordinates(dimensions)
         ).T[other_mz_order]
         # TODO Express precursor ppm mzs in absolute?
-        self_coordinates[dimensions.index("FRAGMENT_MZ")] = np.log(
-            self_coordinates[dimensions.index("FRAGMENT_MZ")]
+        self_coordinates[:, dimensions.index("FRAGMENT_MZ")] = np.log(
+            self_coordinates[:, dimensions.index("FRAGMENT_MZ")]
         ) * 10**6
-        other_coordinates[dimensions.index("FRAGMENT_MZ")] = np.log(
-            other_coordinates[dimensions.index("FRAGMENT_MZ")]
+        other_coordinates[:, dimensions.index("FRAGMENT_MZ")] = np.log(
+            other_coordinates[:, dimensions.index("FRAGMENT_MZ")]
         ) * 10**6
-        # if parameters["calibrate_PRECURSOR_RT"]:
-        #     other_rts = other.ion_network.calibrate_precursor_rt(
-        #         self, parameters
-        #     )[other_mz_order]
-        #     other_coordinates[dimensions.index("PRECURSOR_RT")] = other_rts
+        if parameters["calibrate_PRECURSOR_RT"]:
+            other_rts = other.__calibrate_precursor_rt(
+                self, parameters
+            )[other_mz_order]
+            other_coordinates[:, dimensions.index("PRECURSOR_RT")] = other_rts
         max_errors = np.array([errors[dimension] for dimension in dimensions])
         with multiprocessing.pool.ThreadPool(thread_count) as p:
             results = p.starmap(
@@ -767,6 +767,64 @@ class Evidence(HDF_MS_Run_File):
             np.flatnonzero(other_negative_mask),
         )
 
+    def __calibrate_precursor_rt(self, other, parameters):
+        # TODO: Docstring
+        ms_utils.LOGGER.info(
+            f"Calibrating PRECURSOR_RT of {self.file_name} with "
+            f"{other.file_name}"
+        )
+        self_mzs = self.ion_network.get_ion_coordinates("FRAGMENT_MZ")
+        other_mzs = other.ion_network.get_ion_coordinates("FRAGMENT_MZ")
+        self_mz_order = np.argsort(self_mzs)
+        other_mz_order = np.argsort(other_mzs)
+        other_rt_order = np.argsort(other_mz_order)
+        # TODO index rts (ordered 0-1, allow e.g. 0.1 distance)?
+        self_indices, other_indices = quick_align(
+            self_mzs,
+            other_mzs,
+            self_mz_order,
+            other_mz_order,
+            other_rt_order,
+            parameters["calibration_ppm_FRAGMENT_MZ"]
+        )
+        self_rts = self.ion_network.get_ion_coordinates("PRECURSOR_RT")
+        other_rts = other.ion_network.get_ion_coordinates(
+            "PRECURSOR_RT",
+            indices=other_indices
+        )
+        calibrated_self_rts = []
+        for (
+            self_start_index,
+            self_end_index,
+            other_rt_start,
+            other_rt_end
+        ) in zip(
+            self_indices[:-1],
+            self_indices[1:],
+            other_rts[:-1],
+            other_rts[1:]
+        ):
+            self_rt_start = self_rts[self_start_index]
+            self_rt_end = self_rts[self_end_index]
+            if self_rt_start == self_rt_end:
+                new_rts = np.repeat(
+                    other_rt_start,
+                    self_end_index - self_start_index
+                )
+            else:
+                slope = (
+                    other_rt_end - other_rt_start
+                ) / (
+                    self_rt_end - self_rt_start
+                )
+                new_rts = other_rt_start + slope * (
+                    self_rts[self_start_index: self_end_index] - self_rt_start
+                )
+            calibrated_self_rts.append(new_rts)
+        calibrated_self_rts.append([other_rts[-1]])
+        calibrated_self_rts = np.concatenate(calibrated_self_rts)
+        return calibrated_self_rts
+
     def __write_edges(
         self,
         other,
@@ -862,106 +920,6 @@ class Evidence(HDF_MS_Run_File):
             self_indices_=indices,
             self_pointers_=pointers,
         )
-
-    # @staticmethod
-    # @numba.njit(cache=True)
-    # def quick_align(
-    #     self_mzs,
-    #     other_mzs,
-    #     self_mz_order,
-    #     other_mz_order,
-    #     other_rt_order,
-    #     ppm
-    # ):
-    #     # TODO: Docstring
-    #     max_mz_diff = 1 + ppm * 10**-6
-    #     low_limits = np.searchsorted(
-    #         self_mzs[self_mz_order],
-    #         other_mzs[other_mz_order] / max_mz_diff,
-    #         "left"
-    #     )[other_rt_order]
-    #     high_limits = np.searchsorted(
-    #         self_mzs[self_mz_order],
-    #         other_mzs[other_mz_order] * max_mz_diff,
-    #         "right"
-    #     )[other_rt_order]
-    #     diffs = high_limits - low_limits
-    #     ends = np.cumsum(diffs)
-    #     self_indices = np.empty(ends[-1], np.int64)
-    #     for l, h, e, d in zip(low_limits, high_limits, ends, diffs):
-    #         self_indices[e - d: e] = self_mz_order[l: h]
-    #     other_indices = np.repeat(
-    #         np.arange(len(other_rt_order)),
-    #         high_limits - low_limits
-    #     )
-    #     selection = longest_increasing_subsequence(self_indices)
-    #     self_indices_mask = np.empty(len(selection) + 2, np.int64)
-    #     self_indices_mask[0] = 0
-    #     self_indices_mask[1: -1] = self_indices[selection]
-    #     self_indices_mask[-1] = len(self_mzs) - 1
-    #     other_indices_mask = np.empty(len(selection) + 2, np.int64)
-    #     other_indices_mask[0] = 0
-    #     other_indices_mask[1: -1] = other_indices[selection]
-    #     other_indices_mask[-1] = len(other_mzs) - 1
-    #     return self_indices_mask, other_indices_mask
-    #
-    # def calibrate_precursor_rt(self, other, parameters):
-    #     # TODO: Docstring
-    #     ms_utils.LOGGER.info(
-    #         f"Calibrating PRECURSOR_RT of {self.file_name} with "
-    #         f"{other.file_name}"
-    #     )
-    #     self_mzs = self.get_ion_coordinates("FRAGMENT_MZ")
-    #     other_mzs = other.get_ion_coordinates("FRAGMENT_MZ")
-    #     self_mz_order = np.argsort(self_mzs)
-    #     other_mz_order = np.argsort(other_mzs)
-    #     other_rt_order = np.argsort(other_mz_order)
-    #     # TODO index rts (ordered 0-1, allow e.g. 0.1 distance)?
-    #     self_indices, other_indices = self.quick_align(
-    #         self_mzs,
-    #         other_mzs,
-    #         self_mz_order,
-    #         other_mz_order,
-    #         other_rt_order,
-    #         parameters["calibration_ppm_FRAGMENT_MZ"]
-    #     )
-    #     self_rts = self.get_ion_coordinates("PRECURSOR_RT")
-    #     other_rts = other.get_ion_coordinates(
-    #         "PRECURSOR_RT",
-    #         indices=other_indices
-    #     )
-    #     calibrated_self_rts = []
-    #     for (
-    #         self_start_index,
-    #         self_end_index,
-    #         other_rt_start,
-    #         other_rt_end
-    #     ) in zip(
-    #         self_indices[:-1],
-    #         self_indices[1:],
-    #         other_rts[:-1],
-    #         other_rts[1:]
-    #     ):
-    #         self_rt_start = self_rts[self_start_index]
-    #         self_rt_end = self_rts[self_end_index]
-    #         if self_rt_start == self_rt_end:
-    #             new_rts = np.repeat(
-    #                 other_rt_start,
-    #                 self_end_index - self_start_index
-    #             )
-    #         else:
-    #             slope = (
-    #                 other_rt_end - other_rt_start
-    #             ) / (
-    #                 self_rt_end - self_rt_start
-    #             )
-    #             new_rts = other_rt_start + slope * (
-    #                 self_rts[self_start_index: self_end_index] - self_rt_start
-    #             )
-    #         calibrated_self_rts.append(new_rts)
-    #     calibrated_self_rts.append([other_rts[-1]])
-    #     calibrated_self_rts = np.concatenate(calibrated_self_rts)
-    #     return calibrated_self_rts
 
     def get_nodes(
         self,
@@ -1236,6 +1194,47 @@ def increase_buffer(buffer, max_batch=10**7):
     new_buffer[:len(buffer)] = buffer
     return new_buffer
 
+
+@numba.njit(cache=True)
+def quick_align(
+    self_mzs,
+    other_mzs,
+    self_mz_order,
+    other_mz_order,
+    other_rt_order,
+    ppm
+):
+    # TODO: Docstring
+    max_mz_diff = 1 + ppm * 10**-6
+    low_limits = np.searchsorted(
+        self_mzs[self_mz_order],
+        other_mzs[other_mz_order] / max_mz_diff,
+        "left"
+    )[other_rt_order]
+    high_limits = np.searchsorted(
+        self_mzs[self_mz_order],
+        other_mzs[other_mz_order] * max_mz_diff,
+        "right"
+    )[other_rt_order]
+    diffs = high_limits - low_limits
+    ends = np.cumsum(diffs)
+    self_indices = np.empty(ends[-1], np.int64)
+    for l, h, e, d in zip(low_limits, high_limits, ends, diffs):
+        self_indices[e - d: e] = self_mz_order[l: h]
+    other_indices = np.repeat(
+        np.arange(len(other_rt_order)),
+        high_limits - low_limits
+    )
+    selection = longest_increasing_subsequence(self_indices)
+    self_indices_mask = np.empty(len(selection) + 2, np.int64)
+    self_indices_mask[0] = 0
+    self_indices_mask[1: -1] = self_indices[selection]
+    self_indices_mask[-1] = len(self_mzs) - 1
+    other_indices_mask = np.empty(len(selection) + 2, np.int64)
+    other_indices_mask[0] = 0
+    other_indices_mask[1: -1] = other_indices[selection]
+    other_indices_mask[-1] = len(other_mzs) - 1
+    return self_indices_mask, other_indices_mask
 
 @numba.njit(cache=True, nogil=True)
 def align_coordinates(
