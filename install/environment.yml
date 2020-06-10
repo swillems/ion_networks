@@ -10,10 +10,11 @@ dependencies:
   - attrs=19.3.0=py_0
   - babel=2.8.0=py_0
   - backcall=0.1.0=py_0
+  - blas=1.0=openblas
   - bleach=3.1.0=py_0
   - bzip2=1.0.8=h516909a_2
-  - ca-certificates=2020.1.1=0
-  - certifi=2020.4.5.1=py38_0
+  - ca-certificates=2020.4.5.1=hecc5488_0
+  - certifi=2020.4.5.1=py38h32f6830_0
   - cffi=1.13.2=py38h2e261b9_0
   - chardet=3.0.4=py38_1003
   - click=7.0=py_0
@@ -35,6 +36,7 @@ dependencies:
   - gst-plugins-base=1.14.5=h0935bb2_0
   - gstreamer=1.14.5=h36ae1b5_0
   - h5py=2.10.0=nompi_py38h513d04c_101
+  - hdbscan=0.8.26=py38h8790de6_1
   - hdf5=1.10.5=nompi_h3c11f04_1104
   - icu=64.2=he1b5a44_1
   - idna=2.8=py38_1000
@@ -45,6 +47,7 @@ dependencies:
   - ipython_genutils=0.2.0=py_1
   - jedi=0.15.2=py38_0
   - jinja2=2.10.3=py_0
+  - joblib=0.15.1=py_0
   - jpeg=9c=h14c3975_1001
   - jsonschema=3.2.0=py38_0
   - jupyter_client=5.3.4=py38_1
@@ -90,7 +93,7 @@ dependencies:
   - numba=0.47.0=py38h962f231_0
   - numpy=1.17.5=py38h95a1406_0
   - openh264=1.8.0=hdbcaa40_1000
-  - openssl=1.1.1g=h7b6447c_0
+  - openssl=1.1.1g=h516909a_0
   - packaging=20.1=py_0
   - pandas=0.25.3=py38hb3f55d8_0
   - pandoc=2.9.1.1=0
@@ -122,6 +125,7 @@ dependencies:
   - qt=5.12.5=hd8c4c69_1
   - readline=7.0=h7b6447c_5
   - requests=2.22.0=py38_1
+  - scikit-learn=0.22.1=py38h22eb022_0
   - scipy=1.4.1=py38h921218d_0
   - seaborn=0.9.0=py_2
   - send2trash=1.5.0=py_0
