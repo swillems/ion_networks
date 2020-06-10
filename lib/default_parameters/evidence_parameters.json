@@ -2,7 +2,7 @@
     "log_file_name": "",
     "output_directory": "",
     "force_overwrite": true,
-    "threads": 8,
+    "threads": 0,
     "fragment_errors": {
         "FRAGMENT_MZ": 50.0,
         "PRECURSOR_RT": 0.5,
