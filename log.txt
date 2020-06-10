@@ -1,0 +1,79 @@
+2020-06-10 14:07:28,193 > ==================================================
+2020-06-10 14:07:28,193 > COMMAND: ion_networks.py create -i 28Oct2016_060.inet.csv
+2020-06-10 14:07:28,193 > VERSION: 2.0.200526
+2020-06-10 14:07:28,194 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-10 14:07:28,194 > 
+2020-06-10 14:07:28,194 > Creating ion-networks
+2020-06-10 14:07:28,194 > 1 input_file: ['/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.csv']
+2020-06-10 14:07:28,194 > output_directory: 
+2020-06-10 14:07:28,194 > parameter_file_name: 
+2020-06-10 14:07:28,194 > max_threads: 8
+2020-06-10 14:07:28,194 > 
+2020-06-10 14:07:28,215 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf...
+2020-06-10 14:07:28,215 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.csv
+2020-06-10 14:07:28,624 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf...
+2020-06-10 14:07:28,701 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf
+2020-06-10 14:07:28,722 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf
+2020-06-10 14:07:29,066 > Tuning of PRECURSOR_MZ error of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf failed
+2020-06-10 14:07:29,304 > Tuning of PRECURSOR_RT error of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf: 0.11930000000000263
+2020-06-10 14:07:30,320 > 
+2020-06-10 14:07:30,320 > Something went wrong, execution incomplete!
+Traceback (most recent call last):
+  File "/home/sander/Documents/Proteomics/ion_networks/src/ms_utils.py", line 72, in open_logger
+    yield LOGGER
+  File "/home/sander/Documents/Proteomics/ion_networks/src/interface.py", line 162, in create_ion_networks
+    network.create(
+  File "/home/sander/Documents/Proteomics/ion_networks/src/ms_run_files.py", line 344, in create
+    self.__create_edges(parameters)
+  File "/home/sander/Documents/Proteomics/ion_networks/src/ms_run_files.py", line 172, in __create_edges
+    results = p.starmap(
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/multiprocessing/pool.py", line 372, in starmap
+    return self._map_async(func, iterable, starmapstar, chunksize).get()
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/multiprocessing/pool.py", line 762, in get
+    self.wait(timeout)
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/multiprocessing/pool.py", line 759, in wait
+    self._event.wait(timeout)
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/threading.py", line 558, in wait
+    signaled = self._cond.wait(timeout)
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/threading.py", line 302, in wait
+    waiter.acquire()
+KeyboardInterrupt
+2020-06-10 14:07:30,344 > Time taken: 2.1508493423461914
+2020-06-10 14:07:30,344 > ==================================================
+2020-06-10 14:11:00,170 > ==================================================
+2020-06-10 14:11:00,170 > COMMAND: ion_networks.py create -i 28Oct2016_060.inet.csv
+2020-06-10 14:11:00,170 > VERSION: 2.0.200526
+2020-06-10 14:11:00,170 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-10 14:11:00,170 > 
+2020-06-10 14:11:00,170 > Creating ion-networks
+2020-06-10 14:11:00,170 > 1 input_file: ['/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.csv']
+2020-06-10 14:11:00,170 > output_directory: 
+2020-06-10 14:11:00,170 > parameter_file_name: 
+2020-06-10 14:11:00,170 > max_threads: 8
+2020-06-10 14:11:00,170 > 
+2020-06-10 14:11:00,173 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf...
+2020-06-10 14:11:00,173 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.csv
+2020-06-10 14:11:00,563 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf...
+2020-06-10 14:11:00,639 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf
+2020-06-10 14:11:00,662 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf
+2020-06-10 14:11:00,704 > 
+2020-06-10 14:11:00,704 > Something went wrong, execution incomplete!
+Traceback (most recent call last):
+  File "/home/sander/Documents/Proteomics/ion_networks/src/ms_utils.py", line 74, in open_logger
+    yield LOGGER
+  File "/home/sander/Documents/Proteomics/ion_networks/src/interface.py", line 162, in create_ion_networks
+    network.create(
+  File "/home/sander/Documents/Proteomics/ion_networks/src/ms_run_files.py", line 344, in create
+    self.__create_edges(parameters)
+  File "/home/sander/Documents/Proteomics/ion_networks/src/ms_run_files.py", line 148, in __create_edges
+    self.__tune_precursor_errors(
+  File "/home/sander/Documents/Proteomics/ion_networks/src/ms_run_files.py", line 252, in __tune_precursor_errors
+    indptr = np.cumsum(indptr)
+  File "<__array_function__ internals>", line 5, in cumsum
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/site-packages/numpy/core/fromnumeric.py", line 2423, in cumsum
+    return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/site-packages/numpy/core/fromnumeric.py", line 61, in _wrapfunc
+    return bound(*args, **kwds)
+KeyboardInterrupt
+2020-06-10 14:11:00,731 > Time taken: 0.5611634254455566
+2020-06-10 14:11:00,731 > ==================================================

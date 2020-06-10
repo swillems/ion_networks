@@ -57,8 +57,8 @@ def convert_data_formats_to_csvs(
     # TODO: Proper parsing of empty log...?
     if (log_file_name is None) or (log_file_name == ""):
         log_file_name = parameters["log_file_name"]
-    if log_file_name != "":
-        log_file_name = os.path.abspath(log_file_name)
+        if log_file_name == "":
+            log_file_name = output_directory
     with ms_utils.open_logger(log_file_name) as logger:
         logger.info(f"Converting to generic input csvs")
         input_file_names = ms_utils.get_file_names_with_extension(
@@ -132,8 +132,8 @@ def create_ion_networks(
     # TODO: Proper parsing of empty log...?
     if (log_file_name is None) or (log_file_name == ""):
         log_file_name = parameters["log_file_name"]
-    if log_file_name != "":
-        log_file_name = os.path.abspath(log_file_name)
+        if log_file_name == "":
+            log_file_name = output_directory
     with ms_utils.open_logger(log_file_name) as logger:
         logger.info(f"Creating ion-networks")
         input_file_names = ms_utils.get_file_names_with_extension(
@@ -197,8 +197,6 @@ def evidence_ion_networks(
     # TODO: Proper parsing of empty log...?
     if (log_file_name is None) or (log_file_name == ""):
         log_file_name = parameters["log_file_name"]
-    if log_file_name != "":
-        log_file_name = os.path.abspath(log_file_name)
     with ms_utils.open_logger(log_file_name) as logger:
         logger.info(f"Evidencing ion-networks")
         input_file_names = ms_utils.get_file_names_with_extension(
@@ -252,8 +250,6 @@ def show_ion_network(
     # TODO: Proper parsing of empty log...?
     if (log_file_name is None) or (log_file_name == ""):
         log_file_name = parameters["log_file_name"]
-    if log_file_name != "":
-        log_file_name = os.path.abspath(log_file_name)
     with ms_utils.open_logger(log_file_name) as logger:
         logger.info(f"Showing ion-networks")
         logger.info("")
@@ -289,8 +285,8 @@ def create_database(
     # TODO: Proper parsing of empty log...?
     if (log_file_name is None) or (log_file_name == ""):
         log_file_name = parameters["log_file_name"]
-    if log_file_name != "":
-        log_file_name = os.path.abspath(log_file_name)
+        if log_file_name == "":
+            log_file_name = output_directory
     # TODO: turn off ms2pip logger?
     with ms_utils.open_logger(log_file_name) as logger:
         logger.info(f"Creating database")
@@ -348,8 +344,6 @@ def annotate_ion_network(
     # TODO: Proper parsing of empty log...?
     if (log_file_name is None) or (log_file_name == ""):
         log_file_name = parameters["log_file_name"]
-    if log_file_name != "":
-        log_file_name = os.path.abspath(log_file_name)
     with ms_utils.open_logger(log_file_name) as logger:
         logger.info(f"Annotating ion-networks")
         input_file_names = ms_utils.get_file_names_with_extension(
@@ -756,7 +750,7 @@ class CLI(object):
             "This log file can also be supplied through a [parameters.json] "
             "file. It can be turned off by providing an empty path (i.e. ''). "
             "If the log file already exists, the new log data is appended.",
-        type=click.Path(dir_okay=False),
+        type=click.Path(),
     )
     def convert(
         input_path,
@@ -827,7 +821,7 @@ class CLI(object):
             "This log file can also be supplied through a [parameters.json] "
             "file. It can be turned off by providing an empty path (i.e. ''). "
             "If the log file already exists, the new log data is appended.",
-        type=click.Path(dir_okay=False)
+        type=click.Path()
     )
     def create(
         input_path,
@@ -875,7 +869,7 @@ class CLI(object):
             "This log file can also be supplied through a [parameters.json] "
             "file. It can be turned off by providing an empty path (i.e. ''). "
             "If the log file already exists, the new log data is appended.",
-        type=click.Path(dir_okay=False)
+        type=click.Path()
     )
     def evidence(
         input_path,
@@ -911,7 +905,7 @@ class CLI(object):
             "This log file can also be supplied through a [parameters.json] "
             "file. It can be turned off by providing an empty path (i.e. ''). "
             "If the log file already exists, the new log data is appended.",
-        type=click.Path(dir_okay=False)
+        type=click.Path()
     )
     def show(
         parameter_file_name,
@@ -974,7 +968,7 @@ class CLI(object):
             "This log file can also be supplied through a [parameters.json] "
             "file. It can be turned off by providing an empty path (i.e. ''). "
             "If the log file already exists, the new log data is appended.",
-        type=click.Path(dir_okay=False)
+        type=click.Path()
     )
     def database(
         input_path,
@@ -1029,7 +1023,7 @@ class CLI(object):
             "This log file can also be supplied through a [parameters.json] "
             "file. It can be turned off by providing an empty path (i.e. ''). "
             "If the log file already exists, the new log data is appended.",
-        type=click.Path(dir_okay=False)
+        type=click.Path()
     )
     def annotate(
         input_path,

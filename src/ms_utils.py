@@ -51,7 +51,13 @@ def open_logger(log_file_name, log_level=logging.INFO):
     console_handler.setLevel(log_level)
     console_handler.setFormatter(formatter)
     LOGGER.addHandler(console_handler)
-    if log_file_name != "":
+    if log_file_name is not None:
+        if log_file_name == "":
+            log_file_name = BASE_PATH
+        else:
+            log_file_name = os.path.abspath(log_file_name)
+        if os.path.isdir(log_file_name):
+            log_file_name = os.path.join(log_file_name, "log.txt")
         directory = os.path.dirname(log_file_name)
         if not os.path.exists(directory):
             os.makedirs(directory)

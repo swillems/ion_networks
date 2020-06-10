@@ -282,11 +282,9 @@ class Network(HDF_MS_Run_File):
                 precursor_differences - bandwidth
             )
             max_frequency_index = np.argmax(frequency)
-            precursor_differences = precursor_differences[max_frequency_index:]
-            frequency = frequency[max_frequency_index:]
             if max_frequency_index > indices.shape[0] * usable[0]:
                 ms_utils.LOGGER.info(
-                    f"Tuning of {dimension} error of ion-network "
+                    f"{dimension} error tuning of ion-network "
                     f"{self.file_name} failed"
                 )
                 continue
@@ -302,16 +300,22 @@ class Network(HDF_MS_Run_File):
                     precursor_differences.reshape(-1, 1)
                 ).flatten() < frequency
             )
-            tuning = precursor_differences[min_index]
-            if tuning > prior_errors[dimension]:
+            if max_frequency_index > min_index:
                 ms_utils.LOGGER.info(
-                    f"Tuning of {dimension} error of ion-network "
+                    f"{dimension} error tuning of ion-network "
                     f"{self.file_name} failed"
+                )
+                continue
+            tuning = precursor_differences[min_index]
+            if (tuning > prior_errors[dimension]) or tuning < bandwidth:
+                ms_utils.LOGGER.info(
+                    f"{dimension} error tuning of ion-network "
+                    f"{self.file_name} was out of bounds"
                 )
                 continue
             estimations[dimension] = tuning
             ms_utils.LOGGER.info(
-                f"Tuning of {dimension} error of ion-network "
+                f"{dimension} error tuning of ion-network "
                 f"{self.file_name}: {tuning}"
             )
         return estimations
