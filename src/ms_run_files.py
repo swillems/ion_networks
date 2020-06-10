@@ -148,7 +148,8 @@ class Network(HDF_MS_Run_File):
                     parameters["precursor_errors_auto_tune_ion_count"],
                     parameters["precursor_errors_auto_tune_ppm"],
                     parameters["precursor_errors_auto_tune_target_mz"],
-                    parameters["precursor_errors_auto_tune_smoother"],
+                    # parameters["precursor_errors_auto_tune_smoother"],
+                    precursor_errors,
                     parameters["precursor_errors_auto_tune_noise_range"],
                 )
             )
@@ -214,7 +215,8 @@ class Network(HDF_MS_Run_File):
         to_select_per_sample,
         ppm,
         mz_distance,
-        min_window,
+        # min_window,
+        precursor_bandwidth,
         usable,
     ):
         ms_utils.LOGGER.info(
@@ -266,9 +268,10 @@ class Network(HDF_MS_Run_File):
                     ) - precursor_array[indices]
                 )
             )
-            bandwidth = np.max(
-                precursor_differences[use_slice][min_window:] - precursor_differences[use_slice][:-min_window]
-            )
+            # bandwidth = np.max(
+            #     precursor_differences[use_slice][min_window:] - precursor_differences[use_slice][:-min_window]
+            # )
+            bandwidth = precursor_bandwidth[dimension] / 10
             frequency = np.searchsorted(
                 precursor_differences,
                 precursor_differences + bandwidth
@@ -297,10 +300,11 @@ class Network(HDF_MS_Run_File):
                     precursor_differences.reshape(-1, 1)
                 ).flatten() < frequency
             )
-            estimations[dimension] = precursor_differences[min_index]
+            tuning = precursor_differences[min_index]
+            estimations[dimension] = tuning
             ms_utils.LOGGER.info(
                 f"Tuning of {dimension} error of ion-network "
-                f"{self.file_name}: {precursor_differences[min_index]}"
+                f"{self.file_name}: {tuning}"
             )
         return estimations
 

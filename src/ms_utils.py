@@ -7,6 +7,7 @@ import logging
 import json
 import time
 import contextlib
+import multiprocessing
 # external
 import numpy as np
 import pandas as pd
@@ -115,7 +116,14 @@ def read_parameters_from_json_file(file_name="", default=""):
     # TODO: e.g. DT_error = 2.0, instead of DT_error = 2
     if "threads" in parameters:
         global MAX_THREADS
-        MAX_THREADS = parameters["threads"]
+        max_cpu_count = multiprocessing.cpu_count()
+        threads = parameters["threads"]
+        if threads > max_cpu_count:
+            MAX_THREADS = max_cpu_count
+        else:
+            while threads <= 0:
+                threads += max_cpu_count
+            MAX_THREADS = threads
     return parameters
 
 

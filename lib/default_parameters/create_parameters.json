@@ -1,7 +1,7 @@
 {
     "log_file_name": "log.txt",
     "output_directory": "",
-    "threads": 8,
+    "threads": 0,
     "precursor_errors": {
         "PRECURSOR_RT": 0.1,
         "PRECURSOR_DT": 2.0,

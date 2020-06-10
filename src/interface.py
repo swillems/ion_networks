@@ -73,6 +73,7 @@ def convert_data_formats_to_csvs(
         logger.info(f"data_type: {data_type}")
         logger.info(f"output_directory: {output_directory}")
         logger.info(f"parameter_file_name: {parameter_file_name}")
+        logger.info(f"max_threads: {ms_utils.MAX_THREADS}")
         logger.info("")
         if output_directory != "":
             if not os.path.exists(output_directory):
@@ -146,6 +147,7 @@ def create_ion_networks(
         )
         logger.info(f"output_directory: {output_directory}")
         logger.info(f"parameter_file_name: {parameter_file_name}")
+        logger.info(f"max_threads: {ms_utils.MAX_THREADS}")
         logger.info("")
         for centroids_file_name in input_file_names:
             local_file_name = os.path.basename(centroids_file_name)
@@ -209,6 +211,7 @@ def evidence_ion_networks(
             f": {input_file_names}"
         )
         logger.info(f"parameter_file_name: {parameter_file_name}")
+        logger.info(f"max_threads: {ms_utils.MAX_THREADS}")
         logger.info("")
         evidence_files = [
             ms_run_files.Evidence(
@@ -361,6 +364,7 @@ def annotate_ion_network(
         )
         logger.info(f"database_file_name: {database_file_name}")
         logger.info(f"parameter_file_name: {parameter_file_name}")
+        logger.info(f"max_threads: {ms_utils.MAX_THREADS}")
         logger.info("")
         for file_name in input_file_names:
             ani = ms_run_files.Annotation(
