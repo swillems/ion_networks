@@ -540,3 +540,951 @@ ValueError: could not broadcast input array from shape (463727) into shape (3)
 2020-06-10 16:17:26,384 > Successfully finished execution
 2020-06-10 16:17:26,384 > Time taken: 8.242900848388672
 2020-06-10 16:17:26,384 > ==================================================
+2020-06-10 19:45:02,559 > ==================================================
+2020-06-10 19:45:02,559 > COMMAND: ion_networks.py create -i .
+2020-06-10 19:45:02,559 > VERSION: 2.0.200610
+2020-06-10 19:45:02,559 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-10 19:45:02,559 > 
+2020-06-10 19:45:02,559 > Creating ion-networks
+2020-06-10 19:45:02,559 > 10 input_files: ['/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.csv']
+2020-06-10 19:45:02,559 > output_directory: 
+2020-06-10 19:45:02,559 > parameter_file_name: 
+2020-06-10 19:45:02,559 > max_threads: 8
+2020-06-10 19:45:02,560 > 
+2020-06-10 19:45:02,645 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf...
+2020-06-10 19:45:02,645 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.csv
+2020-06-10 19:45:05,936 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf...
+2020-06-10 19:45:06,250 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf
+2020-06-10 19:45:06,362 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf
+2020-06-10 19:45:07,053 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf: 2.9025000000001455
+2020-06-10 19:45:07,484 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf: 0.06419999999999959
+2020-06-10 19:46:47,918 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf
+2020-06-10 19:46:49,489 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf...
+2020-06-10 19:46:49,489 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.csv
+2020-06-10 19:46:52,270 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf...
+2020-06-10 19:46:52,576 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf
+2020-06-10 19:46:52,683 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf
+2020-06-10 19:46:53,269 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf: 3.1225000000000023
+2020-06-10 19:46:53,662 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf: 0.07369999999999521
+2020-06-10 19:48:48,809 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf
+2020-06-10 19:48:50,690 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf...
+2020-06-10 19:48:50,690 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.csv
+2020-06-10 19:48:53,412 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf...
+2020-06-10 19:48:53,736 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf
+2020-06-10 19:48:53,845 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf
+2020-06-10 19:48:54,491 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf: 2.632499999999993
+2020-06-10 19:48:54,898 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf: 0.060899999999996624
+2020-06-10 19:50:54,539 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf
+2020-06-10 19:50:56,291 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf...
+2020-06-10 19:50:56,291 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.csv
+2020-06-10 19:50:59,863 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf...
+2020-06-10 19:51:00,314 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf
+2020-06-10 19:51:00,451 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf
+2020-06-10 19:51:01,212 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf: 3.045000000000016
+2020-06-10 19:51:01,725 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf: 0.05030000000000001
+2020-06-10 19:53:01,425 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf
+2020-06-10 19:53:03,131 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf...
+2020-06-10 19:53:03,131 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.csv
+2020-06-10 19:53:06,241 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf...
+2020-06-10 19:53:06,644 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf
+2020-06-10 19:53:06,780 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf
+2020-06-10 19:53:07,547 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf: 2.902499999999975
+2020-06-10 19:53:08,033 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf: 0.05639999999999645
+2020-06-10 19:55:14,758 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf
+2020-06-10 19:55:16,587 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf...
+2020-06-10 19:55:16,587 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.csv
+2020-06-10 19:55:19,581 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf...
+2020-06-10 19:55:19,995 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf
+2020-06-10 19:55:20,126 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf
+2020-06-10 19:55:20,873 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf: 3.1899999999999977
+2020-06-10 19:55:21,400 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf: 0.07110000000000127
+2020-06-10 19:57:19,372 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf
+2020-06-10 19:57:21,918 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf...
+2020-06-10 19:57:21,918 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.csv
+2020-06-10 19:57:25,454 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf...
+2020-06-10 19:57:25,941 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf
+2020-06-10 19:57:26,106 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf
+2020-06-10 19:57:27,060 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf: 3.0749999999999886
+2020-06-10 19:57:27,647 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf: 0.06080000000000041
+2020-06-10 20:06:31,935 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf
+2020-06-10 20:06:51,503 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf...
+2020-06-10 20:06:51,504 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.csv
+2020-06-10 20:07:03,955 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf...
+2020-06-10 20:07:05,623 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf
+2020-06-10 20:07:06,191 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf
+2020-06-10 20:07:09,457 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf: 2.972500000000025
+2020-06-10 20:07:11,543 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf: 0.06649999999999778
+2020-06-10 20:11:30,317 > 
+2020-06-10 20:11:30,319 > Something went wrong, execution incomplete!
+Traceback (most recent call last):
+  File "/home/sander/Documents/Proteomics/ion_networks/src/ms_utils.py", line 74, in open_logger
+    yield LOGGER
+  File "/home/sander/Documents/Proteomics/ion_networks/src/interface.py", line 166, in create_ion_networks
+    network.create(
+  File "/home/sander/Documents/Proteomics/ion_networks/src/ms_run_files.py", line 348, in create
+    self.__create_edges(parameters)
+  File "/home/sander/Documents/Proteomics/ion_networks/src/ms_run_files.py", line 172, in __create_edges
+    results = p.starmap(
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/multiprocessing/pool.py", line 372, in starmap
+    return self._map_async(func, iterable, starmapstar, chunksize).get()
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/multiprocessing/pool.py", line 762, in get
+    self.wait(timeout)
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/multiprocessing/pool.py", line 759, in wait
+    self._event.wait(timeout)
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/threading.py", line 558, in wait
+    signaled = self._cond.wait(timeout)
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/threading.py", line 302, in wait
+    waiter.acquire()
+KeyboardInterrupt
+2020-06-10 20:11:30,394 > Time taken: 1587.8351986408234
+2020-06-10 20:11:30,395 > ==================================================
+2020-06-11 08:58:38,803 > ==================================================
+2020-06-11 08:58:38,819 > COMMAND: ion_networks.py create -i 28Oct2016_067.inet.csv -i 28Oct2016_068.inet.csv -i 28Oct2016_069.inet.csv
+2020-06-11 08:58:38,819 > VERSION: 2.0.200610
+2020-06-11 08:58:38,819 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 08:58:38,819 > 
+2020-06-11 08:58:38,819 > Creating ion-networks
+2020-06-11 08:58:38,819 > 3 input_files: ['/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.csv']
+2020-06-11 08:58:38,819 > output_directory: 
+2020-06-11 08:58:38,819 > parameter_file_name: 
+2020-06-11 08:58:38,819 > max_threads: 8
+2020-06-11 08:58:38,820 > 
+2020-06-11 08:58:38,846 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf...
+2020-06-11 08:58:38,846 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.csv
+2020-06-11 08:58:41,768 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf...
+2020-06-11 08:58:42,077 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf
+2020-06-11 08:58:42,187 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf
+2020-06-11 08:58:42,825 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf: 2.972500000000025
+2020-06-11 08:58:43,248 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf: 0.06649999999999778
+2020-06-11 09:00:18,911 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf
+2020-06-11 09:00:20,572 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf...
+2020-06-11 09:00:20,572 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.csv
+2020-06-11 09:00:23,148 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf...
+2020-06-11 09:00:23,460 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf
+2020-06-11 09:00:23,569 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf
+2020-06-11 09:00:24,171 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf: 2.910000000000025
+2020-06-11 09:00:24,557 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf: 0.0671999999999997
+2020-06-11 09:02:01,175 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf
+2020-06-11 09:02:02,855 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf...
+2020-06-11 09:02:02,856 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.csv
+2020-06-11 09:02:05,469 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf...
+2020-06-11 09:02:05,781 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf
+2020-06-11 09:02:05,886 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf
+2020-06-11 09:02:06,486 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf: 3.142499999999984
+2020-06-11 09:02:06,916 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf: 0.06689999999999685
+2020-06-11 09:03:44,771 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf
+2020-06-11 09:03:46,324 > 
+2020-06-11 09:03:46,324 > Successfully finished execution
+2020-06-11 09:03:46,324 > Time taken: 307.5219051837921
+2020-06-11 09:03:46,324 > ==================================================
+2020-06-11 09:04:51,408 > ==================================================
+2020-06-11 09:04:51,408 > COMMAND: ion_networks.py show
+2020-06-11 09:04:51,408 > VERSION: 2.0.200610
+2020-06-11 09:04:51,408 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 09:04:51,408 > 
+2020-06-11 09:04:51,408 > Showing ion-networks
+2020-06-11 09:04:51,409 > 
+2020-06-11 09:05:05,122 > 
+2020-06-11 09:05:05,122 > Successfully finished execution
+2020-06-11 09:05:05,122 > Time taken: 13.714476585388184
+2020-06-11 09:05:05,122 > ==================================================
+2020-06-11 09:05:57,754 > ==================================================
+2020-06-11 09:05:57,754 > COMMAND: ion_networks.py evidence -i 28Oct2016_060.inet.hdf -i 28Oct2016_061.inet.hdf
+2020-06-11 09:05:57,755 > VERSION: 2.0.200610
+2020-06-11 09:05:57,755 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 09:05:57,755 > 
+2020-06-11 09:05:57,755 > Evidencing ion-networks
+2020-06-11 09:05:57,755 > 2 input_files: ['/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf']
+2020-06-11 09:05:57,755 > parameter_file_name: 
+2020-06-11 09:05:57,755 > max_threads: 8
+2020-06-11 09:05:57,755 > 
+2020-06-11 09:05:59,004 > Caching edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:06:06,997 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf
+2020-06-11 09:06:07,001 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:06:09,347 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:06:23,180 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:06:23,282 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:06:23,348 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:06:31,634 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:06:33,505 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:06:35,648 > 
+2020-06-11 09:06:35,649 > Successfully finished execution
+2020-06-11 09:06:35,649 > Time taken: 37.89452600479126
+2020-06-11 09:06:35,649 > ==================================================
+2020-06-11 09:07:32,896 > ==================================================
+2020-06-11 09:07:32,896 > COMMAND: ion_networks.py show
+2020-06-11 09:07:32,896 > VERSION: 2.0.200610
+2020-06-11 09:07:32,896 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 09:07:32,896 > 
+2020-06-11 09:07:32,896 > Showing ion-networks
+2020-06-11 09:07:32,896 > 
+2020-06-11 09:10:50,838 > 
+2020-06-11 09:10:50,838 > Successfully finished execution
+2020-06-11 09:10:50,838 > Time taken: 197.94266557693481
+2020-06-11 09:10:50,838 > ==================================================
+2020-06-11 09:10:58,212 > ==================================================
+2020-06-11 09:10:58,212 > COMMAND: ion_networks.py show
+2020-06-11 09:10:58,212 > VERSION: 2.0.200610
+2020-06-11 09:10:58,212 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 09:10:58,212 > 
+2020-06-11 09:10:58,212 > Showing ion-networks
+2020-06-11 09:10:58,212 > 
+2020-06-11 09:11:42,429 > 
+2020-06-11 09:11:42,429 > Successfully finished execution
+2020-06-11 09:11:42,429 > Time taken: 44.21699118614197
+2020-06-11 09:11:42,429 > ==================================================
+2020-06-11 09:13:28,809 > ==================================================
+2020-06-11 09:13:28,809 > COMMAND: ion_networks.py show
+2020-06-11 09:13:28,809 > VERSION: 2.0.200610
+2020-06-11 09:13:28,809 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 09:13:28,809 > 
+2020-06-11 09:13:28,809 > Showing ion-networks
+2020-06-11 09:13:28,810 > 
+2020-06-11 09:14:01,566 > 
+2020-06-11 09:14:01,566 > Successfully finished execution
+2020-06-11 09:14:01,567 > Time taken: 32.757787466049194
+2020-06-11 09:14:01,567 > ==================================================
+2020-06-11 09:16:06,183 > ==================================================
+2020-06-11 09:16:06,183 > COMMAND: ion_networks.py show
+2020-06-11 09:16:06,183 > VERSION: 2.0.200610
+2020-06-11 09:16:06,183 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 09:16:06,183 > 
+2020-06-11 09:16:06,184 > Showing ion-networks
+2020-06-11 09:16:06,184 > 
+2020-06-11 09:21:48,917 > 
+2020-06-11 09:21:48,917 > Successfully finished execution
+2020-06-11 09:21:48,917 > Time taken: 342.734050989151
+2020-06-11 09:21:48,917 > ==================================================
+2020-06-11 09:21:53,522 > ==================================================
+2020-06-11 09:21:53,522 > COMMAND: ion_networks.py show
+2020-06-11 09:21:53,522 > VERSION: 2.0.200610
+2020-06-11 09:21:53,522 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 09:21:53,522 > 
+2020-06-11 09:21:53,522 > Showing ion-networks
+2020-06-11 09:21:53,522 > 
+2020-06-11 09:23:27,827 > 
+2020-06-11 09:23:27,827 > Successfully finished execution
+2020-06-11 09:23:27,827 > Time taken: 94.30562663078308
+2020-06-11 09:23:27,827 > ==================================================
+2020-06-11 09:23:54,936 > ==================================================
+2020-06-11 09:23:54,937 > COMMAND: ion_networks.py show
+2020-06-11 09:23:54,937 > VERSION: 2.0.200610
+2020-06-11 09:23:54,937 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 09:23:54,937 > 
+2020-06-11 09:23:54,937 > Showing ion-networks
+2020-06-11 09:23:54,937 > 
+2020-06-11 09:25:09,004 > 
+2020-06-11 09:25:09,004 > Successfully finished execution
+2020-06-11 09:25:09,004 > Time taken: 74.06802010536194
+2020-06-11 09:25:09,004 > ==================================================
+2020-06-11 09:29:40,482 > ==================================================
+2020-06-11 09:29:40,482 > COMMAND: ion_networks.py show
+2020-06-11 09:29:40,482 > VERSION: 2.0.200610
+2020-06-11 09:29:40,482 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 09:29:40,482 > 
+2020-06-11 09:29:40,482 > Showing ion-networks
+2020-06-11 09:29:40,482 > 
+2020-06-11 09:30:17,961 > 
+2020-06-11 09:30:17,961 > Successfully finished execution
+2020-06-11 09:30:17,962 > Time taken: 37.480037450790405
+2020-06-11 09:30:17,962 > ==================================================
+2020-06-11 09:31:31,334 > ==================================================
+2020-06-11 09:31:31,334 > COMMAND: ion_networks.py show
+2020-06-11 09:31:31,334 > VERSION: 2.0.200610
+2020-06-11 09:31:31,334 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 09:31:31,334 > 
+2020-06-11 09:31:31,334 > Showing ion-networks
+2020-06-11 09:31:31,334 > 
+2020-06-11 09:34:02,388 > 
+2020-06-11 09:34:02,389 > Successfully finished execution
+2020-06-11 09:34:02,389 > Time taken: 151.0553412437439
+2020-06-11 09:34:02,389 > ==================================================
+2020-06-11 09:36:00,360 > ==================================================
+2020-06-11 09:36:00,360 > COMMAND: ion_networks.py show
+2020-06-11 09:36:00,360 > VERSION: 2.0.200610
+2020-06-11 09:36:00,360 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 09:36:00,360 > 
+2020-06-11 09:36:00,360 > Showing ion-networks
+2020-06-11 09:36:00,360 > 
+2020-06-11 09:41:53,680 > 
+2020-06-11 09:41:53,681 > Successfully finished execution
+2020-06-11 09:41:53,681 > Time taken: 353.32107067108154
+2020-06-11 09:41:53,681 > ==================================================
+2020-06-11 09:42:25,463 > ==================================================
+2020-06-11 09:42:25,463 > COMMAND: ion_networks.py show
+2020-06-11 09:42:25,463 > VERSION: 2.0.200610
+2020-06-11 09:42:25,464 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 09:42:25,464 > 
+2020-06-11 09:42:25,464 > Showing ion-networks
+2020-06-11 09:42:25,464 > 
+2020-06-11 09:45:03,004 > 
+2020-06-11 09:45:03,005 > Successfully finished execution
+2020-06-11 09:45:03,005 > Time taken: 157.54149508476257
+2020-06-11 09:45:03,005 > ==================================================
+2020-06-11 09:48:18,742 > ==================================================
+2020-06-11 09:48:18,742 > COMMAND: ion_networks.py evidence -i .
+2020-06-11 09:48:18,742 > VERSION: 2.0.200610
+2020-06-11 09:48:18,742 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 09:48:18,742 > 
+2020-06-11 09:48:18,742 > Evidencing ion-networks
+2020-06-11 09:48:18,743 > 10 input_files: ['/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf', '/home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf']
+2020-06-11 09:48:18,743 > parameter_file_name: 
+2020-06-11 09:48:18,743 > max_threads: 8
+2020-06-11 09:48:18,743 > 
+2020-06-11 09:48:24,044 > Caching edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:48:28,525 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf
+2020-06-11 09:48:28,529 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:48:30,194 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:48:39,548 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:48:39,613 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:48:39,680 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:48:44,520 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:48:46,499 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:48:48,649 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf
+2020-06-11 09:48:48,653 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:48:50,727 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:49:00,204 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:49:00,271 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:49:00,337 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:49:06,043 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:49:07,979 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:49:09,576 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf
+2020-06-11 09:49:09,580 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:49:11,800 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:49:21,028 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:49:21,098 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:49:21,167 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:49:26,637 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:49:28,642 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:49:30,175 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf
+2020-06-11 09:49:30,179 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:49:34,168 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:49:43,420 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:49:43,494 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:49:43,564 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:49:49,388 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:49:53,561 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:49:55,247 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf
+2020-06-11 09:49:55,253 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:49:57,263 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:50:06,131 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:50:06,200 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:50:06,263 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:50:15,966 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:50:18,296 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:50:20,409 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf
+2020-06-11 09:50:20,413 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:50:22,512 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:50:31,923 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:50:31,993 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:50:32,060 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:50:38,525 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:50:40,871 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:50:42,975 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf
+2020-06-11 09:50:42,979 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:50:44,810 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:50:54,167 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:50:54,237 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:50:54,300 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:51:00,687 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:51:03,367 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:51:05,232 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf
+2020-06-11 09:51:05,236 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:51:07,026 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:51:16,044 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:51:16,116 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:51:16,182 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:51:22,517 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:51:25,104 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:51:28,852 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf
+2020-06-11 09:51:28,856 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:51:31,127 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:51:40,300 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:51:40,371 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:51:40,465 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:51:46,891 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:51:49,453 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_060.evidence.hdf
+2020-06-11 09:51:51,647 > Caching edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:51:57,121 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf
+2020-06-11 09:51:57,160 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:51:58,988 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:52:08,211 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:52:08,331 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:52:08,494 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:52:17,301 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:52:21,177 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:52:23,907 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf
+2020-06-11 09:52:23,953 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:52:25,840 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:52:35,159 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:52:35,228 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:52:35,358 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:52:41,187 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:52:44,165 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:52:46,001 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf
+2020-06-11 09:52:46,028 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:52:47,883 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:52:57,172 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:52:57,244 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:52:57,388 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:53:03,488 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:53:10,317 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:53:12,357 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf
+2020-06-11 09:53:12,382 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:53:14,179 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:53:23,145 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:53:23,214 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:53:23,352 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:53:31,858 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:53:35,341 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:53:37,670 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf
+2020-06-11 09:53:37,722 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:53:39,708 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:53:49,295 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:53:49,366 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:53:49,506 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:53:56,328 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:53:58,780 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:54:00,954 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf
+2020-06-11 09:54:01,007 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:54:03,027 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:54:13,523 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:54:13,599 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:54:13,718 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:54:20,546 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:54:23,011 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:54:26,466 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf
+2020-06-11 09:54:26,487 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:54:28,514 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:54:37,952 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:54:38,022 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:54:38,222 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:54:44,969 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:54:47,478 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:54:49,582 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf
+2020-06-11 09:54:49,632 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:54:51,650 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:55:00,825 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:55:00,896 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:55:01,033 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:55:07,763 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:55:11,773 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_061.evidence.hdf
+2020-06-11 09:55:14,496 > Caching edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:55:18,554 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf
+2020-06-11 09:55:18,582 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:55:20,267 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:55:29,582 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:55:29,677 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:55:29,810 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:55:33,814 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:55:35,703 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:55:37,480 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf
+2020-06-11 09:55:37,505 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:55:39,290 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:55:48,971 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:55:49,052 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:55:49,161 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:55:53,153 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:55:55,064 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:55:58,402 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf
+2020-06-11 09:55:58,425 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:56:00,069 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:56:09,409 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:56:09,478 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:56:09,571 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:56:13,957 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:56:15,866 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:56:18,284 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf
+2020-06-11 09:56:18,288 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:56:20,156 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:56:31,330 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:56:31,402 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:56:31,473 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:56:35,746 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:56:37,654 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:56:39,682 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf
+2020-06-11 09:56:39,686 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:56:41,390 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:56:50,964 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:56:51,038 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:56:51,112 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:56:55,531 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:56:57,611 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:56:59,660 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf
+2020-06-11 09:56:59,665 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:57:01,548 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:57:11,171 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:57:11,243 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:57:11,314 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:57:15,732 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:57:17,796 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:57:19,835 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf
+2020-06-11 09:57:19,839 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:57:21,499 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:57:31,927 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:57:31,998 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:57:32,063 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:57:36,317 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:57:38,260 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_062.evidence.hdf
+2020-06-11 09:57:40,318 > Caching edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:57:44,117 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf
+2020-06-11 09:57:44,121 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:57:45,819 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:57:55,446 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:57:55,519 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:57:55,595 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:57:59,832 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 09:58:01,765 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:58:03,608 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf
+2020-06-11 09:58:03,612 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:58:05,238 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:58:14,771 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:58:14,860 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:58:14,943 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:58:20,418 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 09:58:22,809 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:58:25,582 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf
+2020-06-11 09:58:25,587 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:58:27,657 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:58:38,797 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:58:39,300 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:58:39,393 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:58:44,808 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 09:58:47,192 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:58:49,922 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf
+2020-06-11 09:58:49,927 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:58:51,923 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:59:02,864 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:59:02,951 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:59:03,038 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:59:08,326 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 09:59:10,838 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:59:13,545 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf
+2020-06-11 09:59:13,550 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:59:15,561 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:59:26,188 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:59:26,276 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:59:26,363 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:59:31,689 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 09:59:34,115 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:59:36,684 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf
+2020-06-11 09:59:36,690 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:59:38,682 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:59:49,614 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:59:49,700 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 09:59:49,782 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:59:55,038 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 09:59:57,464 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_063.evidence.hdf
+2020-06-11 10:00:00,208 > Caching edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:00:05,425 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf
+2020-06-11 10:00:05,430 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:00:07,468 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:00:18,281 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:00:18,366 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:00:18,447 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:00:24,064 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:00:26,533 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:00:29,912 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf
+2020-06-11 10:00:29,917 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:00:32,009 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:00:42,911 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:00:42,983 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:00:43,055 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:00:47,403 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:00:49,332 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:00:51,589 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf
+2020-06-11 10:00:51,593 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:00:53,239 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:01:02,937 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:01:03,010 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:01:03,084 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:01:07,520 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:01:09,564 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:01:11,717 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf
+2020-06-11 10:01:11,721 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:01:13,418 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:01:23,260 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:01:23,334 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:01:23,404 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:01:27,732 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:01:29,705 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:01:32,050 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf
+2020-06-11 10:01:32,055 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:01:33,710 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:01:43,249 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:01:43,321 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:01:43,388 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:01:47,770 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:01:50,081 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_064.evidence.hdf
+2020-06-11 10:01:52,776 > Caching edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:01:57,871 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf
+2020-06-11 10:01:57,876 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:01:59,544 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:02:08,814 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:02:08,881 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:02:08,953 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:02:15,230 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:02:18,634 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:02:21,030 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf
+2020-06-11 10:02:21,034 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:02:22,645 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:02:31,800 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:02:31,866 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:02:31,939 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:02:36,661 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:02:41,055 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:02:43,916 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf
+2020-06-11 10:02:43,922 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:02:45,984 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:02:56,640 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:02:56,723 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:02:56,822 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:03:02,943 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:03:06,277 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:03:09,483 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf
+2020-06-11 10:03:09,488 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:03:11,431 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:03:21,752 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:03:21,834 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:03:21,918 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:03:27,982 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:03:31,014 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_065.evidence.hdf
+2020-06-11 10:03:33,835 > Caching edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:03:40,001 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf
+2020-06-11 10:03:40,006 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:03:42,076 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:03:53,276 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:03:53,366 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:03:53,452 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:03:59,331 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:04:02,279 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:04:04,902 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf
+2020-06-11 10:04:04,906 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:04:06,594 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:04:16,321 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:04:16,397 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:04:16,467 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:04:21,146 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:04:23,415 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:04:25,509 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf
+2020-06-11 10:04:25,514 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:04:27,198 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:04:36,809 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:04:36,897 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:04:36,980 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:04:42,861 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:04:45,765 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_066.evidence.hdf
+2020-06-11 10:04:48,567 > Caching edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:04:54,462 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf
+2020-06-11 10:04:54,467 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:04:56,480 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:05:07,046 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:05:07,133 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:05:07,224 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:05:13,039 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:05:15,977 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:05:18,705 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf
+2020-06-11 10:05:18,710 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:05:20,709 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:05:31,237 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:05:31,325 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:05:31,410 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:05:37,184 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:05:40,018 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_067.evidence.hdf
+2020-06-11 10:05:42,835 > Caching edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:05:48,819 > Aligning /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.inet.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.inet.hdf
+2020-06-11 10:05:48,825 > Aligning nodes of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:05:50,821 > Calibrating PRECURSOR_RT of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:06:01,578 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:06:01,665 > Writing aligned nodes from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:06:01,748 > Aligning edges of /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf and /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:06:07,554 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf
+2020-06-11 10:06:10,464 > Writing aligned edges from /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_069.evidence.hdf with /home/sander/Documents/Proteomics/data/ecoli/28Oct2016_068.evidence.hdf
+2020-06-11 10:06:13,633 > 
+2020-06-11 10:06:13,633 > Successfully finished execution
+2020-06-11 10:06:13,633 > Time taken: 1074.8909528255463
+2020-06-11 10:06:13,633 > ==================================================
+2020-06-11 10:07:28,248 > ==================================================
+2020-06-11 10:07:28,248 > COMMAND: ion_networks.py show
+2020-06-11 10:07:28,248 > VERSION: 2.0.200610
+2020-06-11 10:07:28,248 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 10:07:28,248 > 
+2020-06-11 10:07:28,248 > Showing ion-networks
+2020-06-11 10:07:28,248 > 
+2020-06-11 10:10:02,840 > 
+2020-06-11 10:10:02,840 > Successfully finished execution
+2020-06-11 10:10:02,840 > Time taken: 154.5928692817688
+2020-06-11 10:10:02,841 > ==================================================
+2020-06-11 10:39:40,237 > ==================================================
+2020-06-11 10:39:40,238 > COMMAND: ion_networks.py show
+2020-06-11 10:39:40,238 > VERSION: 2.0.200610
+2020-06-11 10:39:40,238 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 10:39:40,238 > 
+2020-06-11 10:39:40,238 > Showing ion-networks
+2020-06-11 10:39:40,238 > 
+2020-06-11 10:41:34,451 > 
+2020-06-11 10:41:34,452 > Successfully finished execution
+2020-06-11 10:41:34,452 > Time taken: 114.21434164047241
+2020-06-11 10:41:34,452 > ==================================================
+2020-06-11 10:41:51,825 > ==================================================
+2020-06-11 10:41:51,825 > COMMAND: ion_networks.py show
+2020-06-11 10:41:51,825 > VERSION: 2.0.200610
+2020-06-11 10:41:51,825 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 10:41:51,825 > 
+2020-06-11 10:41:51,825 > Showing ion-networks
+2020-06-11 10:41:51,826 > 
+2020-06-11 11:03:29,249 > 
+2020-06-11 11:03:29,249 > Successfully finished execution
+2020-06-11 11:03:29,249 > Time taken: 1297.4244973659515
+2020-06-11 11:03:29,249 > ==================================================
+2020-06-11 11:08:54,805 > ==================================================
+2020-06-11 11:08:54,805 > COMMAND: ion_networks.py create -i .
+2020-06-11 11:08:54,805 > VERSION: 2.0.200610
+2020-06-11 11:08:54,805 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 11:08:54,805 > 
+2020-06-11 11:08:54,805 > Creating ion-networks
+2020-06-11 11:08:54,806 > 10 input_files: ['/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_069.inet.csv']
+2020-06-11 11:08:54,806 > output_directory: 
+2020-06-11 11:08:54,806 > parameter_file_name: 
+2020-06-11 11:08:54,806 > max_threads: 8
+2020-06-11 11:08:54,806 > 
+2020-06-11 11:08:54,848 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf...
+2020-06-11 11:08:54,848 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.csv
+2020-06-11 11:08:55,430 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf...
+2020-06-11 11:08:55,504 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf
+2020-06-11 11:08:55,528 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf
+2020-06-11 11:08:55,931 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf: 4.762499999999989
+2020-06-11 11:08:56,225 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf: 0.1133000000000024
+2020-06-11 11:09:20,410 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf
+2020-06-11 11:09:21,252 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf...
+2020-06-11 11:09:21,252 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.csv
+2020-06-11 11:09:21,769 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf...
+2020-06-11 11:09:21,844 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf
+2020-06-11 11:09:21,867 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf
+2020-06-11 11:09:22,271 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf: 3.430000000000007
+2020-06-11 11:09:22,502 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf: 0.10260000000000247
+2020-06-11 11:09:45,369 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf
+2020-06-11 11:09:45,975 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf...
+2020-06-11 11:09:45,975 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.csv
+2020-06-11 11:09:46,481 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf...
+2020-06-11 11:09:46,556 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf
+2020-06-11 11:09:46,578 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf
+2020-06-11 11:09:46,967 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf: 4.079999999999984
+2020-06-11 11:09:47,176 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf: 0.09120000000000061
+2020-06-11 11:10:12,125 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf
+2020-06-11 11:10:12,801 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf...
+2020-06-11 11:10:12,801 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.csv
+2020-06-11 11:10:13,323 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf...
+2020-06-11 11:10:13,394 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf
+2020-06-11 11:10:13,416 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf
+2020-06-11 11:10:13,791 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf: 3.492500000000007
+2020-06-11 11:10:14,032 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf: 0.09839999999999804
+2020-06-11 11:10:38,012 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf
+2020-06-11 11:10:38,598 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf...
+2020-06-11 11:10:38,598 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.csv
+2020-06-11 11:10:39,107 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf...
+2020-06-11 11:10:39,178 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf
+2020-06-11 11:10:39,200 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf
+2020-06-11 11:10:39,552 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf: 3.7700000000000387
+2020-06-11 11:10:39,769 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf: 0.09759999999999991
+2020-06-11 11:11:04,870 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf
+2020-06-11 11:11:05,528 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.hdf...
+2020-06-11 11:11:05,528 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.csv
+2020-06-11 11:11:06,028 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.hdf...
+2020-06-11 11:11:06,099 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.hdf
+2020-06-11 11:11:06,120 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.hdf
+2020-06-11 11:11:06,481 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.hdf: 3.992500000000007
+2020-06-11 11:11:06,691 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.hdf: 0.09179999999999922
+2020-06-11 11:11:29,889 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.hdf
+2020-06-11 11:11:30,650 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.hdf...
+2020-06-11 11:11:30,650 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.csv
+2020-06-11 11:11:31,254 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.hdf...
+2020-06-11 11:11:31,345 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.hdf
+2020-06-11 11:11:31,373 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.hdf
+2020-06-11 11:11:31,896 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.hdf: 3.6225000000000023
+2020-06-11 11:11:32,232 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.hdf: 0.10640000000000072
+2020-06-11 11:11:58,538 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.hdf
+2020-06-11 11:11:59,408 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.hdf...
+2020-06-11 11:11:59,408 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.csv
+2020-06-11 11:11:59,988 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.hdf...
+2020-06-11 11:12:00,077 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.hdf
+2020-06-11 11:12:00,108 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.hdf
+2020-06-11 11:12:00,570 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.hdf: 3.3774999999999977
+2020-06-11 11:12:00,865 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.hdf: 0.10170000000000101
+2020-06-11 11:12:25,020 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.hdf
+2020-06-11 11:12:25,796 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.hdf...
+2020-06-11 11:12:25,796 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.csv
+2020-06-11 11:12:26,412 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.hdf...
+2020-06-11 11:12:26,501 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.hdf
+2020-06-11 11:12:26,530 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.hdf
+2020-06-11 11:12:26,985 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.hdf: 3.920000000000016
+2020-06-11 11:12:27,276 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.hdf: 0.08950000000000102
+2020-06-11 11:12:53,858 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.hdf
+2020-06-11 11:12:54,627 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_069.inet.hdf...
+2020-06-11 11:12:54,627 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_069.inet.csv
+2020-06-11 11:12:55,196 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_069.inet.hdf...
+2020-06-11 11:12:55,285 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_069.inet.hdf
+2020-06-11 11:12:55,312 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_069.inet.hdf
+2020-06-11 11:12:55,769 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_069.inet.hdf: 3.7700000000000387
+2020-06-11 11:12:56,037 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_069.inet.hdf: 0.08840000000000003
+2020-06-11 11:13:22,689 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_069.inet.hdf
+2020-06-11 11:13:23,395 > 
+2020-06-11 11:13:23,395 > Successfully finished execution
+2020-06-11 11:13:23,395 > Time taken: 268.59020352363586
+2020-06-11 11:13:23,395 > ==================================================
+2020-06-11 11:13:27,485 > ==================================================
+2020-06-11 11:13:27,485 > COMMAND: ion_networks.py create -i .
+2020-06-11 11:13:27,485 > VERSION: 2.0.200610
+2020-06-11 11:13:27,485 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 11:13:27,485 > 
+2020-06-11 11:13:27,485 > Creating ion-networks
+2020-06-11 11:13:27,485 > 10 input_files: ['/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_069.inet.csv']
+2020-06-11 11:13:27,486 > output_directory: 
+2020-06-11 11:13:27,486 > parameter_file_name: 
+2020-06-11 11:13:27,486 > max_threads: 8
+2020-06-11 11:13:27,486 > 
+2020-06-11 11:13:27,608 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf...
+2020-06-11 11:13:27,608 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.csv
+2020-06-11 11:13:28,113 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf...
+2020-06-11 11:13:28,203 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf
+2020-06-11 11:13:28,230 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf
+2020-06-11 11:13:28,699 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf: 4.762499999999989
+2020-06-11 11:13:29,031 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf: 0.1133000000000024
+2020-06-11 11:13:56,969 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf
+2020-06-11 11:13:58,060 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf...
+2020-06-11 11:13:58,060 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.csv
+2020-06-11 11:13:58,513 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf...
+2020-06-11 11:13:58,607 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf
+2020-06-11 11:13:58,636 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf
+2020-06-11 11:13:59,111 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf: 3.430000000000007
+2020-06-11 11:13:59,386 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf: 0.10260000000000247
+2020-06-11 11:14:28,155 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf
+2020-06-11 11:14:28,957 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf...
+2020-06-11 11:14:28,957 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.csv
+2020-06-11 11:14:29,404 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf...
+2020-06-11 11:14:29,494 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf
+2020-06-11 11:14:29,522 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf
+2020-06-11 11:14:30,003 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf: 4.079999999999984
+2020-06-11 11:14:30,265 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf: 0.09120000000000061
+2020-06-11 11:14:57,382 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf
+2020-06-11 11:14:58,211 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf...
+2020-06-11 11:14:58,211 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.csv
+2020-06-11 11:14:58,644 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf...
+2020-06-11 11:14:58,736 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf
+2020-06-11 11:14:58,764 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf
+2020-06-11 11:14:59,232 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf: 3.492500000000007
+2020-06-11 11:14:59,522 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf: 0.09839999999999804
+2020-06-11 11:15:29,160 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf
+2020-06-11 11:15:29,934 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf...
+2020-06-11 11:15:29,934 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.csv
+2020-06-11 11:15:30,388 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf...
+2020-06-11 11:15:30,478 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf
+2020-06-11 11:15:30,510 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf
+2020-06-11 11:15:30,965 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf: 3.7700000000000387
+2020-06-11 11:15:31,251 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf: 0.09759999999999991
+2020-06-11 11:15:56,685 > 
+2020-06-11 11:15:56,685 > Something went wrong, execution incomplete!
+Traceback (most recent call last):
+  File "/home/sander/Documents/Proteomics/ion_networks/src/ms_utils.py", line 74, in open_logger
+    yield LOGGER
+  File "/home/sander/Documents/Proteomics/ion_networks/src/interface.py", line 166, in create_ion_networks
+    network.create(
+  File "/home/sander/Documents/Proteomics/ion_networks/src/ms_run_files.py", line 348, in create
+    self.__create_edges(parameters)
+  File "/home/sander/Documents/Proteomics/ion_networks/src/ms_run_files.py", line 172, in __create_edges
+    results = p.starmap(
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/multiprocessing/pool.py", line 372, in starmap
+    return self._map_async(func, iterable, starmapstar, chunksize).get()
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/multiprocessing/pool.py", line 762, in get
+    self.wait(timeout)
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/multiprocessing/pool.py", line 759, in wait
+    self._event.wait(timeout)
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/threading.py", line 558, in wait
+    signaled = self._cond.wait(timeout)
+  File "/home/sander/anaconda3/envs/ion_networks/lib/python3.8/threading.py", line 302, in wait
+    waiter.acquire()
+KeyboardInterrupt
+2020-06-11 11:15:56,689 > Time taken: 149.20474290847778
+2020-06-11 11:15:56,690 > ==================================================
+2020-06-11 11:17:24,526 > ==================================================
+2020-06-11 11:17:24,526 > COMMAND: ion_networks.py create -i .
+2020-06-11 11:17:24,526 > VERSION: 2.0.200610
+2020-06-11 11:17:24,526 > LOGFILE: /home/sander/Documents/Proteomics/ion_networks/log.txt
+2020-06-11 11:17:24,526 > 
+2020-06-11 11:17:24,526 > Creating ion-networks
+2020-06-11 11:17:24,526 > 10 input_files: ['/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.csv', '/home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_069.inet.csv']
+2020-06-11 11:17:24,526 > output_directory: 
+2020-06-11 11:17:24,527 > parameter_file_name: 
+2020-06-11 11:17:24,527 > max_threads: 8
+2020-06-11 11:17:24,527 > 
+2020-06-11 11:17:24,548 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf...
+2020-06-11 11:17:24,548 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.csv
+2020-06-11 11:17:25,033 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf...
+2020-06-11 11:17:25,135 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf
+2020-06-11 11:17:25,163 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf
+2020-06-11 11:17:25,632 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf: 4.762499999999989
+2020-06-11 11:17:25,967 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf: 0.1133000000000024
+2020-06-11 11:17:53,104 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_060.inet.hdf
+2020-06-11 11:17:54,188 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf...
+2020-06-11 11:17:54,188 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.csv
+2020-06-11 11:17:54,635 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf...
+2020-06-11 11:17:54,726 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf
+2020-06-11 11:17:54,754 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf
+2020-06-11 11:17:55,212 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf: 3.430000000000007
+2020-06-11 11:17:55,480 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf: 0.10260000000000247
+2020-06-11 11:18:20,268 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_061.inet.hdf
+2020-06-11 11:18:21,076 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf...
+2020-06-11 11:18:21,076 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.csv
+2020-06-11 11:18:21,526 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf...
+2020-06-11 11:18:21,616 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf
+2020-06-11 11:18:21,647 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf
+2020-06-11 11:18:22,139 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf: 4.079999999999984
+2020-06-11 11:18:22,401 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf: 0.09120000000000061
+2020-06-11 11:18:48,825 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_062.inet.hdf
+2020-06-11 11:18:49,684 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf...
+2020-06-11 11:18:49,684 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.csv
+2020-06-11 11:18:50,121 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf...
+2020-06-11 11:18:50,210 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf
+2020-06-11 11:18:50,237 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf
+2020-06-11 11:18:50,704 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf: 3.492500000000007
+2020-06-11 11:18:50,994 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf: 0.09839999999999804
+2020-06-11 11:19:15,754 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_063.inet.hdf
+2020-06-11 11:19:16,523 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf...
+2020-06-11 11:19:16,523 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.csv
+2020-06-11 11:19:16,974 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf...
+2020-06-11 11:19:17,062 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf
+2020-06-11 11:19:17,089 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf
+2020-06-11 11:19:17,528 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf: 3.7700000000000387
+2020-06-11 11:19:17,803 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf: 0.09759999999999991
+2020-06-11 11:19:48,089 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_064.inet.hdf
+2020-06-11 11:19:48,904 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.hdf...
+2020-06-11 11:19:48,904 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.csv
+2020-06-11 11:19:49,332 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.hdf...
+2020-06-11 11:19:49,422 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.hdf
+2020-06-11 11:19:49,448 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.hdf
+2020-06-11 11:19:49,914 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.hdf: 3.992500000000007
+2020-06-11 11:19:50,178 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.hdf: 0.09179999999999922
+2020-06-11 11:20:17,664 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_065.inet.hdf
+2020-06-11 11:20:18,570 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.hdf...
+2020-06-11 11:20:18,571 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.csv
+2020-06-11 11:20:19,086 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.hdf...
+2020-06-11 11:20:19,192 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.hdf
+2020-06-11 11:20:19,225 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.hdf
+2020-06-11 11:20:19,791 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.hdf: 3.6225000000000023
+2020-06-11 11:20:20,139 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.hdf: 0.10640000000000072
+2020-06-11 11:20:52,759 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_066.inet.hdf
+2020-06-11 11:20:54,028 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.hdf...
+2020-06-11 11:20:54,029 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.csv
+2020-06-11 11:20:54,623 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.hdf...
+2020-06-11 11:20:54,745 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.hdf
+2020-06-11 11:20:54,783 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.hdf
+2020-06-11 11:20:55,407 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.hdf: 3.3774999999999977
+2020-06-11 11:20:55,827 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.hdf: 0.10170000000000101
+2020-06-11 11:21:31,764 > Writing edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_067.inet.hdf
+2020-06-11 11:21:33,013 > Creating ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.hdf...
+2020-06-11 11:21:33,013 > Reading centroided csv file /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.csv
+2020-06-11 11:21:33,741 > Writing nodes of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.hdf...
+2020-06-11 11:21:33,908 > Creating edges of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.hdf
+2020-06-11 11:21:33,957 > Tuning precursor errors of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.hdf
+2020-06-11 11:21:34,749 > PRECURSOR_MZ error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.hdf: 3.920000000000016
+2020-06-11 11:21:35,204 > PRECURSOR_RT error tuning of ion-network /home/sander/Documents/Proteomics/data/ecoli_test/28Oct2016_068.inet.hdf: 0.08950000000000102

@@ -374,6 +374,16 @@ class Browser(object):
                 )
             ]
         )
+        self.nodes_on_top = True
+        layout.append(
+            [
+                sg.Checkbox(
+                    'NODES ON TOP',
+                    default=self.nodes_on_top,
+                    key="nodes_on_top"
+                ),
+            ]
+        )
         layout.append(
             [
                 sg.Button("Save network"),
@@ -418,6 +428,14 @@ class Browser(object):
             self.evidence_bg_color = values["evidence_bg_color"]
             self.figs["evidence"].axes[0].set_facecolor(self.evidence_bg_color)
             flush_figure(self.figs["evidence"], True)
+        if self.nodes_on_top != values["nodes_on_top"]:
+            # TODO
+            e = self.edge_collection.get_zorder()
+            n = self.node_scatter.get_zorder()
+            self.edge_collection.set_zorder(n)
+            self.node_scatter.set_zorder(e)
+            flush_figure(self.figs["network"], True)
+            self.nodes_on_top = values["nodes_on_top"]
         if event == "Save network":
             file_name = sg.popup_get_file("Save network", save_as=True)
             if file_name is None:
@@ -794,12 +812,27 @@ class Browser(object):
                     parent_group_name=f"runs/{other_evidence.run_name}/nodes"
                 )
         if hasattr(self, "evidence_plot"):
-            for i in self.evidence_plot:
-                i.remove()
+            for evidence_plot in self.evidence_plot:
+                for i in evidence_plot:
+                    i.remove()
+                del evidence_plot[:]
             del self.evidence_plot[:]
-        self.evidence_plot = self.figs["evidence"].axes[0].plot(
-            alignments.T
+        color_mapper = matplotlib.cm.ScalarMappable(
+            norm=matplotlib.colors.Normalize(
+                vmin=0,
+                vmax=20,
+            ),
+            cmap="tab20"
         )
+        colors = color_mapper.to_rgba(nodes % 20)
+        self.evidence_plot = []
+        for i, c in zip(alignments, colors):
+            evidence_plot = self.figs["evidence"].axes[0].plot(
+                i,
+                c=c
+            )
+            self.evidence_plot.append(evidence_plot)
+
         self.figs["evidence"].axes[0].set_ylim(
             [
                 np.min(alignments),
