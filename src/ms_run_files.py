@@ -1160,7 +1160,7 @@ class Annotation(HDF_MS_Run_File):
         return low_limits[inv_order], high_limits[inv_order]
 
 
-@numba.njit(nogil=True)
+@numba.njit(nogil=True, cache=True)
 def longest_increasing_subsequence(sequence):
     # TODO:Docstring
     M = np.zeros(len(sequence) + 1, np.int64)
@@ -1188,14 +1188,14 @@ def longest_increasing_subsequence(sequence):
     return longest_increasing_subsequence
 
 
-@numba.njit(nogil=True)
+@numba.njit(nogil=True, cache=True)
 def increase_buffer(buffer, max_batch=10**7):
     new_buffer = np.empty(buffer.shape[0] + max_batch, np.int64)
     new_buffer[:len(buffer)] = buffer
     return new_buffer
 
 
-@numba.njit(nogil=True)
+@numba.njit(nogil=True, cache=True)
 def quick_align(
     self_mzs,
     other_mzs,
@@ -1238,7 +1238,7 @@ def quick_align(
     return self_indices_mask, other_indices_mask
 
 
-@numba.njit(nogil=True)
+@numba.njit(nogil=True, cache=True)
 def align_coordinates(
     queries,
     lower_limits,
@@ -1277,7 +1277,7 @@ def align_coordinates(
     return (indptr, indices[:total])
 
 
-@numba.njit(nogil=True)
+@numba.njit(nogil=True, cache=True)
 def make_symmetric(indptr, indices):
     # TODO: multithread?
     offsets = np.cumsum(np.bincount(indices))
@@ -1302,7 +1302,7 @@ def make_symmetric(indptr, indices):
     return indptr_, indices_, pointers_
 
 
-@numba.njit(nogil=True)
+@numba.njit(nogil=True, cache=True)
 def align_edges(
     queries,
     self_indptr,
