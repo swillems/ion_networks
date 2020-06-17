@@ -545,7 +545,10 @@ class HDF_File(object):
 
     @property
     def version(self):
-        return self.read_attr("version")
+        try:
+            return self.read_attr("version")
+        except KeyError:
+            return "0.0.0"
 
     @property
     def is_read_only(self):

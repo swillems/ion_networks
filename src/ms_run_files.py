@@ -978,7 +978,9 @@ class Annotation(HDF_MS_Run_File):
         new_file=False,
     ):
         # TODO: Docstring
-        file_name = self.convert_reference_to_trimmed_file_name(reference)
+        file_name = self.convert_reference_to_trimmed_file_name(
+            reference
+        )
         super().__init__(
             f"{file_name}.annotation.hdf",
             is_read_only=is_read_only,
@@ -1141,7 +1143,9 @@ class Annotation(HDF_MS_Run_File):
         parameters
     ):
         # TODO: Docstring
-        ms_utils.LOGGER.info(f"Writing node candidates to {self.file_name}")
+        ms_utils.LOGGER.info(
+            f"Writing node candidates to {self.file_name}"
+        )
         max_ppm = parameters["annotation_ppm"]
         self_mzs = self.ion_network.get_ion_coordinates("FRAGMENT_MZ")
         mz_order = np.argsort(self_mzs)
