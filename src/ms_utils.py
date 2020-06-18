@@ -532,6 +532,8 @@ def get_github_version():
                     return github_version
             else:
                 return None
+    except IndexError:
+        return None
     except urllib.error.URLError:
         return None
 
@@ -539,20 +541,22 @@ def get_github_version():
 def verify_version():
     github_version = get_github_version()
     if github_version is None:
-        print("*" * 50)
-        print("Failed to check for updates")
-        print("*" * 50)
-        print()
-    elif github_version != VERSION:
-        print("*" * 50)
-        print(
-            f"Github is at version {github_version}, "
-            f"while local version is {VERSION}"
+        return (
+            f'{"*" * 50}\n'
+            f'{"Failed to check if version update is possible"}\n'
+            f'{"*" * 50}\n'
         )
-        print("Update by running the following command:")
-        print(f"bash '{UPDATE_COMMAND}'")
-        print("*" * 50)
-        print()
+    elif github_version != VERSION:
+        return (
+            f'{("*" * 50)}\n'
+            f"Github is at version {github_version}, "
+            f"while local version is {VERSION}\n"
+            f'{("Update by running the following command:")}\n'
+            f"bash '{UPDATE_COMMAND}'\n"
+            f'{("*" * 50)}\n'
+        )
+    else:
+        return ""
 
 
 class HDF_File(object):

@@ -381,6 +381,13 @@ class GUI(object):
         self.widget_size = widget_size
         self.window = {}
         self.evaluate_window = {}
+        update_message = ms_utils.verify_version()
+        if update_message != "":
+            sg.popup(
+                update_message,
+                title="Update available",
+                non_blocking=True
+            )
         self.init_main_window()
         self.init_convert_window()
         self.init_create_window()
@@ -667,7 +674,7 @@ class CLI(object):
     CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
     def __init__(self):
-        ms_utils.verify_version()
+        print(ms_utils.verify_version())
         # TODO: process update message
         self.main.add_command(CLI.convert)
         self.main.add_command(CLI.create)
