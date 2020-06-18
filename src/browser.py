@@ -22,6 +22,7 @@ DEFAULT_BROWSER_PATH = os.path.join(LIB_PATH, "browser_images")
 DEFAULT_BROWSER_IMAGES = {
     "pointer": "pointer_25x25.png",
 }
+NODE_LABEL_DECIMALS = 2
 
 MATPLOTLIB_COLORS_CONTINUOUS = sorted(matplotlib.cm.__dict__['datad'])
 MATPLOTLIB_COLORS_FIXED = sorted(matplotlib.colors.__dict__['CSS4_COLORS'])
@@ -201,10 +202,22 @@ class Browser(object):
                 )
             ]
         )
+        self.node_labels = ""
+        layout.append(
+            [
+                sg.Text('NODE LABELS', size=(25, 1)),
+                sg.Combo(
+                    self.ion_network.dimensions + self.ion_network.ion_comments + ['NODE EVIDENCE', ""],
+                    size=(21, 1),
+                    default_value=self.node_labels,
+                    key="node_labels",
+                )
+            ]
+        )
         self.node_color = "FRAGMENT_LOGINT"
         # self.node_color = "lightgrey"
         self.node_color_c_map = "RdYlGn"
-        self.node_color_normalize = True
+        self.node_color_normalize = False
         layout.append(
             [
                 sg.Text('NODE COLOR', size=(25, 1)),
@@ -285,7 +298,7 @@ class Browser(object):
         self.edge_color = "EDGE EVIDENCE"
         # self.edge_color = "lightgrey"
         self.edge_color_c_map = "RdYlGn"
-        self.edge_color_normalize = True
+        self.edge_color_normalize = False
         layout.append(
             [
                 sg.Text('EDGE COLOR', size=(25, 1)),
@@ -568,6 +581,12 @@ class Browser(object):
                 self.network_figure_update_node_colors(nodes)
             except NameError:
                 self.network_figure_update_node_colors()
+        if self.node_labels != values["node_labels"]:
+            self.node_labels = values["node_labels"]
+            try:
+                self.network_figure_update_node_labels(nodes)
+            except NameError:
+                self.network_figure_update_node_labels()
 
     def evaluate_edge_settings_window(
         self,
@@ -658,6 +677,53 @@ class Browser(object):
         self.node_scatter.set_facecolor(colors)
         flush_figure(self.figs["network"], flush)
         self.reset_selected_nodes()
+
+    def network_figure_update_node_labels(
+        self,
+        nodes=None,
+        reorder=False,
+        flush=True
+    ):
+        if nodes is None:
+            nodes = self.get_filtered_nodes()
+        if len(nodes) == 0:
+            flush_figure(self.figs["network"], flush)
+            return
+        # TODO:
+        for child in self.figs["network"].axes[0].get_children():
+            if isinstance(
+                child, matplotlib.text.Annotation
+            ):
+                child.remove()
+        if self.node_labels in self.ion_network.dimensions:
+            labels = np.round(
+                self.ion_network.get_ion_coordinates(
+                    self.node_labels,
+                    nodes
+                ),
+                NODE_LABEL_DECIMALS
+            )
+        elif self.node_labels in self.ion_network.ion_comments:
+            labels = self.ion_network.get_ion_comments(
+                self.node_labels,
+                nodes
+            )
+        elif self.node_labels == 'NODE EVIDENCE':
+            labels = self.evidence.get_nodes()[nodes]
+        else:
+            flush_figure(self.figs["network"], flush)
+            return
+        x_coordinates, y_coordinates = self.ion_network.get_ion_coordinates(
+            [self.x_axis, self.y_axis],
+            nodes
+        )
+        for x, y, label in zip(
+            x_coordinates,
+            y_coordinates,
+            labels
+        ):
+            self.figs["network"].axes[0].annotate(label, (x, y))
+        flush_figure(self.figs["network"], flush)
 
     def network_figure_update_edge_colors(
         self,
