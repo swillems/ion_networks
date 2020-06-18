@@ -8,6 +8,7 @@ import json
 import time
 import contextlib
 import multiprocessing
+import urllib
 # external
 import numpy as np
 import pandas as pd
@@ -17,7 +18,9 @@ import pyteomics.mgf
 from _version import __version__ as VERSION
 
 
+GITHUB_VERSION_FILE = "https://raw.githubusercontent.com/swillems/ion_networks/master/src/_version.py"
 BASE_PATH = os.path.dirname(os.path.dirname(__file__))
+UPDATE_COMMAND = os.path.join(BASE_PATH, "install", "update.sh")
 LIB_PATH = os.path.join(BASE_PATH, "lib")
 DEFAULT_PARAMETER_PATH = os.path.join(LIB_PATH, "default_parameters")
 DEFAULT_PARAMETER_FILES = {
@@ -517,6 +520,39 @@ def write_data_to_csv_file(
     """
     LOGGER.info(f"Writing to centroided csv file {out_file_name}")
     data.to_csv(out_file_name, index=False)
+
+
+def get_github_version():
+    # TODO: Docstring
+    try:
+        with urllib.request.urlopen(GITHUB_VERSION_FILE) as version_file:
+            for line in version_file.read().decode('utf-8').split("\n"):
+                if line.startswith("__version__"):
+                    github_version = line.split("\"")[1]
+                    return github_version
+            else:
+                return None
+    except urllib.error.URLError:
+        return None
+
+
+def verify_version():
+    github_version = get_github_version()
+    if github_version is None:
+        print("*" * 50)
+        print("Failed to check for updates")
+        print("*" * 50)
+        print()
+    elif github_version != VERSION:
+        print("*" * 50)
+        print(
+            f"Github is at version {github_version}, "
+            f"while local version is {VERSION}"
+        )
+        print("Update by running the following command:")
+        print(f"bash '{UPDATE_COMMAND}'")
+        print("*" * 50)
+        print()
 
 
 class HDF_File(object):

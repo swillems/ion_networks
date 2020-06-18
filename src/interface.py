@@ -667,6 +667,8 @@ class CLI(object):
     CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
     def __init__(self):
+        ms_utils.verify_version()
+        # TODO: process update message
         self.main.add_command(CLI.convert)
         self.main.add_command(CLI.create)
         self.main.add_command(CLI.evidence)
