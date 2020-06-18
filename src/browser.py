@@ -9,6 +9,7 @@ import numexpr as ne
 import matplotlib.pyplot as plt
 import PySimpleGUI as sg
 import matplotlib
+import pandas as pd
 # local
 import ms_run_files
 
@@ -386,8 +387,14 @@ class Browser(object):
         )
         layout.append(
             [
-                sg.Button("Save network"),
-                sg.Button("Save evidence")
+                sg.Button("Save network plot"),
+                sg.Button("Save evidence plot")
+            ]
+        )
+        layout.append(
+            [
+                # sg.Button("Export network data"),
+                sg.Button("Export evidence data")
             ]
         )
         self.figs["network"].axes[0].set_facecolor(self.network_bg_color)
@@ -436,18 +443,34 @@ class Browser(object):
             self.node_scatter.set_zorder(e)
             flush_figure(self.figs["network"], True)
             self.nodes_on_top = values["nodes_on_top"]
-        if event == "Save network":
-            file_name = sg.popup_get_file("Save network", save_as=True)
+        if event == "Save network plot":
+            file_name = sg.popup_get_file("Save network plot", save_as=True)
             if file_name is None:
                 return
             with loading_window():
                 self.figs["network"].savefig(file_name)
-        if event == "Save evidence":
-            file_name = sg.popup_get_file("Save evidence", save_as=True)
+        if event == "Save evidence plot":
+            file_name = sg.popup_get_file("Save evidence plot", save_as=True)
             if file_name is None:
                 return
             with loading_window():
                 self.figs["evidence"].savefig(file_name)
+        if event == "Export evidence data":
+            if hasattr(self, "evidence_plot"):
+                file_name = sg.popup_get_file("Save evidence data", save_as=True)
+                if file_name is None:
+                    return
+                with loading_window():
+                    data = np.array(
+                        [
+                            lines[0].get_data()[1] for lines in self.evidence_plot
+                        ]
+                    )
+                    data = pd.DataFrame(
+                        data,
+                        columns=[self.ion_network.run_name] + self.evidence.runs
+                    )
+                    data.to_csv(file_name, index=False)
 
     def evaluate_compare_settings_window(
         self,

@@ -1,5 +1,6 @@
 {
     "log_file_name": "",
     "output_directory": "",
+    "force_overwrite": true,
     "annotation_ppm": 20
 }
