@@ -161,7 +161,7 @@ def create_ion_networks(
             )
             network = ms_run_files.Network(
                 ion_network_file_name,
-                new_file=True,
+                new_file=True
             )
             network.create(
                 centroids_file_name=centroids_file_name,
@@ -214,7 +214,8 @@ def evidence_ion_networks(
         evidence_files = [
             ms_run_files.Evidence(
                 file_name,
-                new_file=True,
+                new_file=parameters["force_overwrite"],
+                is_read_only=False,
             ) for file_name in input_file_names
         ]
         for index, evidence_file in enumerate(evidence_files[:-1]):
