@@ -45,12 +45,11 @@ def open_logger(log_file_name, log_level=logging.INFO):
     start_time = time.time()
     formatter = logging.Formatter('%(asctime)s > %(message)s')
     LOGGER.setLevel(log_level)
-    if LOGGER.hasHandlers():
-        LOGGER.handlers.clear()
-    console_handler = logging.StreamHandler(stream=sys.stdout)
-    console_handler.setLevel(log_level)
-    console_handler.setFormatter(formatter)
-    LOGGER.addHandler(console_handler)
+    if not LOGGER.hasHandlers():
+        console_handler = logging.StreamHandler(stream=sys.stdout)
+        console_handler.setLevel(log_level)
+        console_handler.setFormatter(formatter)
+        LOGGER.addHandler(console_handler)
     if log_file_name is not None:
         if log_file_name == "":
             log_file_name = BASE_PATH
@@ -80,8 +79,8 @@ def open_logger(log_file_name, log_level=logging.INFO):
     finally:
         LOGGER.info(f"Time taken: {time.time() - start_time}")
         LOGGER.info("=" * 50)
-        if LOGGER.hasHandlers():
-            LOGGER.handlers.clear()
+        if log_file_name is not None:
+            LOGGER.removeHandler(file_handler)
 
 
 def read_parameters_from_json_file(file_name="", default=""):
