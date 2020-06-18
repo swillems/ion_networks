@@ -99,7 +99,7 @@ class Network(HDF_MS_Run_File):
             A pd.Dataframe with centroided ion peaks.
         """
         ms_utils.LOGGER.info(
-            f"Writing nodes of ion-network {self.file_name}..."
+            f"Writing {data.shape[0]} nodes of ion-network {self.file_name}..."
         )
         precursor_rts = data["PRECURSOR_RT"].values
         if np.any(precursor_rts[:-1] > precursor_rts[1:]):
@@ -193,7 +193,9 @@ class Network(HDF_MS_Run_File):
         self.__write_edges(indptr, indices, precursor_errors, tuned)
 
     def __write_edges(self, indptr, indices, precursor_errors, tuned):
-        ms_utils.LOGGER.info(f"Writing edges of ion-network {self.file_name}")
+        ms_utils.LOGGER.info(
+            f"Writing {indices.shape[0]} edges of ion-network {self.file_name}"
+        )
         self.write_group("edges")
         self.write_dataset(
             "indptr",
@@ -288,13 +290,20 @@ class Network(HDF_MS_Run_File):
                     f"{self.file_name} failed"
                 )
                 continue
-            ransac_regressor = sklearn.linear_model.RANSACRegressor(
-                random_state=1
-            )
-            ransac_regressor.fit(
-                precursor_differences[use_slice].reshape(-1, 1),
-                frequency[use_slice].reshape(-1, 1),
-            )
+            try:
+                ransac_regressor = sklearn.linear_model.RANSACRegressor(
+                    random_state=1
+                )
+                ransac_regressor.fit(
+                    precursor_differences[use_slice].reshape(-1, 1),
+                    frequency[use_slice].reshape(-1, 1),
+                )
+            except ValueError:
+                ms_utils.LOGGER.info(
+                    f"{dimension} error tuning of ion-network "
+                    f"{self.file_name} failed"
+                )
+                continue
             min_index = max_frequency_index + np.argmin(
                 ransac_regressor.predict(
                     precursor_differences[max_frequency_index:].reshape(-1, 1)
@@ -645,7 +654,8 @@ class Evidence(HDF_MS_Run_File):
         intensity_correction,
     ):
         ms_utils.LOGGER.info(
-            f"Writing aligned nodes from {self.file_name} with {other.file_name}"
+            f"Writing {self_indices.shape[0]} aligned nodes "
+            f"from {self.file_name} with {other.file_name}"
         )
         self.write_group("nodes", parent_group_name=f"runs/{other.run_name}")
         self.write_dataset(
@@ -832,7 +842,9 @@ class Evidence(HDF_MS_Run_File):
         negative_pointers,
     ):
         ms_utils.LOGGER.info(
-            f"Writing aligned edges from {self.file_name} with {other.file_name}"
+            f"Writing {positive_pointers.shape[0]} positive edges "
+            f"and {negative_pointers.shape[0]} negative edges from "
+            f"{self.file_name} with {other.file_name}"
         )
         self.write_group("edges", parent_group_name=f"runs/{other.run_name}")
         self.write_dataset(
@@ -1287,6 +1299,7 @@ def make_symmetric(indptr, indices):
     offsets = np.cumsum(np.bincount(indices))
     indptr_ = indptr.copy()
     indptr_[1:1 + offsets.shape[0]] += offsets
+    indptr_[1 + offsets.shape[0]:] += offsets[-1]
     indices_ = np.empty(indptr_[-1], np.int64)
     pointers_ = np.empty_like(indices_)
     offsets = indptr_[:-1] + np.diff(indptr)

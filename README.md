@@ -10,9 +10,10 @@ The ion-networks repository was developed on a [Ubuntu 18.04](http://releases.ub
 For Windows users, the recommended approach is to install a [Windows subsystem for Linux (WSL)](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux) with Ubuntu 18.04 by following [these steps](https://docs.microsoft.com/en-us/windows/wsl/install-win10). After the WSL has been installed and a user account has been created, close the WSL and download and install [MobaXterm v11.1](https://mobaxterm.mobatek.net/download-home-edition.html) or higher. Open MobaXterm and from within open the WSL by clicking the WSL icon on the left of the window. Now, follow the installation steps for Ubuntu 18.04 within the MobaXterm WSL.
 
 ### Ubuntu 18.04
-This repository requires python to be run within a [conda](https://conda.io/projects/conda/en/latest/index.html) environment. The following one-line command will install Miniconda3 (only if this is not installed yet), followed by the installation of the ion-networks repository by [downloading the ion-networks installation script](https://github.com/swillems/ion_networks/tree/master/install/install.sh) and running the install script at the desired location:
+This repository requires python to be run within a [conda](https://conda.io/projects/conda/en/latest/index.html) environment. The following one-line command will install Miniconda3 (only if this is not installed yet), followed by the installation of the ion-networks repository by [downloading the ion-networks installation script](https://github.com/swillems/ion_networks/tree/master/install/install.sh) and running the install script at the desired location (this path should be chosen by the user):
 
 ```bash
+mkdir /desired/path/where/to/install/ion_networks/
 cd /desired/path/where/to/install/ion_networks/
 wget https://raw.githubusercontent.com/swillems/ion_networks/master/install/install.sh && bash install.sh && rm install.sh && source ~/.bashrc
 # wget --auth-no-challenge -O install.sh https://raw.githubusercontent.com/swillems/ion_networks/master/install/install.sh?token=XXX && bash install.sh && rm install.sh && source ~/.bashrc
