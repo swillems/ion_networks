@@ -556,39 +556,50 @@ class Evidence(HDF_MS_Run_File):
             set(self.ion_network.dimensions) & set(other.ion_network.dimensions)
         )
         dimensions.remove("FRAGMENT_LOGINT")
-        self_mz = self.ion_network.get_ion_coordinates("FRAGMENT_MZ")
-        other_mz = other.ion_network.get_ion_coordinates("FRAGMENT_MZ")
-        self_mz_order = np.argsort(self_mz)
-        other_mz_order = np.argsort(other_mz)
-        max_mz_diff = 1 + errors["FRAGMENT_MZ"] * 10**-6
+        self_coordinates = np.stack(
+            self.ion_network.get_ion_coordinates(dimensions)
+        ).T
+        other_coordinates = np.stack(
+            other.ion_network.get_ion_coordinates(dimensions)
+        ).T
+        fragment_index = dimensions.index("FRAGMENT_MZ")
+        self_mz_order = np.argsort(self_coordinates[:, fragment_index])
+        other_mz_order = np.argsort(other_coordinates[:, fragment_index])
+        self_coordinates = self_coordinates[self_mz_order]
+        other_coordinates = other_coordinates[other_mz_order]
+        if parameters["calibrate_FRAGMENT_MZ"]:
+            other_mzs, fragment_ppm_correction = other.__calibrate_fragment_mz(
+                self,
+                other_coordinates[:, fragment_index],
+                self_coordinates[:, fragment_index],
+                parameters
+            )
+            other_coordinates[:, fragment_index] = other_mzs
+        else:
+            fragment_ppm_correction = 0
+        if parameters["calibrate_PRECURSOR_RT"]:
+            other_rts = other.__calibrate_precursor_rt(
+                self,
+                fragment_ppm_correction,
+                parameters
+            )[other_mz_order]
+            other_coordinates[:, dimensions.index("PRECURSOR_RT")] = other_rts
+        self_coordinates[:, fragment_index] = np.log(
+            self_coordinates[:, fragment_index]
+        ) * 10**6
+        other_coordinates[:, fragment_index] = np.log(
+            other_coordinates[:, fragment_index]
+        ) * 10**6
         lower_limits = np.searchsorted(
-            other_mz[other_mz_order],
-            self_mz[self_mz_order] / max_mz_diff,
+            other_coordinates[:, fragment_index],
+            self_coordinates[:, fragment_index] - errors["FRAGMENT_MZ"],
             "left"
         )
         upper_limits = np.searchsorted(
-            other_mz[other_mz_order],
-            self_mz[self_mz_order] * max_mz_diff,
+            other_coordinates[:, fragment_index],
+            self_coordinates[:, fragment_index] + errors["FRAGMENT_MZ"],
             "right"
         )
-        self_coordinates = np.stack(
-            self.ion_network.get_ion_coordinates(dimensions)
-        ).T[self_mz_order]
-        other_coordinates = np.stack(
-            other.ion_network.get_ion_coordinates(dimensions)
-        ).T[other_mz_order]
-        # TODO Express precursor ppm mzs in absolute?
-        self_coordinates[:, dimensions.index("FRAGMENT_MZ")] = np.log(
-            self_coordinates[:, dimensions.index("FRAGMENT_MZ")]
-        ) * 10**6
-        other_coordinates[:, dimensions.index("FRAGMENT_MZ")] = np.log(
-            other_coordinates[:, dimensions.index("FRAGMENT_MZ")]
-        ) * 10**6
-        if parameters["calibrate_PRECURSOR_RT"]:
-            other_rts = other.__calibrate_precursor_rt(
-                self, parameters
-            )[other_mz_order]
-            other_coordinates[:, dimensions.index("PRECURSOR_RT")] = other_rts
         max_errors = np.array([errors[dimension] for dimension in dimensions])
         with multiprocessing.pool.ThreadPool(thread_count) as p:
             results = p.starmap(
@@ -654,8 +665,8 @@ class Evidence(HDF_MS_Run_File):
         intensity_correction,
     ):
         ms_utils.LOGGER.info(
-            f"Writing {self_indices.shape[0]} aligned nodes "
-            f"from {self.file_name} with {other.file_name}"
+            f"Writing {np.sum(unique)} unique nodes and {np.sum(~unique)} "
+            f"ambiguous nodes from {self.file_name} with {other.file_name}"
         )
         self.write_group("nodes", parent_group_name=f"runs/{other.run_name}")
         self.write_dataset(
@@ -777,14 +788,66 @@ class Evidence(HDF_MS_Run_File):
             np.flatnonzero(other_negative_mask),
         )
 
-    def __calibrate_precursor_rt(self, other, parameters):
+    def __calibrate_fragment_mz(self, other, self_mzs, other_mzs, parameters):
+        ms_utils.LOGGER.info(
+            f"Calibrating PRECURSOR_MZ of {self.file_name} with "
+            f"{other.file_name}"
+        )
+        ppm = parameters["calibration_ppm_FRAGMENT_MZ"]
+        mass_defect = parameters["calibration_mass_defect"]
+        self_lower = np.searchsorted(
+            self_mzs,
+            self_mzs * (1 - ppm / 10**6),
+            "left"
+        )
+        self_upper = np.searchsorted(
+            self_mzs,
+            self_mzs * (1 + ppm / 10**6),
+            "right"
+        )
+        self_peaks = find_peak_indices(
+            self_mzs,
+            self_upper - self_lower,
+            mass_defect
+        )
+        other_lower = np.searchsorted(
+            other_mzs,
+            other_mzs * (1 - ppm / 10**6),
+            "left"
+        )
+        other_upper = np.searchsorted(
+            other_mzs,
+            other_mzs * (1 + ppm / 10**6),
+            "right"
+        )
+        other_peaks = find_peak_indices(
+            other_mzs,
+            other_upper - other_lower,
+            mass_defect
+        )
+        fragment_ppm_correction = np.median(
+            (self_mzs[self_peaks] - other_mzs[other_peaks]) * 10**6 / self_mzs[self_peaks]
+        )
+        return (
+            self_mzs * (1 - fragment_ppm_correction / 10**6),
+            fragment_ppm_correction
+        )
+
+    def __calibrate_precursor_rt(
+        self,
+        other,
+        fragment_ppm_correction,
+        parameters
+    ):
         # TODO: Docstring
         ms_utils.LOGGER.info(
             f"Calibrating PRECURSOR_RT of {self.file_name} with "
             f"{other.file_name}"
         )
         self_mzs = self.ion_network.get_ion_coordinates("FRAGMENT_MZ")
-        other_mzs = other.ion_network.get_ion_coordinates("FRAGMENT_MZ")
+        other_mzs = other.ion_network.get_ion_coordinates("FRAGMENT_MZ") * (
+            1 + fragment_ppm_correction / 10**6
+        )
         self_mz_order = np.argsort(self_mzs)
         other_mz_order = np.argsort(other_mzs)
         other_rt_order = np.argsort(other_mz_order)
@@ -1377,3 +1440,22 @@ def align_edges(
         ] = current_start + candidates1[overlap]
         pointer_offset += overlap_count
     return self_pointers_[:pointer_offset], other_pointers_[:pointer_offset]
+
+
+@numba.njit
+def find_peak_indices(input_array, output_array, max_distance):
+    peaks = np.zeros(int(input_array[-1]), np.int64)
+    current_max_mz = 0
+    current_max_int = 0
+    current_max_index = 0
+    for index, (intensity, mz) in enumerate(zip(output_array, input_array)):
+        if mz > current_max_mz + max_distance:
+            peaks[int(current_max_mz)] = current_max_index
+            current_max_mz = mz
+            current_max_int = intensity
+            current_max_index = index
+        elif intensity > current_max_int:
+            current_max_mz = mz
+            current_max_int = intensity
+            current_max_index = index
+    return peaks

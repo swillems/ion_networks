@@ -21,12 +21,12 @@ def get_mzs_and_frequencies(mzs, ppm):
 
 
 @numba.njit
-def find_peaks(intensities, mzs, max_distance=0.9):
-    peaks = np.zeros(int(mzs[-1]), np.int64)
+def find_peak_indices(input_array, output_array, max_distance):
+    peaks = np.zeros(int(input_array[-1]), np.int64)
     current_max_mz = 0
     current_max_int = 0
     current_max_index = 0
-    for index, (intensity, mz) in enumerate(zip(intensities, mzs)):
+    for index, (intensity, mz) in enumerate(zip(output_array, input_array)):
         if mz > current_max_mz + max_distance:
             peaks[int(current_max_mz)] = current_max_index
             current_max_mz = mz

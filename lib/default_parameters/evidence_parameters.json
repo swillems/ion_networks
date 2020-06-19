@@ -6,10 +6,12 @@
     "fragment_errors": {
         "FRAGMENT_MZ": 50.0,
         "PRECURSOR_RT": 0.5,
-        "PRECURSOR_DT": 2.0,
+        "PRECURSOR_DT": 3.0,
         "PRECURSOR_MZ": 5.0
     },
+    "calibrate_FRAGMENT_MZ": true,
     "calibrate_PRECURSOR_RT": true,
-    "calibration_ppm_FRAGMENT_MZ": 1.0,
-    "calibration_ions": 50000
+    "calibration_ppm_FRAGMENT_MZ": 5.0,
+    "calibration_ions": 100000,
+    "calibration_mass_defect": 0.9
 }
