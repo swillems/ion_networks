@@ -13,45 +13,6 @@ import multiprocessing as mp
 
 
 
-def get_mzs_and_frequencies(mzs, ppm):
-    new_mzs = np.sort(mzs)
-    lower = np.searchsorted(new_mzs, new_mzs * (1 - ppm / 10**6), "left")
-    upper = np.searchsorted(new_mzs, new_mzs * (1 + ppm / 10**6), "right")
-    return new_mzs, upper - lower
-
-
-@numba.njit
-def find_peak_indices(input_array, output_array, max_distance):
-    peaks = np.zeros(int(input_array[-1]), np.int64)
-    current_max_mz = 0
-    current_max_int = 0
-    current_max_index = 0
-    for index, (intensity, mz) in enumerate(zip(output_array, input_array)):
-        if mz > current_max_mz + max_distance:
-            peaks[int(current_max_mz)] = current_max_index
-            current_max_mz = mz
-            current_max_int = intensity
-            current_max_index = index
-        elif intensity > current_max_int:
-            current_max_mz = mz
-            current_max_int = intensity
-            current_max_index = index
-    return peaks
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -147,6 +108,14 @@ def find_peak_indices(input_array, output_array, max_distance):
 
 
 
+
+
+
+
+
+
+
+
 #
 #
 # inet=inets[0]
@@ -161,11 +130,6 @@ def find_peak_indices(input_array, output_array, max_distance):
 # )
 # print(inet.dimensions)
 #
-
-
-
-
-
 
 
 #
@@ -200,9 +164,6 @@ def find_peak_indices(input_array, output_array, max_distance):
 # color_order = np.argsort(colors)
 # colors = colors[color_order]
 # plot_edges = plot_edges[color_order]
-
-
-
 
 
 

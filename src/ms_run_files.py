@@ -876,7 +876,13 @@ class Evidence(HDF_MS_Run_File):
         orders = []
         for i, dimension in enumerate(dimensions):
             array = np.abs(
-                self_coordinates[self_indices, i] - other_coordinates[other_indices, i]
+                self_coordinates[
+                    self_indices,
+                    i
+                ] - other_coordinates[
+                    other_indices,
+                    i
+                ]
             )
             arrays.append(array)
             orders.append(np.argsort(array))
@@ -901,6 +907,10 @@ class Evidence(HDF_MS_Run_File):
                 selection[bad_selection] = False
                 previous_best_count = best_count
                 fragment_errors[best_dimension] = best_value
+                ms_utils.LOGGER.info(
+                    f"Updating {dimension} fragment errors between "
+                    f"{self.file_name} and {other.file_name}: {best_value}"
+                )
             else:
                 break
         return selection, fragment_errors

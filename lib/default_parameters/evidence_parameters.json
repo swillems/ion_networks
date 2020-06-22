@@ -5,14 +5,14 @@
     "threads": 0,
     "fragment_errors": {
         "FRAGMENT_MZ": 100,
-        "PRECURSOR_RT": 5,
+        "PRECURSOR_RT": 3.0,
         "PRECURSOR_DT": 3.0,
         "PRECURSOR_MZ": 5.0
     },
-    "fragment_errors_auto_tune_minimal_improvement": 0.01,
     "calibrate_FRAGMENT_MZ": true,
     "calibrate_PRECURSOR_RT": true,
     "calibration_ppm_FRAGMENT_MZ": 5.0,
     "calibration_ions": 100000,
-    "calibration_mass_defect": 0.9
+    "calibration_mass_defect": 0.9,
+    "fragment_errors_auto_tune_minimal_improvement": 0.01
 }
