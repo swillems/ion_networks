@@ -547,9 +547,6 @@ class Evidence(HDF_MS_Run_File):
 
     def __align_nodes(self, other, parameters):
         # TODO: Docstring
-        ms_utils.LOGGER.info(
-            f"Aligning nodes of {self.file_name} and {other.file_name}"
-        )
         thread_count = ms_utils.MAX_THREADS
         errors = parameters["fragment_errors"]
         dimensions = sorted(
@@ -601,6 +598,9 @@ class Evidence(HDF_MS_Run_File):
             "right"
         )
         max_errors = np.array([errors[dimension] for dimension in dimensions])
+        ms_utils.LOGGER.info(
+            f"Aligning nodes of {self.file_name} and {other.file_name}"
+        )
         with multiprocessing.pool.ThreadPool(thread_count) as p:
             results = p.starmap(
                 align_coordinates,
@@ -627,6 +627,19 @@ class Evidence(HDF_MS_Run_File):
         fragment_errors = {
             dimension: errors[dimension] for dimension in dimensions
         }
+        if parameters["fragment_errors_auto_tune_minimal_improvement"] > -1:
+            selection, fragment_errors = self.__auto_tune_fragment_errors(
+                other,
+                self_indices,
+                other_indices,
+                dimensions,
+                self_coordinates[np.argsort(self_mz_order)],
+                other_coordinates[np.argsort(other_mz_order)],
+                parameters["fragment_errors_auto_tune_minimal_improvement"],
+                fragment_errors
+            )
+            self_indices = self_indices[selection]
+            other_indices = other_indices[selection]
         self_unique = np.bincount(self_indices) == 1
         other_unique = np.bincount(other_indices) == 1
         unique = self_unique[self_indices] & other_unique[other_indices]
@@ -646,14 +659,16 @@ class Evidence(HDF_MS_Run_File):
             self_indices,
             unique,
             fragment_errors,
-            intensity_correction
+            intensity_correction,
+            fragment_ppm_correction
         )
         other.__write_nodes(
             self,
             other_indices,
             unique,
             fragment_errors,
-            -intensity_correction
+            -intensity_correction,
+            -fragment_ppm_correction
         )
 
     def __write_nodes(
@@ -663,6 +678,7 @@ class Evidence(HDF_MS_Run_File):
         unique,
         fragment_errors,
         intensity_correction,
+        fragment_ppm_correction
     ):
         ms_utils.LOGGER.info(
             f"Writing {np.sum(unique)} unique nodes and {np.sum(~unique)} "
@@ -703,6 +719,11 @@ class Evidence(HDF_MS_Run_File):
         )
         self.write_attr(
             "median_intensity_correction",
+            intensity_correction,
+            parent_group_name=f"runs/{other.run_name}/nodes"
+        )
+        self.write_attr(
+            "fragment_ppm_correction",
             intensity_correction,
             parent_group_name=f"runs/{other.run_name}/nodes"
         )
@@ -832,6 +853,57 @@ class Evidence(HDF_MS_Run_File):
             self_mzs * (1 - fragment_ppm_correction / 10**6),
             fragment_ppm_correction
         )
+
+    def __auto_tune_fragment_errors(
+        self,
+        other,
+        self_indices,
+        other_indices,
+        dimensions,
+        self_coordinates,
+        other_coordinates,
+        minimal_improvement,
+        fragment_errors,
+    ):
+        ms_utils.LOGGER.info(
+            f"Auto-tuning fragment errors of {self.file_name} and {other.file_name}"
+        )
+        selection = np.ones(self_indices.shape[0], np.bool_)
+        best_count = 0
+        previous_best_count = 0
+        best_dimension = ""
+        arrays = []
+        orders = []
+        for i, dimension in enumerate(dimensions):
+            array = np.abs(
+                self_coordinates[self_indices, i] - other_coordinates[other_indices, i]
+            )
+            arrays.append(array)
+            orders.append(np.argsort(array))
+        while True:
+            bad_selection = np.array([], np.int64)
+            for i, dimension in enumerate(dimensions):
+                if dimension == best_dimension:
+                    continue
+                array = arrays[i][selection]
+                order = orders[i][selection]
+                apex, counts = get_unique_apex_and_count(
+                    self_indices[order],
+                    other_indices[order],
+                    return_all_counts=False
+                )
+                if counts[0] > best_count:
+                    best_count = counts[0]
+                    best_dimension = dimension
+                    bad_selection = order[apex:]
+                    best_value = array[order[apex]]
+            if best_count > previous_best_count * (1 + minimal_improvement):
+                selection[bad_selection] = False
+                previous_best_count = best_count
+                fragment_errors[best_dimension] = best_value
+            else:
+                break
+        return selection, fragment_errors
 
     def __calibrate_precursor_rt(
         self,
@@ -1442,7 +1514,7 @@ def align_edges(
     return self_pointers_[:pointer_offset], other_pointers_[:pointer_offset]
 
 
-@numba.njit
+@numba.njit(cache=True)
 def find_peak_indices(input_array, output_array, max_distance):
     peaks = np.zeros(int(input_array[-1]), np.int64)
     current_max_mz = 0
@@ -1459,3 +1531,60 @@ def find_peak_indices(input_array, output_array, max_distance):
             current_max_int = intensity
             current_max_index = index
     return peaks
+
+
+@numba.njit(nogil=True, cache=True)
+def get_unique_apex_and_count(
+    ordered_self_indices,
+    ordered_other_indices,
+    return_all_counts=True
+):
+    counts = np.zeros_like(ordered_self_indices)
+    self_max = np.max(ordered_self_indices)
+    other_max = np.max(ordered_other_indices)
+    unique_pair = np.zeros(counts.shape[0], np.bool_)
+    self_frequencies = np.zeros(self_max + 1, np.int64)
+    other_frequencies = np.zeros(other_max + 1, np.int64)
+    self_indptr = np.empty(self_max + 2, np.int64)
+    self_indptr[0] = 0
+    self_indptr[1:] = np.cumsum(np.bincount(ordered_self_indices))
+    self_order = np.argsort(ordered_self_indices)
+    other_indptr = np.empty(other_max + 2, np.int64)
+    other_indptr[0] = 0
+    other_indptr[1:] = np.cumsum(np.bincount(ordered_other_indices))
+    other_order = np.argsort(ordered_other_indices)
+    unique_count = 0
+    max_count = 0
+    apex = 0
+    for i in range(counts.shape[0]):
+        self_index = ordered_self_indices[i]
+        other_index = ordered_other_indices[i]
+        if (
+            self_frequencies[self_index] == 0
+        ) & (
+            other_frequencies[other_index] == 0
+        ):
+            unique_count += 1
+            unique_pair[i] = True
+            if unique_count > max_count:
+                apex = i
+                max_count = unique_count
+        else:
+            self_locs = self_order[
+                self_indptr[self_index]: self_indptr[self_index + 1]
+            ]
+            if np.any(unique_pair[self_locs]):
+                unique_count -= 1
+            other_locs = other_order[
+                other_indptr[other_index]: other_indptr[other_index + 1]
+            ]
+            if np.any(unique_pair[other_locs]):
+                unique_count -= 1
+            unique_pair[self_locs] = False
+            unique_pair[other_locs] = False
+        self_frequencies[self_index] += 1
+        other_frequencies[other_index] += 1
+        counts[i] = unique_count
+    if not return_all_counts:
+        counts = counts[apex: apex + 1]
+    return apex, counts
