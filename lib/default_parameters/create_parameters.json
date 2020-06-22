@@ -1,6 +1,6 @@
 {
-    "log_file_name": "",
-    "output_directory": "",
+    "log_file_name": ".",
+    "output_directory": ".",
     "threads": 0,
     "precursor_errors": {
         "PRECURSOR_RT": 0.2,

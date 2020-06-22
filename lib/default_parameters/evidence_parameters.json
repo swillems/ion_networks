@@ -1,6 +1,6 @@
 {
-    "log_file_name": "",
-    "output_directory": "",
+    "log_file_name": ".",
+    "output_directory": ".",
     "force_overwrite": true,
     "threads": 0,
     "fragment_errors": {

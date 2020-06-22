@@ -132,7 +132,6 @@ class Network(HDF_MS_Run_File):
             A dictionary with optional parameters for the creation of an
             ion-network.
         """
-        ms_utils.LOGGER.info(f"Creating edges of ion-network {self.file_name}")
         thread_count = ms_utils.MAX_THREADS
         precursor_coordinates = np.stack(
             self.get_ion_coordinates(self.precursor_dimensions)
@@ -168,6 +167,7 @@ class Network(HDF_MS_Run_File):
             rt_coordinates + parameters["precursor_errors"]["PRECURSOR_RT"],
             "right"
         )
+        ms_utils.LOGGER.info(f"Creating edges of ion-network {self.file_name}")
         with multiprocessing.pool.ThreadPool(thread_count) as p:
             results = p.starmap(
                 align_coordinates,
@@ -846,6 +846,10 @@ class Evidence(HDF_MS_Run_File):
             other_upper - other_lower,
             mass_defect
         )
+        if self_peaks.shape[0] > other_peaks.shape[0]:
+            self_peaks = self_peaks[:other_peaks.shape[0]]
+        elif other_peaks.shape[0] > self_peaks.shape[0]:
+            other_peaks = other_peaks[:self_peaks.shape[0]]
         fragment_ppm_correction = np.median(
             (self_mzs[self_peaks] - other_mzs[other_peaks]) * 10**6 / self_mzs[self_peaks]
         )
