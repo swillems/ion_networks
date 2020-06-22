@@ -41,7 +41,7 @@ class HDF_MS_Run_File(ms_utils.HDF_File):
         return ".".join(os.path.basename(self.file_name).split(".")[:-2])
 
 
-class Network(HDF_MS_Run_File):
+class HDF_Network_File(HDF_MS_Run_File):
     """
     An ion-network with ions as nodes and possible precursor origin of
     fragments as edges.
@@ -469,7 +469,7 @@ class Network(HDF_MS_Run_File):
             return indptr, indices
 
 
-class Evidence(HDF_MS_Run_File):
+class HDF_Evidence_File(HDF_MS_Run_File):
     """
     An evidence set containing positive and negative edge evidence, as well as
     node evidence.
@@ -496,7 +496,7 @@ class Evidence(HDF_MS_Run_File):
             is_read_only=is_read_only,
             new_file=new_file,
         )
-        self.ion_network = Network(reference)
+        self.ion_network = HDF_Network_File(reference)
         self.ion_network.evidence = self
         if new_file:
             self.write_group("runs")
@@ -531,7 +531,7 @@ class Evidence(HDF_MS_Run_File):
             self.directory,
             key + ".evidence.hdf"
         )
-        return Evidence(full_file_name)
+        return HDF_Evidence_File(full_file_name)
 
     def __iter__(self):
         self.__iterator_pointer = 0
@@ -1129,7 +1129,7 @@ class Evidence(HDF_MS_Run_File):
             return edges
 
 
-class Annotation(HDF_MS_Run_File):
+class HDF_Annotation_File(HDF_MS_Run_File):
     # TODO: Docstring
 
     def __init__(
@@ -1147,9 +1147,9 @@ class Annotation(HDF_MS_Run_File):
             is_read_only=is_read_only,
             new_file=new_file,
         )
-        self.evidence = Evidence(reference)
+        self.evidence = HDF_Evidence_File(reference)
         self.evidence.annotation = self
-        self.ion_network = Network(reference)
+        self.ion_network = HDF_Network_File(reference)
         self.ion_network.annotation = self
 
     def create_annotations(self, database, parameters):

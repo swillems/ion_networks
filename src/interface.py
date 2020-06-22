@@ -159,7 +159,7 @@ def create_ion_networks(
                 output_path,
                 f"{local_file_name[:-9]}.inet.hdf"
             )
-            network = ms_run_files.Network(
+            network = ms_run_files.HDF_Network_File(
                 ion_network_file_name,
                 new_file=True
             )
@@ -212,7 +212,7 @@ def evidence_ion_networks(
         logger.info(f"max_threads: {ms_utils.MAX_THREADS}")
         logger.info("")
         evidence_files = [
-            ms_run_files.Evidence(
+            ms_run_files.HDF_Evidence_File(
                 file_name,
                 new_file=parameters["force_overwrite"],
                 is_read_only=False,
@@ -320,7 +320,7 @@ def create_database(
                 database_file_name = f"{database_file_name}.hdf"
         else:
             database_file_name = f"{database_file_name}_decoy.hdf"
-        db = ms_database.Database(
+        db = ms_database.HDF_Database_File(
             database_file_name,
             new_file=True,
         )
@@ -362,7 +362,7 @@ def annotate_ion_network(
         logger.info(f"max_threads: {ms_utils.MAX_THREADS}")
         logger.info("")
         for file_name in input_file_names:
-            ani = ms_run_files.Annotation(
+            ani = ms_run_files.HDF_Annotation_File(
                 file_name,
                 new_file=True,
             )

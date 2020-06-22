@@ -1077,12 +1077,12 @@ class Browser(object):
         if file_name is None:
             return
         try:
-            ion_network = ms_run_files.Network(file_name)
+            ion_network = ms_run_files.HDF_Network_File(file_name)
         except (OSError, ValueError):
             sg.popup_error('This is not a valid ion_network')
             return
         try:
-            evidence = ms_run_files.Evidence(file_name)
+            evidence = ms_run_files.HDF_Evidence_File(file_name)
         except (OSError, ValueError):
             sg.popup_error('This ion_network has no valid evidence')
             return

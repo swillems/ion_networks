@@ -11,7 +11,7 @@ import pyteomics.fasta
 import ms_utils
 
 
-class Database(ms_utils.HDF_File):
+class HDF_Database_File(ms_utils.HDF_File):
     # TODO: Docstring
 
     def create_from_fastas(
@@ -312,7 +312,7 @@ class Database(ms_utils.HDF_File):
             yield selected
         else:
             for ptm in ptms[len(selected)]:
-                for ptm_combination in Database.generate_ptm_combinations_recursively(
+                for ptm_combination in HDF_Database_File.generate_ptm_combinations_recursively(
                     ptms,
                     selected + [ptm]
                 ):
@@ -343,7 +343,7 @@ class Database(ms_utils.HDF_File):
                     local_ptms[i] += fixed_ptms[aa]
                 else:
                     local_ptms[i].append("")
-        for ptm_combination in Database.generate_ptm_combinations_recursively(local_ptms):
+        for ptm_combination in HDF_Database_File.generate_ptm_combinations_recursively(local_ptms):
             yield ptm_combination
 
     def get_fragment_coordinates(self, dimensions=None, indices=...):
