@@ -130,6 +130,7 @@ dmypy.json
 
 # Temp folder and sandbox
 .tmp
+projects
 # src/sandbox*
 *log.txt
 

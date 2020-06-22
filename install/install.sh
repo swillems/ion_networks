@@ -30,6 +30,14 @@ if ! hash ion_networks.py 2>/dev/null; then
   conda deactivate
   echo "alias ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'" >> ~/.bashrc
   # export ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'
+  echo "Testing installation"
+  mkdir projects
+  cd projects
+  mkdir test_data
+  cd test_data
+  ion_networks.py create -i .
+  ion_network.py evidence -i .
+  ion_networks.py show
 else
   echo "Ion-networks are already installed."
   echo "Update with command 'bash ion_networks/install/update.sh'."
