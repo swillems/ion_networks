@@ -148,7 +148,14 @@ class HDF_Database_File(ms_utils.HDF_File):
         protrec = pd.DataFrame(
             [
                 tuple(
-                    [protein_name] + [
+                    [
+                        protein_name,
+                        protein_name.startswith(
+                            parameters["decoy_prefix"]
+                        ) & protein_name.endswith(
+                            parameters["decoy_suffix"]
+                        )
+                    ] + [
                         protein_info[column] if column in protein_info else "" for column in columns
                     ]
                 ) for protein_name, protein_info in sorted(
@@ -156,7 +163,7 @@ class HDF_Database_File(ms_utils.HDF_File):
                     key=lambda p: p[1]["index"]
                 )
             ],
-            columns=["protein"] + columns
+            columns=["protein", "decoy"] + columns
         )
         protrec.set_index("index", inplace=True)
         self.write_dataset("proteins", protrec)
@@ -171,22 +178,25 @@ class HDF_Database_File(ms_utils.HDF_File):
     ):
         # TODO: Docstring
         ms_utils.LOGGER.info(f"Writing peptidoforms to {self.file_name}")
+        decoys = self.read_dataset("decoy", parent_group_name="proteins")
         peptide_list = [
             (
                 peptide,
                 pyteomics.mass.fast_mass(peptide),
-                ";".join([str(p) for p in protein_list])
+                ";".join([str(p) for p in protein_list]),
+                np.all(decoys[protein_list])
             ) for (peptide, protein_list) in sorted(peptides.items())
         ]
         columns = [
             "sequence",
             "mass",
             "proteins",
+            "decoy",
         ]
         if (len(variable_ptms) + len(fixed_ptms)) > 0:
             columns += ["modifications"]
             modified_peptide_list = []
-            for peptide, mass, proteins in peptide_list:
+            for peptide, mass, proteins, decoy in peptide_list:
                 for ptm_combination in self.generate_ptm_combinations(
                     f".{peptide}.",
                     [[]] * (len(peptide) + 2),
@@ -213,6 +223,7 @@ class HDF_Database_File(ms_utils.HDF_File):
                             peptide,
                             mass + ptm_combo_mass,
                             proteins,
+                            decoy,
                             parsed_ptm_combination
                         )
                     )

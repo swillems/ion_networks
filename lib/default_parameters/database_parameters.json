@@ -16,7 +16,7 @@
     },
     "model": "HCD",
     "protease": "trypsin",
-    "missed_cleavages": 1,
+    "missed_cleavages": 0,
     "min_peptide_length": 5,
     "max_peptide_length": 30,
     "standard_amino_acids": true,
@@ -24,7 +24,7 @@
     "create_decoys": true,
     "decoy_prefix": "DECOY_",
     "decoy_suffix": "_REVERSED",
-    "charges": [1, 2, 3],
+    "charges": [2],
     "cpu_count": 8,
     "batch_size": 1000000
 }

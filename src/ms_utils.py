@@ -30,6 +30,7 @@ DEFAULT_PARAMETER_FILES = {
     "interface": "interface_parameters.json",
     "database": "database_parameters.json",
     "annotation": "annotation_parameters.json",
+    "mgf": "mgf_parameters.json",
 }
 DATA_TYPE_FILE_EXTENSIONS = {
     "DDA": ".mgf",

@@ -10,6 +10,7 @@ import scipy
 import numba
 import scipy.sparse
 import sklearn.linear_model
+import numexpr as ne
 # local
 import ms_database
 import ms_utils
@@ -529,7 +530,7 @@ class HDF_Evidence_File(HDF_MS_Run_File):
             raise KeyError("Evidence {key} is missing from {self}")
         full_file_name = os.path.join(
             self.directory,
-            key + ".evidence.hdf"
+            f"{key}.evidence.hdf"
         )
         return HDF_Evidence_File(full_file_name)
 
@@ -1128,6 +1129,76 @@ class HDF_Evidence_File(HDF_MS_Run_File):
                 edges = mask
             return edges
 
+    def create_mgf(self, parameters):
+        ms_utils.LOGGER.info(f"Creating mgf of {self.file_name}")
+        selected_edges = ne.evaluate(
+            parameters["edge_threshold"],
+            local_dict={
+                "positive_edges": self.get_edges(),
+                "negative_edges": self.get_edges(positive=False),
+                "evidence_run_count": self.run_count
+            },
+            global_dict={},
+        )
+        indptr, indices, edge_pointers = self.ion_network.get_edges(
+            symmetric=True,
+            return_pointers=True
+        )
+        clusters = cluster_network(
+            indptr,
+            indices,
+            edge_pointers,
+            selected_edges,
+        )
+        cluster_indices = np.argsort(clusters)
+        cluster_indptr = np.empty(np.max(clusters + 2), np.int64)
+        cluster_indptr[0] = 0
+        cluster_indptr[1:] = np.cumsum(np.bincount(clusters))
+        mzs, ints, rts = self.ion_network.get_ion_coordinates(
+            ["FRAGMENT_MZ", "FRAGMENT_LOGINT", "PRECURSOR_RT"]
+        )
+        with open(
+            os.path.join(self.directory, f"{self.run_name}.mgf"),
+            "w"
+        ) as infile:
+            for cluster_index in np.flatnonzero(
+                np.diff(cluster_indptr) > parameters["minimum_peaks"]
+            ):
+                infile.write("BEGIN IONS\n")
+                cluster = cluster_indices[
+                    cluster_indptr[cluster_index]: cluster_indptr[cluster_index + 1]
+                ]
+                # if expand:
+                #     new_indices = [cluster]
+                #     for index in cluster:
+                #         neighbors = indices[
+                #             indptr[index]: indptr[index + 1]
+                #         ]
+                #         pointers = edge_pointers[
+                #             indptr[index]: indptr[index + 1]
+                #         ]
+                #         selected = selected_edges[pointers]
+                #         new_indices.append(neighbors[selected])
+                #     cluster = np.unique(np.concatenate(new_indices))
+                local_mzs = np.round(mzs[cluster], 4)
+                local_ints = np.round(2**ints[cluster], 2)
+                local_rts = rts[cluster]
+                infile.write(
+                    f"TITLE=cluster_index.{cluster_index}.{cluster_index}. "
+                    f"File=\"{self.file_name}\" "
+                    f"NativeID:\"sample=1 period=1 cycle={cluster_index-1} "
+                    f"experiment=1\"\n"
+                )
+                infile.write(
+                    f"RTINSECONDS={np.round(np.average(local_rts) * 60, 2)}\n"
+                )
+                infile.write("PEPMASS=1000\n")
+                infile.write("CHARGE=2+\n")
+                mz_order = np.argsort(local_mzs)
+                for i in mz_order:
+                    infile.write(f"{local_mzs[i]} {local_ints[i]}\n")
+                infile.write("END IONS\n")
+
 
 class HDF_Annotation_File(HDF_MS_Run_File):
     # TODO: Docstring
@@ -1602,3 +1673,32 @@ def get_unique_apex_and_count(
     if not return_all_counts:
         counts = counts[apex: apex + 1]
     return apex, counts
+
+
+@numba.njit
+def cluster_network(
+    indptr,
+    indices,
+    edge_pointers,
+    selected_edges,
+):
+    node_count = indptr.shape[0] - 1
+    clusters = np.zeros(node_count, np.int64)
+    cluster_number = 0
+    for index in range(node_count):
+        if clusters[index] != 0:
+            continue
+        current_cluster = set()
+        new_indices = set()
+        new_indices.add(index)
+        while len(new_indices) > 0:
+            new_index = new_indices.pop()
+            current_cluster.add(new_index)
+            neighbors = indices[indptr[new_index]: indptr[new_index + 1]]
+            pointers = edge_pointers[indptr[new_index]: indptr[new_index + 1]]
+            selected = selected_edges[pointers]
+            new_indices |= set(neighbors[selected]) - current_cluster
+        cluster_number += 1
+        for i in current_cluster:
+            clusters[i] = cluster_number
+    return clusters

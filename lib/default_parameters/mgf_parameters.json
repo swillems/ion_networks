@@ -1,0 +1,7 @@
+{
+    "log_file_name": ".",
+    "output_directory": ".",
+    "force_overwrite": true,
+    "minimum_peaks": 5,
+    "edge_threshold": "2 * (positive_edges - negative_edges) > evidence_run_count"
+}

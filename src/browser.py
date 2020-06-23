@@ -754,11 +754,12 @@ class Browser(object):
                 flush_figure(self.figs["network"], flush)
                 return
             if self.edge_color in ['EDGE EVIDENCE']:
-                positive_counts = self.positive_edge_evidence
-                negative_counts = self.negative_edge_evidence
                 inds = ne.evaluate(
                     self.edge_formula,
-                    local_dict={"p": positive_counts, "n": negative_counts},
+                    local_dict={
+                        "p": self.positive_edge_evidence,
+                        "n": self.negative_edge_evidence
+                    },
                     global_dict={},
                 )
                 color_inds = inds[selected_edges]
@@ -813,16 +814,17 @@ class Browser(object):
                 )
             selected_neighbors = self.edges[nodes].T.tocsr()[nodes]
             a, b = selected_neighbors.nonzero()
-            positive_counts = self.positive_edge_evidence[
-                selected_neighbors.data
-            ]
-            negative_counts = self.negative_edge_evidence[
-                selected_neighbors.data
-            ]
             try:
                 values = ne.evaluate(
                     self.edge_formula,
-                    local_dict={"p": positive_counts, "n": negative_counts},
+                    local_dict={
+                        "p": self.positive_edge_evidence[
+                            selected_neighbors.data
+                        ],
+                        "n": self.negative_edge_evidence[
+                            selected_neighbors.data
+                        ]
+                    },
                     global_dict={},
                 )
                 selection = (values >= self.min_edge_threshold)

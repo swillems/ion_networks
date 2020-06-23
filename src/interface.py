@@ -369,6 +369,63 @@ def annotate_ion_network(
             ani.create_annotations(database_file_name, parameters)
 
 
+def create_mgfs(
+    input_path,
+    output_directory,
+    parameter_file_name,
+    log_file_name
+):
+    """
+    Create ion-networks from unified csv files.
+
+    Parameters
+    ----------
+    input_path : iterable[str]
+        An iterable with file and/or folder names.
+    output_directory : str or None
+        If provided, all new files will be saved in this directory.
+    parameter_file_name : str or None
+        If provided, parameters will be read from this file.
+    log_file_name : str or None
+        If provided, all logs will be written to this file.
+    """
+    if parameter_file_name is None:
+        parameter_file_name = ""
+    if parameter_file_name != "":
+        parameter_file_name = os.path.abspath(parameter_file_name)
+    if output_directory is None:
+        output_directory = ""
+    if output_directory != "":
+        output_directory = os.path.abspath(output_directory)
+    parameters = ms_utils.read_parameters_from_json_file(
+        file_name=parameter_file_name,
+        default="mgf"
+    )
+    # TODO: Proper parsing of empty log...?
+    if (log_file_name is None) or (log_file_name == ""):
+        log_file_name = parameters["log_file_name"]
+        if log_file_name == "":
+            log_file_name = output_directory
+    with ms_utils.open_logger(log_file_name) as logger:
+        logger.info(f"Creating ion-networks")
+        input_file_names = ms_utils.get_file_names_with_extension(
+            input_path,
+            ".evidence.hdf"
+        )
+        file_count = len(input_file_names)
+        logger.info(
+            f"{file_count} input_file{'s' if file_count != 1 else ''}"
+            f": {input_file_names}"
+        )
+        logger.info(f"output_directory: {output_directory}")
+        logger.info(f"parameter_file_name: {parameter_file_name}")
+        logger.info(f"max_threads: {ms_utils.MAX_THREADS}")
+        logger.info("")
+        for input_file in input_file_names:
+            evidence = ms_run_files.HDF_Evidence_File(input_file)
+            evidence.create_mgf(parameters=parameters)
+
+
 class GUI(object):
     # TODO: Docstring
 
@@ -683,6 +740,7 @@ class CLI(object):
         self.main.add_command(CLI.gui)
         self.main.add_command(CLI.database)
         self.main.add_command(CLI.annotate)
+        self.main.add_command(CLI.mgf)
         self.main()
 
     @staticmethod
@@ -1047,6 +1105,69 @@ class CLI(object):
             parameter_file_name,
             log_file_name
         )
+
+    @staticmethod
+    @click.command(
+        "mgf",
+        help="Create [input.MGF] ion-network files from evidence "
+            "[input.evidence.hdf] files.",
+        short_help="Create mgf files from evidence."
+    )
+    @click.option(
+        "--input_path",
+        "-i",
+        help="An evidence [input.evidence.hdf] file. "
+            "Individual files can be provided, as well as folders. "
+            "This flag can be set multiple times.",
+        multiple=True,
+        required=True,
+        type=click.Path(exists=True)
+    )
+    @click.option(
+        "--output_directory",
+        "-o",
+        help="For each [input.evidence.hdf] file, an [input.mgf] "
+            "file is created. "
+            "If no output directory is provided, each [input.mgf] file is "
+            "placed in the same folder as its corresponding "
+            "[input.evidence.hdf] file. "
+            "This output directory can also be supplied through a "
+            "[parameters.json] file. "
+            "WARNING: This overrides already existing files without "
+            "confirmation.",
+        type=click.Path(file_okay=False)
+    )
+    @click.option(
+        "--parameter_file",
+        "-p",
+        "parameter_file_name",
+        help="A [parameters.json] file with optional parameters.",
+        type=click.Path(exists=True, dir_okay=False)
+    )
+    @click.option(
+        "--log_file",
+        "-l",
+        "log_file_name",
+        help="Save the log to a [log.txt] file. "
+            "By default this is written to the current directory. "
+            "This log file can also be supplied through a [parameters.json] "
+            "file. It can be turned off by providing an empty path (i.e. ''). "
+            "If the log file already exists, the new log data is appended.",
+        type=click.Path()
+    )
+    def mgf(
+        input_path,
+        output_directory,
+        parameter_file_name,
+        log_file_name
+    ):
+        create_mgfs(
+            input_path,
+            output_directory,
+            parameter_file_name,
+            log_file_name
+        )
+
 
 # TODO: Rename "unified" and "peaks" referring to .inet.csv files?
 # TODO: Define help text in separate json files?
