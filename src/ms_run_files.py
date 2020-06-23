@@ -1154,9 +1154,15 @@ class HDF_Evidence_File(HDF_MS_Run_File):
         cluster_indptr = np.empty(np.max(clusters + 2), np.int64)
         cluster_indptr[0] = 0
         cluster_indptr[1:] = np.cumsum(np.bincount(clusters))
-        mzs, ints, rts = self.ion_network.get_ion_coordinates(
-            ["FRAGMENT_MZ", "FRAGMENT_LOGINT", "PRECURSOR_RT"]
+        mzs, ints = self.ion_network.get_ion_coordinates(
+            ["FRAGMENT_MZ", "FRAGMENT_LOGINT"]
         )
+        precursor_dimensions = self.ion_network.get_ion_coordinates(
+            self.ion_network.precursor_dimensions
+        )
+        rts = precursor_dimensions[
+            self.ion_network.precursor_dimensions.index("PRECURSOR_RT")
+        ]
         with open(
             os.path.join(self.directory, f"{self.run_name}.mgf"),
             "w"
@@ -1183,9 +1189,22 @@ class HDF_Evidence_File(HDF_MS_Run_File):
                 local_mzs = np.round(mzs[cluster], 4)
                 local_ints = np.round(2**ints[cluster], 2)
                 local_rts = rts[cluster]
+                precursor_strings = []
+                for precursor_dimension, array in zip(
+                    self.ion_network.precursor_dimensions,
+                    precursor_dimensions
+                ):
+                    precursor_string = np.round(
+                        np.average(array[cluster]),
+                        2
+                    )
+                    precursor_strings.append(
+                        f"{precursor_dimension}={precursor_string}"
+                    )
                 infile.write(
                     f"TITLE=cluster_index.{cluster_index}.{cluster_index}. "
                     f"File=\"{self.file_name}\" "
+                    f"Precursor_dimensions:\"{' '.join(precursor_strings)}\" "
                     f"NativeID:\"sample=1 period=1 cycle={cluster_index-1} "
                     f"experiment=1\"\n"
                 )
