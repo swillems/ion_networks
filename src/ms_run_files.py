@@ -4,6 +4,7 @@
 import os
 import ast
 import multiprocessing.pool
+import csv
 # external
 import numpy as np
 import scipy
@@ -1220,6 +1221,141 @@ class HDF_Evidence_File(HDF_MS_Run_File):
                 for i in mz_order:
                     infile.write(f"{local_mzs[i]} {local_ints[i]}\n")
                 infile.write("END IONS\n")
+
+    def annotate(
+        self,
+        database,
+        out_file_name,
+        parameters
+    ):
+        parameters = ms_utils.read_parameters_from_json_file(default="annotation")
+        threads = ms_utils.MAX_THREADS
+        ms_utils.LOGGER.info(f"Reading {self.ion_network.file_name}")
+        inet_mzs = self.ion_network.get_ion_coordinates("FRAGMENT_MZ")
+        mz_order = np.argsort(inet_mzs)
+        spectra_log_mzs = np.log(inet_mzs[mz_order]) * 10**6
+        indptr, indices, edge_pointers = self.ion_network.get_edges(
+            symmetric=True,
+            return_pointers=True
+        )
+        ms_utils.LOGGER.info(f"Reading database {database.file_name}")
+        peptide_pointers = database.get_fragment_coordinates("peptide_index")
+        database_log_mzs = np.log(
+            database.get_fragment_coordinates("mz")
+        ) * 10**6
+        ms_utils.LOGGER.info(
+            f"Matching fragments of {self.file_name} with {database.file_name}"
+        )
+        low_limits = np.searchsorted(
+            database_log_mzs,
+            spectra_log_mzs - parameters["annotation_ppm"],
+            "left"
+        )
+        high_limits = np.searchsorted(
+            database_log_mzs,
+            spectra_log_mzs + parameters["annotation_ppm"],
+            "right"
+        )
+        inv_order = np.argsort(mz_order)
+        ms_utils.LOGGER.info(
+            f"Annotating fragments of {self.file_name} with {database.file_name}"
+        )
+        selected_edges = ne.evaluate(
+            parameters["edge_threshold"],
+            local_dict={
+                "positive_edges": self.get_edges(),
+                "negative_edges": self.get_edges(positive=False),
+                "evidence_run_count": self.run_count
+            },
+            global_dict={},
+        )
+        with multiprocessing.pool.ThreadPool(threads) as p:
+            results = p.starmap(
+                numba_functions.annotate_network,
+                [
+                    (
+                        np.arange(i, self.ion_network.node_count, threads),
+                        indptr,
+                        indices,
+                        edge_pointers,
+                        selected_edges,
+                        low_limits[inv_order],
+                        high_limits[inv_order],
+                        peptide_pointers,
+                    ) for i in range(threads)
+                ]
+            )
+        scores = np.concatenate([r[0] for r in results])
+        fragments = np.concatenate([r[1] for r in results])
+        ion_indices = np.concatenate([r[2] for r in results])
+        count_results = np.concatenate([r[3] for r in results])
+        del results
+        self.export_annotated_csv(
+            scores,
+            fragments,
+            ion_indices,
+            count_results,
+            database,
+            peptide_pointers,
+            out_file_name,
+        )
+
+    def export_annotated_csv(
+        self,
+        scores,
+        fragments,
+        ion_indices,
+        count_results,
+        database,
+        peptide_pointers,
+        out_file_name,
+    ):
+        ms_utils.LOGGER.info(f"Exporting {out_file_name}")
+        peptides = peptide_pointers[fragments]
+        decoys = database.read_dataset("decoy", "peptides")
+        peptide_modifications = database.read_dataset(
+            "modifications",
+            "peptides"
+        )
+        peptide_sequences = database.read_dataset("sequence", "peptides")
+        fragment_ion_numbers = database.get_fragment_coordinates("ionnumber")
+        fragment_is_y_ion = database.get_fragment_coordinates("y_ion")
+        self_coordinates = self.ion_network.get_ion_coordinates(
+            self.ion_network.dimensions
+        )
+        with open(out_file_name, "w") as raw_outfile:
+            outfile = csv.writer(raw_outfile)
+            header = ["Fragment_index"]
+            header += self.ion_network.dimensions
+            header += [
+                "Fragment_ion_number",
+                "Fragment_is_y_ion",
+                "Peptide_sequence",
+                "peptide_mods",
+                "Score",
+                "Count",
+                "Decoy"
+            ]
+            outfile.writerow(header)
+            for i, ion_index in enumerate(ion_indices):
+                fragment_index = fragments[i]
+                peptide_index = peptides[i]
+                row = [ion_index]
+                row += [
+                    self_coordinate[
+                        ion_index
+                    ] for self_coordinate in self_coordinates
+                ]
+                row += [
+                    fragment_ion_numbers[fragment_index],
+                    fragment_is_y_ion[fragment_index],
+                    peptide_sequences[peptide_index],
+                    peptide_modifications[peptide_index],
+                    scores[i],
+                    count_results[i],
+                    decoys[peptide_index],
+                ]
+                outfile.writerow(row)
 
 
 class HDF_Annotation_File(HDF_MS_Run_File):

@@ -598,13 +598,6 @@ def annotate_mgf(
         "right"
     )
     inv_order = np.argsort(mz_order)
-    # from matplotlib import pyplot as plt
-    # plt.show(
-    #     plt.plot(
-    #         np.bincount(high_limits - low_limits)
-    #     )
-    # )
-    # return
     LOGGER.info(
         f"Annotating fragments of {mgf_file_name} with {database.file_name}"
     )

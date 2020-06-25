@@ -357,8 +357,7 @@ def annotate(
             logger.info(f"Annotating ion-networks")
             input_file_names = ms_utils.get_file_names_with_extension(
                 input_path,
-                # extension=".evidence.hdf"
-                extension=".inet.hdf"
+                extension=".evidence.hdf"
             )
         file_count = len(input_file_names)
         logger.info(
@@ -380,12 +379,9 @@ def annotate(
                     parameters,
                 )
             else:
-                raise NotImplementedError
-                # ani = ms_run_files.HDF_Annotation_File(
-                #     file_name,
-                #     new_file=True,
-                # )
-                # ani.create_annotations(database_file_name, parameters)
+                out_file_name = f"{'.'.join(file_name.split('.')[:-2])}.csv"
+                evidence = ms_run_files.HDF_Evidence_File(file_name)
+                evidence.annotate(database, out_file_name, parameters)
 
 
 def create_mgfs(

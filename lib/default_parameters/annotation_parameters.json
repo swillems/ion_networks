@@ -3,6 +3,6 @@
     "output_directory": ".",
     "threads": 0,
     "force_overwrite": true,
-    "score_cutoff": -5,
+    "edge_threshold": "positive_edges > negative_edges",
     "annotation_ppm": 20
 }
