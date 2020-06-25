@@ -327,9 +327,10 @@ def create_database(
         db.create_from_fastas(input_file_names, parameters)
 
 
-def annotate_ion_network(
+def annotate(
     input_path,
     database_file_name,
+    mgf_format,
     parameter_file_name,
     log_file_name
 ):
@@ -346,12 +347,19 @@ def annotate_ion_network(
     if (log_file_name is None) or (log_file_name == ""):
         log_file_name = parameters["log_file_name"]
     with ms_utils.open_logger(log_file_name) as logger:
-        logger.info(f"Annotating ion-networks")
-        input_file_names = ms_utils.get_file_names_with_extension(
-            input_path,
-            # extension=".evidence.hdf"
-            extension=".inet.hdf"
-        )
+        if mgf_format:
+            logger.info(f"Annotating mgf files")
+            input_file_names = ms_utils.get_file_names_with_extension(
+                input_path,
+                extension=".mgf"
+            )
+        else:
+            logger.info(f"Annotating ion-networks")
+            input_file_names = ms_utils.get_file_names_with_extension(
+                input_path,
+                # extension=".evidence.hdf"
+                extension=".inet.hdf"
+            )
         file_count = len(input_file_names)
         logger.info(
             f"{file_count} input_file{'s' if file_count != 1 else ''}"
@@ -361,12 +369,23 @@ def annotate_ion_network(
         logger.info(f"parameter_file_name: {parameter_file_name}")
         logger.info(f"max_threads: {ms_utils.MAX_THREADS}")
         logger.info("")
+        database = ms_database.HDF_Database_File(database_file_name)
         for file_name in input_file_names:
-            ani = ms_run_files.HDF_Annotation_File(
-                file_name,
-                new_file=True,
-            )
-            ani.create_annotations(database_file_name, parameters)
+            if mgf_format:
+                out_file_name = f"{file_name[:-4]}.csv"
+                ms_utils.annotate_mgf(
+                    file_name,
+                    database,
+                    out_file_name,
+                    parameters,
+                )
+            else:
+                raise NotImplementedError
+                # ani = ms_run_files.HDF_Annotation_File(
+                #     file_name,
+                #     new_file=True,
+                # )
+                # ani.create_annotations(database_file_name, parameters)
 
 
 def create_mgfs(
@@ -1076,6 +1095,14 @@ class CLI(object):
         type=click.Path(exists=True, dir_okay=False),
     )
     @click.option(
+        '--mgf_format',
+        '-m',
+        'mgf_format',
+        help="Input is in mgf format (default=False)",
+        is_flag=True,
+        default=False
+    )
+    @click.option(
         "--parameter_file",
         "-p",
         "parameter_file_name",
@@ -1096,12 +1123,14 @@ class CLI(object):
     def annotate(
         input_path,
         database_file_name,
+        mgf_format,
         parameter_file_name,
         log_file_name
     ):
-        annotate_ion_network(
+        annotate(
             input_path,
             database_file_name,
+            mgf_format,
             parameter_file_name,
             log_file_name
         )

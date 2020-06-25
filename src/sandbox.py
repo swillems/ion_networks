@@ -14,9 +14,53 @@ import multiprocessing as mp
 
 
 
-
-
-
+@numba.njit(cache=True, nogil=True)
+def calculate_scores(
+    queries,
+    spec_indptr,
+    low_limits,
+    high_limits,
+    peptide_count, #len(peptide_sequences),
+    peptide_pointers,
+):
+    peptide_results = np.zeros(spec_indptr[-1], np.int64)
+    score_results = np.zeros(spec_indptr[-1], np.float64)
+    for spectrum_index in queries:
+        spectrum_start = spec_indptr[spectrum_index]
+        spectrum_end = spec_indptr[spectrum_index + 1]
+        candidates = np.zeros(peptide_count, np.int64)
+        for ion_index in range(spectrum_start, spectrum_end):
+            peptide_low = low_limits[ion_index]
+            peptide_high = high_limits[ion_index]
+            if peptide_low == peptide_high:
+                continue
+            peptides = peptide_pointers[peptide_low: peptide_high]
+            candidates[peptides] += 1
+        for ion_index in range(spectrum_start, spectrum_end):
+            peptide_low = low_limits[ion_index]
+            peptide_high = high_limits[ion_index]
+            if peptide_low == peptide_high:
+                continue
+            peptides = peptide_pointers[peptide_low: peptide_high]
+            local_candicates = candidates[peptides]
+            frequencies = np.bincount(local_candicates)
+            frequencies = np.cumsum(frequencies[:0:-1])[::-1]
+            for regression_index, value in enumerate(frequencies):
+                if value == 1:
+                    break
+            else:
+                continue
+            if regression_index < 2:
+                continue
+            max_count = (len(frequencies) - 1)
+            regression_constant = np.log(frequencies[0])
+            regression_slope = (np.log(frequencies[regression_index]) - regression_constant) / regression_index
+            score = regression_constant + regression_slope * max_count
+            if score < 0:
+                score_results[ion_index] = score
+                peptide = peptides[local_candicates == max_count + 1][0]
+                peptide_results[ion_index] = peptide
+    return score_results, peptide_results
 
 
 

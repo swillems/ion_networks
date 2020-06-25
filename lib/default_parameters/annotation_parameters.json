@@ -1,6 +1,8 @@
 {
     "log_file_name": ".",
     "output_directory": ".",
+    "threads": 0,
     "force_overwrite": true,
+    "score_cutoff": -5,
     "annotation_ppm": 20
 }

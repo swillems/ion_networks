@@ -88,6 +88,7 @@ class HDF_Database_File(ms_utils.HDF_File):
                     peptides,
                     decoy_prefix,
                     decoy_suffix,
+                    protein_index=len(proteins),
                     **kwargs,
                 )
         return proteins, peptides
@@ -105,10 +106,10 @@ class HDF_Database_File(ms_utils.HDF_File):
         peptides,
         decoy_prefix,
         decoy_suffix,
+        protein_index=0,
         **kwargs,
     ):
         # TODO: Docstring
-        protein_index = 0
         for description, sequence in pyteomics.fasta.FASTA(fasta_file_name):
             protein_info = pyteomics.fasta.parse(description)
             protein = protein_info["entry"]

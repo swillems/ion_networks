@@ -9,6 +9,7 @@ import time
 import contextlib
 import multiprocessing
 import urllib
+import csv
 # external
 import numpy as np
 import pandas as pd
@@ -16,6 +17,7 @@ import h5py
 import pyteomics.mgf
 # local
 from _version import __version__ as VERSION
+import numba_functions
 
 
 GITHUB_VERSION_FILE = "https://raw.githubusercontent.com/swillems/ion_networks/master/src/_version.py"
@@ -558,6 +560,139 @@ def verify_version():
         )
     else:
         return ""
+
+
+def annotate_mgf(
+    mgf_file_name,
+    database,
+    out_file_name,
+    parameters,
+):
+    threads = MAX_THREADS
+    LOGGER.info(f"Reading spectra of {mgf_file_name}")
+    spectra = [spectrum for spectrum in pyteomics.mgf.read(mgf_file_name)]
+    spectra_mzs = np.concatenate([spectrum["m/z array"] for spectrum in spectra])
+    spectra_indptr = np.empty(len(spectra) + 1, np.int64)
+    spectra_indptr[0] = 0
+    spectra_indptr[1:] = np.cumsum(
+        [len(spectrum["m/z array"]) for spectrum in spectra]
+    )
+    LOGGER.info(f"Reading database {database.file_name}")
+    db_mzs = database.get_fragment_coordinates("mz")
+    peptide_pointers = database.get_fragment_coordinates("peptide_index")
+    mz_order = np.argsort(spectra_mzs)
+    mz_transform = np.log(spectra_mzs[mz_order]) * 10**6
+    LOGGER.info(
+        f"Matching fragments of {mgf_file_name} with {database.file_name}"
+    )
+    low_limits = np.searchsorted(
+        np.log(db_mzs) * 10**6,
+        mz_transform - parameters["annotation_ppm"],
+        "left"
+    )
+    high_limits = np.searchsorted(
+        np.log(db_mzs) * 10**6,
+        mz_transform + parameters["annotation_ppm"],
+        "right"
+    )
+    inv_order = np.argsort(mz_order)
+    LOGGER.info(
+        f"Annotating fragments of {mgf_file_name} with {database.file_name}"
+    )
+    with multiprocessing.pool.ThreadPool(threads) as p:
+        results = p.starmap(
+            numba_functions.annotate_mgf,
+            [
+                (
+                    np.arange(i, spectra_indptr.shape[0] - 1, threads),
+                    spectra_indptr,
+                    low_limits[inv_order],
+                    high_limits[inv_order],
+                    peptide_pointers,
+                ) for i in range(threads)
+            ]
+        )
+    scores = np.concatenate([r[0] for r in results])
+    fragments = np.concatenate([r[1] for r in results])
+    ion_indices = np.concatenate([r[2] for r in results])
+    count_results = np.concatenate([r[3] for r in results])
+    del results
+    export_annotated_csv(
+        scores=scores,
+        fragments=fragments,
+        ion_indices=ion_indices,
+        count_results=count_results,
+        spectra=spectra,
+        spectra_indptr=spectra_indptr,
+        spectra_mzs=spectra_mzs,
+        database=database,
+        peptide_pointers=peptide_pointers,
+        # score_cutoff=parameters["score_cutoff"],
+        out_file_name=out_file_name,
+    )
+
+
+def export_annotated_csv(
+    scores,
+    fragments,
+    ion_indices,
+    count_results,
+    spectra,
+    spectra_indptr,
+    spectra_mzs,
+    database,
+    peptide_pointers,
+    # score_cutoff,
+    out_file_name,
+):
+    LOGGER.info(f"Exporting {out_file_name}")
+    peptides = peptide_pointers[fragments]
+    decoys = database.read_dataset("decoy", "peptides")
+    peptide_modifications = database.read_dataset("modifications", "peptides")
+    peptide_sequences = database.read_dataset("sequence", "peptides")
+    # selection = np.flatnonzero((scores < score_cutoff) & (~decoys[peptides]))
+    fragment_ion_numbers = database.get_fragment_coordinates("ionnumber")
+    fragment_is_y_ion = database.get_fragment_coordinates("y_ion")
+    self_ints = np.concatenate([spectrum["intensity array"] for spectrum in spectra])
+    spectrum_indices1 = np.searchsorted(
+        spectra_indptr,
+        ion_indices,
+        "right"
+    ) - 1
+    with open(out_file_name, "w") as raw_outfile:
+        outfile = csv.writer(raw_outfile)
+        header = [
+            "Fragment_index",
+            "Fragment_mz",
+            "Fragment_int",
+            "Fragment_ion_number",
+            "Fragment_is_y_ion",
+            "Spectrum_title",
+            "Peptide_sequence",
+            "peptide_mods",
+            "Score",
+            "Count",
+            "Decoy"
+        ]
+        outfile.writerow(header)
+        for i, ion_index in enumerate(ion_indices):
+            fragment_index = fragments[i]
+            peptide_index = peptides[i]
+            spectrum_index = spectrum_indices1[i]
+            row = [
+                ion_index,
+                spectra_mzs[ion_index],
+                self_ints[ion_index],
+                fragment_ion_numbers[fragment_index],
+                fragment_is_y_ion[fragment_index],
+                spectra[spectrum_index]['params']['title'],
+                peptide_sequences[peptide_index],
+                peptide_modifications[peptide_index],
+                scores[i],
+                count_results[i],
+                decoys[peptide_index],
+            ]
+            outfile.writerow(row)
 
 
 class HDF_File(object):
