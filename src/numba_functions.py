@@ -424,7 +424,7 @@ def annotate_mgf(
             regression_slope = (np.log(frequencies[regression_index]) - regression_constant) / regression_index
             score = regression_constant + regression_slope * max_count
             if score < 0:
-                score_results[current_i] = score
+                score_results[current_i] = -score
                 hit_index = np.flatnonzero(local_candidates == max_count + 1)[0]
                 fragment = peptide_low + hit_index
                 fragment_results[current_i] = fragment
