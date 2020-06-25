@@ -378,23 +378,23 @@ def __get_candidate_peptide_indices_for_edges(
 @numba.njit(cache=True, nogil=True)
 def annotate_mgf(
     queries,
-    spec_indptr,
+    spectra_indptr,
     low_limits,
     high_limits,
     peptide_pointers,
 ):
+    peptide_count = np.max(peptide_pointers) + 1
     count = 0
-    peptide_count = np.max(peptide_pointers)
     for s in queries:
-        count += spec_indptr[s + 1] - spec_indptr[s]
-    score_results = np.zeros(count, np.float64)
-    fragment_results = np.zeros(count, np.int64)
-    index_results = np.zeros(count, np.int64)
-    count_results = np.zeros(count, np.int64)
+        count += spectra_indptr[s + 1] - spectra_indptr[s]
+    score_results = np.empty(count, np.float64)
+    fragment_results = np.empty(count, np.int64)
+    index_results = np.empty(count, np.int64)
+    count_results = np.empty(count, np.int64)
     current_i = 0
     for spectrum_index in queries:
-        spectrum_start = spec_indptr[spectrum_index]
-        spectrum_end = spec_indptr[spectrum_index + 1]
+        spectrum_start = spectra_indptr[spectrum_index]
+        spectrum_end = spectra_indptr[spectrum_index + 1]
         candidates = np.zeros(peptide_count, np.int64)
         for ion_index in range(spectrum_start, spectrum_end):
             peptide_low = low_limits[ion_index]

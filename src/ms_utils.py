@@ -571,31 +571,40 @@ def annotate_mgf(
     threads = MAX_THREADS
     LOGGER.info(f"Reading spectra of {mgf_file_name}")
     spectra = [spectrum for spectrum in pyteomics.mgf.read(mgf_file_name)]
-    spectra_mzs = np.concatenate([spectrum["m/z array"] for spectrum in spectra])
     spectra_indptr = np.empty(len(spectra) + 1, np.int64)
     spectra_indptr[0] = 0
     spectra_indptr[1:] = np.cumsum(
         [len(spectrum["m/z array"]) for spectrum in spectra]
     )
-    LOGGER.info(f"Reading database {database.file_name}")
-    db_mzs = database.get_fragment_coordinates("mz")
-    peptide_pointers = database.get_fragment_coordinates("peptide_index")
+    spectra_mzs = np.concatenate(
+        [spectrum["m/z array"] for spectrum in spectra]
+    )
     mz_order = np.argsort(spectra_mzs)
-    mz_transform = np.log(spectra_mzs[mz_order]) * 10**6
+    spectra_log_mzs = np.log(spectra_mzs[mz_order]) * 10**6
+    LOGGER.info(f"Reading database {database.file_name}")
+    peptide_pointers = database.get_fragment_coordinates("peptide_index")
+    database_log_mzs = np.log(database.get_fragment_coordinates("mz")) * 10**6
     LOGGER.info(
         f"Matching fragments of {mgf_file_name} with {database.file_name}"
     )
     low_limits = np.searchsorted(
-        np.log(db_mzs) * 10**6,
-        mz_transform - parameters["annotation_ppm"],
+        database_log_mzs,
+        spectra_log_mzs - parameters["annotation_ppm"],
         "left"
     )
     high_limits = np.searchsorted(
-        np.log(db_mzs) * 10**6,
-        mz_transform + parameters["annotation_ppm"],
+        database_log_mzs,
+        spectra_log_mzs + parameters["annotation_ppm"],
         "right"
     )
     inv_order = np.argsort(mz_order)
+    # from matplotlib import pyplot as plt
+    # plt.show(
+    #     plt.plot(
+    #         np.bincount(high_limits - low_limits)
+    #     )
+    # )
+    # return
     LOGGER.info(
         f"Annotating fragments of {mgf_file_name} with {database.file_name}"
     )
