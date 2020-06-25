@@ -303,6 +303,7 @@ def create_database(
         logger.info(f"output_directory: {output_directory}")
         # TODO: Refer to default parameter file if necessary
         logger.info(f"parameter_file_name: {parameter_file_name}")
+        logger.info(f"max_threads: {ms_utils.MAX_THREADS}")
         # TODO: include relevant individual parameters?
         logger.info("")
         base_name = "_".join(

@@ -242,7 +242,6 @@ class HDF_Database_File(ms_utils.HDF_File):
         self,
         peprec,
         model,
-        cpu_count,
         charges,
         ptm_dict,
         variable_ptms,
@@ -279,7 +278,7 @@ class HDF_Database_File(ms_utils.HDF_File):
                 charged_peprec["charge"] = charge
                 charged_fragrec = ms2pip.ms2pipC.MS2PIP(
                     charged_peprec,
-                    num_cpu=cpu_count,
+                    num_cpu=ms_utils.MAX_THREADS,
                     params=ms2pip_params,
                     return_results=True,
                 ).run()

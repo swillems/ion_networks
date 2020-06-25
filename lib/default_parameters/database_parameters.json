@@ -25,6 +25,6 @@
     "decoy_prefix": "DECOY_",
     "decoy_suffix": "_REVERSED",
     "charges": [2],
-    "cpu_count": 8,
+    "threads": 0,
     "batch_size": 1000000
 }
