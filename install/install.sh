@@ -20,8 +20,11 @@ else
 fi
 
 if ! hash ion_networks.py 2>/dev/null; then
-  echo "Downloading latest ion-networks repository from GitHub."
-  git clone https://github.com/swillems/ion_networks.git
+  DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+  if ! [[ "$DIR" == */ion_networks/install ]]; then
+    echo "Downloading latest ion-networks repository from GitHub."
+    git clone https://github.com/swillems/ion_networks.git
+  fi
   echo "Installing ion-networks."
   conda env create --file ion_networks/install/environment.yml
   echo "Adding ion-networks.py alias to ~/.bashrc."
