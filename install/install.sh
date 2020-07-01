@@ -24,11 +24,13 @@ if ! hash ion_networks.py 2>/dev/null; then
   if ! [[ "$DIR" == */ion_networks/install ]]; then
     echo "Downloading latest ion-networks repository from GitHub."
     git clone https://github.com/swillems/ion_networks.git
+  else
+    echo "Source already downloaded"
   fi
   echo "Installing ion-networks."
   conda env create --file ion_networks/install/environment.yml
   echo "Adding ion-networks.py alias to ~/.bashrc."
-  ion_networks_command="$(conda activate; which python)"
+  ion_networks_command="$(conda init; conda activate ion_networks; which python)"
   echo "alias ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'" >> ~/.bashrc
   # export ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'
 else

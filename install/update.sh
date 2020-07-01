@@ -10,5 +10,5 @@ if ! hash ion_networks.py 2>/dev/null; then
   conda env update --file install/environment.yml
 else
   echo "Ion-networks are not installed yet."
-  echo "Try running 'source install/install.sh'."
+  echo "Try running 'bash install/install.sh'."
 fi
