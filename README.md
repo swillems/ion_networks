@@ -15,7 +15,7 @@ This repository requires python to be run within a [conda](https://conda.io/proj
 ```bash
 mkdir /desired/path/where/to/install/ion_networks/
 cd /desired/path/where/to/install/ion_networks/
-wget https://raw.githubusercontent.com/swillems/ion_networks/master/install/install.sh && bash install.sh && rm install.sh && source ~/.bashrc
+wget https://raw.githubusercontent.com/swillems/ion_networks/master/install/install.sh && bash install.sh && rm install.sh && source ~/.bashrc && bash test.sh
 # wget --auth-no-challenge -O install.sh https://raw.githubusercontent.com/swillems/ion_networks/master/install/install.sh?token=XXX && bash install.sh && rm install.sh && source ~/.bashrc
 ```
 
