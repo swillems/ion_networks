@@ -13,10 +13,9 @@ For Windows users, the recommended approach is to install a [Windows subsystem f
 This repository requires python to be run within a [conda](https://conda.io/projects/conda/en/latest/index.html) environment. The following one-line command will install Miniconda3 (only if this is not installed yet), followed by the installation of the ion-networks repository by [downloading the ion-networks installation script](https://github.com/swillems/ion_networks/tree/master/install/install.sh) and running the install script at the desired location (this path should be chosen by the user). Note that this includes a test of the installation with a small data excerpt from [PXD001240](http://proteomecentral.proteomexchange.org/cgi/GetDataset?ID=PXD001240). This data is relatively small (<50MB), but a full analysis will require roughly 2GB of space and 30 minutes depending on your system...
 
 ```bash
-mkdir /desired/path/where/to/install/ion_networks/
-cd /desired/path/where/to/install/ion_networks/
+# mkdir /desired/path/where/to/install/ion_networks/
+# cd /desired/path/where/to/install/ion_networks/
 wget https://raw.githubusercontent.com/swillems/ion_networks/master/install/install.sh && bash install.sh && rm install.sh && source ~/.bashrc && bash test.sh
-# wget --auth-no-challenge -O install.sh https://raw.githubusercontent.com/swillems/ion_networks/master/install/install.sh?token=XXX && bash install.sh && rm install.sh && source ~/.bashrc
 ```
 
 If the ion-networks repository needs to be updated, [download](https://github.com/swillems/ion_networks/tree/master/install/update.sh) and/or run the ```update.sh``` bash script contained in the [install](https://github.com/swillems/ion_networks/tree/master/install) folder of the ion-networks repository.

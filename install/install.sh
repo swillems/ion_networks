@@ -25,9 +25,7 @@ if ! hash ion_networks.py 2>/dev/null; then
   echo "Installing ion-networks."
   conda env create --file ion_networks/install/environment.yml
   echo "Adding ion-networks.py alias to ~/.bashrc."
-  conda activate ion_networks
-  ion_networks_command="$(which python)"
-  conda deactivate
+  ion_networks_command="$(conda activate; which python)"
   echo "alias ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'" >> ~/.bashrc
   # export ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'
 else
