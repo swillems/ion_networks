@@ -737,12 +737,12 @@ class HDF_Evidence_File(HDF_MS_Run_File):
         self.write_dataset(
             "nodes",
             total,
-            parent_group_name=f"total"
+            parent_group_name="total"
         )
         self.write_attr(
             "count",
             np.sum(total),
-            parent_group_name=f"total/nodes"
+            parent_group_name="total/nodes"
         )
 
     def __align_edges(
@@ -1033,24 +1033,24 @@ class HDF_Evidence_File(HDF_MS_Run_File):
         self.write_dataset(
             "positive_edges",
             total_positive,
-            parent_group_name=f"total"
+            parent_group_name="total"
         )
         self.write_attr(
             "count",
             np.sum(total_positive),
-            parent_group_name=f"total/positive_edges"
+            parent_group_name="total/positive_edges"
         )
         total_negative = self.get_edges(positive=False)
         total_negative[negative_pointers] += 1
         self.write_dataset(
             "negative_edges",
             total_negative,
-            parent_group_name=f"total"
+            parent_group_name="total"
         )
         self.write_attr(
             "count",
             np.sum(total_negative),
-            parent_group_name=f"total/negative_edges"
+            parent_group_name="total/negative_edges"
         )
 
     def align(
