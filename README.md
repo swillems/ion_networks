@@ -3,7 +3,7 @@ Analysis of LC-[...]-MSMS data with ion-networks.
 
 ![](https://github.com/swillems/ion_networks/blob/master/docs/3d_example.gif)
 
-## Table of Contents
+## Table of contents
 
    * [Ion-networks](#ion-networks)
       * [Table of contents](#table-of-contents)
