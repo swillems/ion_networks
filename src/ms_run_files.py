@@ -1328,8 +1328,8 @@ class HDF_Evidence_File(HDF_MS_Run_File):
             header = ["Fragment_index"]
             header += self.ion_network.dimensions
             header += [
+                "Fragment_ion_type",
                 "Fragment_ion_number",
-                "Fragment_is_y_ion",
                 "Peptide_sequence",
                 "peptide_mods",
                 "Score",
@@ -1347,8 +1347,8 @@ class HDF_Evidence_File(HDF_MS_Run_File):
                     ] for self_coordinate in self_coordinates
                 ]
                 row += [
+                    "Y" if fragment_is_y_ion[fragment_index] else "B",
                     fragment_ion_numbers[fragment_index],
-                    fragment_is_y_ion[fragment_index],
                     peptide_sequences[peptide_index],
                     peptide_modifications[peptide_index],
                     scores[i],
