@@ -372,7 +372,7 @@ def annotate(
         database = ms_database.HDF_Database_File(database_file_name)
         for file_name in input_file_names:
             if mgf_format:
-                out_file_name = f"{file_name[:-4]}.csv"
+                out_file_name = f"{file_name[:-4]}.annotation.csv"
                 ms_utils.annotate_mgf(
                     file_name,
                     database,
