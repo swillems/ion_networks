@@ -1290,6 +1290,7 @@ class HDF_Evidence_File(HDF_MS_Run_File):
         ion_indices = np.concatenate([r[2] for r in results])
         count_results = np.concatenate([r[3] for r in results])
         candidate_counts = np.concatenate([r[4] for r in results])
+        neighbor_counts = np.concatenate([r[5] for r in results])
         del results
         self.export_annotated_csv(
             scores,
@@ -1297,6 +1298,7 @@ class HDF_Evidence_File(HDF_MS_Run_File):
             ion_indices,
             count_results,
             candidate_counts,
+            neighbor_counts,
             database,
             peptide_pointers,
             out_file_name,
@@ -1309,6 +1311,7 @@ class HDF_Evidence_File(HDF_MS_Run_File):
         ion_indices,
         count_results,
         candidate_counts,
+        neighbor_counts,
         database,
         peptide_pointers,
         out_file_name,
@@ -1338,6 +1341,7 @@ class HDF_Evidence_File(HDF_MS_Run_File):
                 "Score",
                 "Count",
                 "Candidates",
+                "Neighbors",
                 "Decoy"
             ]
             outfile.writerow(header)
@@ -1358,6 +1362,7 @@ class HDF_Evidence_File(HDF_MS_Run_File):
                     scores[i],
                     count_results[i],
                     candidate_counts[i],
+                    neighbor_counts[i],
                     decoys[peptide_index],
                 ]
                 outfile.writerow(row)

@@ -392,6 +392,7 @@ def annotate_mgf(
     index_results = np.empty(count, np.int64)
     count_results = np.empty(count, np.int64)
     candidate_counts = np.empty(count, np.int64)
+    spectrum_sizes = np.empty(count, np.int64)
     current_i = 0
     for spectrum_index in queries:
         spectrum_start = spectra_indptr[spectrum_index]
@@ -425,13 +426,15 @@ def annotate_mgf(
                 index_results[current_i] = ion_index
                 count_results[current_i] = max_count
                 candidate_counts[current_i] = candidate_count
+                spectrum_sizes[current_i] = spectrum_end - spectrum_start
                 current_i += 1
     return (
         score_results[:current_i],
         fragment_results[:current_i],
         index_results[:current_i],
         count_results[:current_i],
-        candidate_counts[:current_i]
+        candidate_counts[:current_i],
+        spectrum_sizes[:current_i],
     )
 
 
@@ -453,6 +456,7 @@ def annotate_network(
     index_results = np.empty(count, np.int64)
     count_results = np.empty(count, np.int64)
     candidate_counts = np.empty(count, np.int64)
+    neighbor_counts = np.empty(count, np.int64)
     current_i = 0
     for ion_index in queries:
         peptide_low = low_limits[ion_index]
@@ -462,7 +466,8 @@ def annotate_network(
         ion_start = indptr[ion_index]
         ion_end = indptr[ion_index + 1]
         good_neighbors = selected_edges[edge_pointers[ion_start: ion_end]]
-        if not np.any(good_neighbors):
+        neighbor_count = np.sum(good_neighbors)
+        if neighbor_count == 0:
             continue
         neighbors = indices[ion_start: ion_end][good_neighbors]
         candidates = np.zeros(peptide_count, np.int64)
@@ -491,13 +496,15 @@ def annotate_network(
             index_results[current_i] = ion_index
             count_results[current_i] = max_count
             candidate_counts[current_i] = candidate_count
+            neighbor_counts[current_i] = neighbor_count
             current_i += 1
     return (
         score_results[:current_i],
         fragment_results[:current_i],
         index_results[:current_i],
         count_results[:current_i],
-        candidate_counts[:current_i]
+        candidate_counts[:current_i],
+        neighbor_counts[:current_i],
     )
 
 
