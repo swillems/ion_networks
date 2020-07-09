@@ -618,12 +618,14 @@ def annotate_mgf(
     fragments = np.concatenate([r[1] for r in results])
     ion_indices = np.concatenate([r[2] for r in results])
     count_results = np.concatenate([r[3] for r in results])
+    candidate_counts = np.concatenate([r[4] for r in results])
     del results
     export_annotated_csv(
         scores=scores,
         fragments=fragments,
         ion_indices=ion_indices,
         count_results=count_results,
+        candidate_counts=candidate_counts,
         spectra=spectra,
         spectra_indptr=spectra_indptr,
         spectra_mzs=spectra_mzs,
@@ -639,6 +641,7 @@ def export_annotated_csv(
     fragments,
     ion_indices,
     count_results,
+    candidate_counts,
     spectra,
     spectra_indptr,
     spectra_mzs,
@@ -674,6 +677,7 @@ def export_annotated_csv(
             "peptide_mods",
             "Score",
             "Count",
+            "Candidates",
             "Decoy"
         ]
         outfile.writerow(header)
@@ -692,6 +696,7 @@ def export_annotated_csv(
                 peptide_modifications[peptide_index],
                 scores[i],
                 count_results[i],
+                candidate_counts[i],
                 decoys[peptide_index],
             ]
             outfile.writerow(row)

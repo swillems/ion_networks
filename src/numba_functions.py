@@ -391,6 +391,7 @@ def annotate_mgf(
     fragment_results = np.empty(count, np.int64)
     index_results = np.empty(count, np.int64)
     count_results = np.empty(count, np.int64)
+    candidate_counts = np.empty(count, np.int64)
     current_i = 0
     for spectrum_index in queries:
         spectrum_start = spectra_indptr[spectrum_index]
@@ -408,7 +409,12 @@ def annotate_mgf(
             peptide_high = high_limits[ion_index]
             if peptide_low == peptide_high:
                 continue
-            score, max_count, max_fragment = score_regression_estimator(
+            (
+                score,
+                max_count,
+                max_fragment,
+                candidate_count
+            ) = score_regression_estimator(
                 candidates[peptide_pointers[peptide_low: peptide_high]],
                 peptide_low,
                 peptide_count
@@ -418,12 +424,14 @@ def annotate_mgf(
                 fragment_results[current_i] = max_fragment
                 index_results[current_i] = ion_index
                 count_results[current_i] = max_count
+                candidate_counts[current_i] = candidate_count
                 current_i += 1
     return (
         score_results[:current_i],
         fragment_results[:current_i],
         index_results[:current_i],
-        count_results[:current_i]
+        count_results[:current_i],
+        candidate_counts[:current_i]
     )
 
 
@@ -444,6 +452,7 @@ def annotate_network(
     fragment_results = np.empty(count, np.int64)
     index_results = np.empty(count, np.int64)
     count_results = np.empty(count, np.int64)
+    candidate_counts = np.empty(count, np.int64)
     current_i = 0
     for ion_index in queries:
         peptide_low = low_limits[ion_index]
@@ -466,7 +475,12 @@ def annotate_network(
                 neighbor_peptide_low: neighbor_peptide_high
             ]
             candidates[peptides] += 1
-        score, max_count, max_fragment = score_regression_estimator(
+        (
+            score,
+            max_count,
+            max_fragment,
+            candidate_count
+        ) = score_regression_estimator(
             candidates[peptide_pointers[peptide_low: peptide_high]] + 1,
             peptide_low,
             peptide_count
@@ -476,12 +490,14 @@ def annotate_network(
             fragment_results[current_i] = max_fragment
             index_results[current_i] = ion_index
             count_results[current_i] = max_count
+            candidate_counts[current_i] = candidate_count
             current_i += 1
     return (
         score_results[:current_i],
         fragment_results[:current_i],
         index_results[:current_i],
-        count_results[:current_i]
+        count_results[:current_i],
+        candidate_counts[:current_i]
     )
 
 
@@ -490,15 +506,15 @@ def score_regression_estimator(candidates, offset, peptide_count):
     frequencies = np.bincount(candidates)
     frequencies = np.cumsum(frequencies[::-1])[::-1]
     max_count = len(frequencies) - 1
-    max_fragment = offset + np.flatnonzero(candidates == max_count + 1)[0]
+    max_fragment = offset + np.flatnonzero(candidates == max_count)[0]
     if frequencies[-1] != 1:
         score = -1
     elif frequencies[1] == 1:
         score = np.log2(peptide_count) * (max_count - 1)
+        # score = 0
     else:
         x0 = 2 + np.flatnonzero(frequencies[2:] == 1)[0]
         y0 = np.log2(frequencies[1])
         slope = y0 / (x0 - 1)
         score = slope * (max_count - x0)
-        # score = - (regression_constant + regression_slope * max_count)
-    return score, max_count, max_fragment
+    return score, max_count, max_fragment, len(candidates)
