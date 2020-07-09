@@ -677,8 +677,9 @@ def export_annotated_csv(
             "Fragment_ion_number",
             "Spectrum_title",
             "Peptide_sequence",
-            "peptide_mods",
-            "Score",
+            "Peptide_mods",
+            "Peptide_length",
+            "Likelihood",
             "Count",
             "Candidates",
             "Spectrum_size",
@@ -689,6 +690,7 @@ def export_annotated_csv(
             fragment_index = fragments[i]
             peptide_index = peptides[i]
             spectrum_index = spectrum_indices1[i]
+            peptide_sequence = peptide_sequences[peptide_index]
             row = [
                 ion_index,
                 spectra_mzs[ion_index],
@@ -696,8 +698,9 @@ def export_annotated_csv(
                 "Y" if fragment_is_y_ion[fragment_index] else "B",
                 fragment_ion_numbers[fragment_index],
                 spectra[spectrum_index]['params']['title'],
-                peptide_sequences[peptide_index],
+                peptide_sequence,
                 peptide_modifications[peptide_index],
+                len(peptide_sequence),
                 scores[i],
                 count_results[i],
                 candidate_counts[i],

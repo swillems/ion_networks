@@ -515,13 +515,13 @@ def score_regression_estimator(candidates, offset, peptide_count):
     max_count = len(frequencies) - 1
     max_fragment = offset + np.flatnonzero(candidates == max_count)[0]
     if frequencies[-1] != 1:
-        score = -1
+        score = 0
     elif frequencies[1] == 1:
-        score = np.log2(peptide_count) * (max_count - 1)
-        # score = 0
+        # score = 1 - 2**(-np.log2(peptide_count) * (max_count - 1))
+        score = 1 - peptide_count**(1 - max_count)
     else:
         x0 = 2 + np.flatnonzero(frequencies[2:] == 1)[0]
         y0 = np.log2(frequencies[1])
         slope = y0 / (x0 - 1)
-        score = slope * (max_count - x0)
+        score = 1 - 2**(-slope * (max_count - x0))
     return score, max_count, max_fragment, len(candidates)

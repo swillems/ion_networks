@@ -1337,8 +1337,9 @@ class HDF_Evidence_File(HDF_MS_Run_File):
                 "Fragment_ion_type",
                 "Fragment_ion_number",
                 "Peptide_sequence",
-                "peptide_mods",
-                "Score",
+                "Peptide_mods",
+                "Peptide_length",
+                "Likelihood",
                 "Count",
                 "Candidates",
                 "Neighbors",
@@ -1354,11 +1355,13 @@ class HDF_Evidence_File(HDF_MS_Run_File):
                         ion_index
                     ] for self_coordinate in self_coordinates
                 ]
+                peptide_sequence = peptide_sequences[peptide_index]
                 row += [
                     "Y" if fragment_is_y_ion[fragment_index] else "B",
                     fragment_ion_numbers[fragment_index],
-                    peptide_sequences[peptide_index],
+                    peptide_sequence,
                     peptide_modifications[peptide_index],
+                    len(peptide_sequence),
                     scores[i],
                     count_results[i],
                     candidate_counts[i],
