@@ -408,26 +408,14 @@ def annotate_mgf(
             peptide_high = high_limits[ion_index]
             if peptide_low == peptide_high:
                 continue
-            peptides = peptide_pointers[peptide_low: peptide_high]
-            local_candidates = candidates[peptides]
-            frequencies = np.bincount(local_candidates)
-            frequencies = np.cumsum(frequencies[:0:-1])[::-1]
-            for regression_index, value in enumerate(frequencies):
-                if value == 1:
-                    break
-            else:
-                continue
-            if regression_index < 2:
-                continue
-            max_count = (len(frequencies) - 1)
-            regression_constant = np.log(frequencies[0])
-            regression_slope = (np.log(frequencies[regression_index]) - regression_constant) / regression_index
-            score = regression_constant + regression_slope * max_count
-            if score < 0:
-                score_results[current_i] = -score
-                hit_index = np.flatnonzero(local_candidates == max_count + 1)[0]
-                fragment = peptide_low + hit_index
-                fragment_results[current_i] = fragment
+            score, max_count, max_fragment = score_regression_estimator(
+                candidates[peptide_pointers[peptide_low: peptide_high]],
+                peptide_low,
+                peptide_count
+            )
+            if score > 0:
+                score_results[current_i] = score
+                fragment_results[current_i] = max_fragment
                 index_results[current_i] = ion_index
                 count_results[current_i] = max_count
                 current_i += 1
@@ -458,44 +446,34 @@ def annotate_network(
     count_results = np.empty(count, np.int64)
     current_i = 0
     for ion_index in queries:
-        ion_start = indptr[ion_index]
-        ion_end = indptr[ion_index + 1]
-        good_neighbors = selected_edges[edge_pointers[ion_start: ion_end]]
-        if np.all(~good_neighbors):
-            continue
-        neighbors = indices[ion_start: ion_end][good_neighbors]
-        candidates = np.zeros(peptide_count, np.int64)
-        for neighbor_ion_index in neighbors:
-            peptide_low = low_limits[neighbor_ion_index]
-            peptide_high = high_limits[neighbor_ion_index]
-            if peptide_low == peptide_high:
-                continue
-            peptides = peptide_pointers[peptide_low: peptide_high]
-            candidates[peptides] += 1
         peptide_low = low_limits[ion_index]
         peptide_high = high_limits[ion_index]
         if peptide_low == peptide_high:
             continue
-        peptides = peptide_pointers[peptide_low: peptide_high]
-        local_candidates = candidates[peptides]
-        frequencies = np.bincount(local_candidates)
-        frequencies = np.cumsum(frequencies[:0:-1])[::-1]
-        for regression_index, value in enumerate(frequencies):
-            if value == 1:
-                break
-        else:
+        ion_start = indptr[ion_index]
+        ion_end = indptr[ion_index + 1]
+        good_neighbors = selected_edges[edge_pointers[ion_start: ion_end]]
+        if not np.any(good_neighbors):
             continue
-        if regression_index < 2:
-            continue
-        max_count = (len(frequencies) - 1)
-        regression_constant = np.log(frequencies[0])
-        regression_slope = (np.log(frequencies[regression_index]) - regression_constant) / regression_index
-        score = regression_constant + regression_slope * max_count
-        if score < 0:
-            score_results[current_i] = -score
-            hit_index = np.flatnonzero(local_candidates == max_count + 1)[0]
-            fragment = peptide_low + hit_index
-            fragment_results[current_i] = fragment
+        neighbors = indices[ion_start: ion_end][good_neighbors]
+        candidates = np.zeros(peptide_count, np.int64)
+        for neighbor_ion_index in neighbors:
+            neighbor_peptide_low = low_limits[neighbor_ion_index]
+            neighbor_peptide_high = high_limits[neighbor_ion_index]
+            if neighbor_peptide_low == neighbor_peptide_high:
+                continue
+            peptides = peptide_pointers[
+                neighbor_peptide_low: neighbor_peptide_high
+            ]
+            candidates[peptides] += 1
+        score, max_count, max_fragment = score_regression_estimator(
+            candidates[peptide_pointers[peptide_low: peptide_high]] + 1,
+            peptide_low,
+            peptide_count
+        )
+        if score > 0:
+            score_results[current_i] = score
+            fragment_results[current_i] = max_fragment
             index_results[current_i] = ion_index
             count_results[current_i] = max_count
             current_i += 1
@@ -505,3 +483,22 @@ def annotate_network(
         index_results[:current_i],
         count_results[:current_i]
     )
+
+
+@numba.njit(cache=True, nogil=True)
+def score_regression_estimator(candidates, offset, peptide_count):
+    frequencies = np.bincount(candidates)
+    frequencies = np.cumsum(frequencies[::-1])[::-1]
+    max_count = len(frequencies) - 1
+    max_fragment = offset + np.flatnonzero(candidates == max_count + 1)[0]
+    if frequencies[-1] != 1:
+        score = -1
+    elif frequencies[1] == 1:
+        score = np.log2(peptide_count) * (max_count - 1)
+    else:
+        x0 = 2 + np.flatnonzero(frequencies[2:] == 1)[0]
+        y0 = np.log2(frequencies[1])
+        slope = y0 / (x0 - 1)
+        score = slope * (max_count - x0)
+        # score = - (regression_constant + regression_slope * max_count)
+    return score, max_count, max_fragment
