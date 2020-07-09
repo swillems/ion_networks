@@ -18,7 +18,8 @@ def convert_data_formats_to_csvs(
     data_type,
     output_directory,
     parameter_file_name,
-    log_file_name
+    log_file_name,
+    threads=None
 ):
     """
     Convert centroided MSMS data to a unified csv that can be read as an
@@ -54,6 +55,8 @@ def convert_data_formats_to_csvs(
         file_name=parameter_file_name,
         default="convert"
     )
+    if threads is not None:
+        ms_utils.set_threads(threads)
     # TODO: Proper parsing of empty log...?
     if (log_file_name is None) or (log_file_name == ""):
         log_file_name = parameters["log_file_name"]
@@ -101,7 +104,8 @@ def create_ion_networks(
     input_path,
     output_directory,
     parameter_file_name,
-    log_file_name
+    log_file_name,
+    threads=None
 ):
     """
     Create ion-networks from unified csv files.
@@ -129,6 +133,8 @@ def create_ion_networks(
         file_name=parameter_file_name,
         default="create"
     )
+    if threads is not None:
+        ms_utils.set_threads(threads)
     # TODO: Proper parsing of empty log...?
     if (log_file_name is None) or (log_file_name == ""):
         log_file_name = parameters["log_file_name"]
@@ -172,7 +178,8 @@ def create_ion_networks(
 def evidence_ion_networks(
     input_path,
     parameter_file_name,
-    log_file_name
+    log_file_name,
+    threads=None
 ):
     """
     Evidence ion-networks with each other.
@@ -194,6 +201,8 @@ def evidence_ion_networks(
         file_name=parameter_file_name,
         default="evidence"
     )
+    if threads is not None:
+        ms_utils.set_threads(threads)
     # TODO: Proper parsing of empty log...?
     if (log_file_name is None) or (log_file_name == ""):
         log_file_name = parameters["log_file_name"]
@@ -268,7 +277,8 @@ def create_database(
     input_path,
     output_directory,
     parameter_file_name,
-    log_file_name
+    log_file_name,
+    threads=None
 ):
     # TODO: Docstring
     if parameter_file_name is None:
@@ -283,6 +293,8 @@ def create_database(
         file_name=parameter_file_name,
         default="database"
     )
+    if threads is not None:
+        ms_utils.set_threads(threads)
     # TODO: Proper parsing of empty log...?
     if (log_file_name is None) or (log_file_name == ""):
         log_file_name = parameters["log_file_name"]
@@ -333,7 +345,9 @@ def annotate(
     database_file_name,
     mgf_format,
     parameter_file_name,
-    log_file_name
+    log_file_name,
+    threads=None,
+    fragment_ppm=None
 ):
     # TODO: Docstring
     if parameter_file_name is None:
@@ -344,6 +358,10 @@ def annotate(
         file_name=parameter_file_name,
         default="annotation"
     )
+    if fragment_ppm is not None:
+        parameters["annotation_ppm"] = fragment_ppm
+    if threads is not None:
+        ms_utils.set_threads(threads)
     # TODO: Proper parsing of empty log...?
     if (log_file_name is None) or (log_file_name == ""):
         log_file_name = parameters["log_file_name"]
@@ -368,6 +386,7 @@ def annotate(
         logger.info(f"database_file_name: {database_file_name}")
         logger.info(f"parameter_file_name: {parameter_file_name}")
         logger.info(f"max_threads: {ms_utils.MAX_THREADS}")
+        logger.info(f"fragment_ppm: {parameters['annotation_ppm']}")
         logger.info("")
         database = ms_database.HDF_Database_File(database_file_name)
         for file_name in input_file_names:
@@ -389,7 +408,8 @@ def create_mgfs(
     input_path,
     output_directory,
     parameter_file_name,
-    log_file_name
+    log_file_name,
+    threads=None
 ):
     """
     Create ion-networks from unified csv files.
@@ -417,6 +437,8 @@ def create_mgfs(
         file_name=parameter_file_name,
         default="mgf"
     )
+    if threads is not None:
+        ms_utils.set_threads(threads)
     # TODO: Proper parsing of empty log...?
     if (log_file_name is None) or (log_file_name == ""):
         log_file_name = parameters["log_file_name"]
@@ -907,17 +929,26 @@ class CLI(object):
             "If the log file already exists, the new log data is appended.",
         type=click.Path()
     )
+    @click.option(
+        "--threads",
+        "-t",
+        "threads",
+        help="The number of threads to use.",
+        type=int
+    )
     def create(
         input_path,
         output_directory,
         parameter_file_name,
-        log_file_name
+        log_file_name,
+        threads
     ):
         create_ion_networks(
             input_path,
             output_directory,
             parameter_file_name,
-            log_file_name
+            log_file_name,
+            threads
         )
 
     @staticmethod
@@ -955,15 +986,24 @@ class CLI(object):
             "If the log file already exists, the new log data is appended.",
         type=click.Path()
     )
+    @click.option(
+        "--threads",
+        "-t",
+        "threads",
+        help="The number of threads to use.",
+        type=int
+    )
     def evidence(
         input_path,
         parameter_file_name,
-        log_file_name
+        log_file_name,
+        threads
     ):
         evidence_ion_networks(
             input_path,
             parameter_file_name,
-            log_file_name
+            log_file_name,
+            threads
         )
 
     @staticmethod
@@ -1054,17 +1094,26 @@ class CLI(object):
             "If the log file already exists, the new log data is appended.",
         type=click.Path()
     )
+    @click.option(
+        "--threads",
+        "-t",
+        "threads",
+        help="The number of threads to use.",
+        type=int
+    )
     def database(
         input_path,
         output_directory,
         parameter_file_name,
-        log_file_name
+        log_file_name,
+        threads
     ):
         create_database(
             input_path,
             output_directory,
             parameter_file_name,
-            log_file_name
+            log_file_name,
+            threads
         )
 
     @staticmethod
@@ -1076,7 +1125,7 @@ class CLI(object):
     @click.option(
         "--input_path",
         "-i",
-        help="An [input.evidence.hdf] evidence file."
+        help="An [input.evidence.hdf] evidence file. "
             "Individual files can be provided, as well as folders. "
             "This flag can be set multiple times.",
         required=True,
@@ -1095,9 +1144,10 @@ class CLI(object):
         '--mgf_format',
         '-m',
         'mgf_format',
-        help="Input is in mgf format (default=False)",
+        help="Input is in mgf format",
         is_flag=True,
-        default=False
+        default=False,
+        show_default=True,
     )
     @click.option(
         "--parameter_file",
@@ -1117,19 +1167,37 @@ class CLI(object):
             "If the log file already exists, the new log data is appended.",
         type=click.Path()
     )
+    @click.option(
+        "--threads",
+        "-t",
+        "threads",
+        help="The number of threads to use.",
+        type=int
+    )
+    @click.option(
+        "--fragment_ppm",
+        "-f",
+        "fragment_ppm",
+        help="The maximum allowed fragment ppm error.",
+        type=float
+    )
     def annotate(
         input_path,
         database_file_name,
         mgf_format,
         parameter_file_name,
-        log_file_name
+        log_file_name,
+        threads,
+        fragment_ppm
     ):
         annotate(
             input_path,
             database_file_name,
             mgf_format,
             parameter_file_name,
-            log_file_name
+            log_file_name,
+            threads,
+            fragment_ppm
         )
 
     @staticmethod

@@ -126,16 +126,19 @@ def read_parameters_from_json_file(file_name="", default=""):
     # TODO: Numba expects proper floats or integers, not a mixture
     # TODO: e.g. DT_error = 2.0, instead of DT_error = 2
     if "threads" in parameters:
-        global MAX_THREADS
-        max_cpu_count = multiprocessing.cpu_count()
-        threads = parameters["threads"]
-        if threads > max_cpu_count:
-            MAX_THREADS = max_cpu_count
-        else:
-            while threads <= 0:
-                threads += max_cpu_count
-            MAX_THREADS = threads
+        set_threads(parameters["threads"])
     return parameters
+
+
+def set_threads(threads):
+    global MAX_THREADS
+    max_cpu_count = multiprocessing.cpu_count()
+    if threads > max_cpu_count:
+        MAX_THREADS = max_cpu_count
+    else:
+        while threads <= 0:
+            threads += max_cpu_count
+        MAX_THREADS = threads
 
 
 def get_file_names_with_extension(input_path, extension=""):
