@@ -706,7 +706,7 @@ def export_annotated_csv(
                 fragment_ion_numbers[fragment_index],
                 spectra[spectrum_index]['params']['title'],
                 spectra[spectrum_index]['params']['pepmass'][0],
-                spectra[0]['params']['rtinseconds'],
+                spectra[spectrum_index]['params']['rtinseconds'],
                 peptide_sequence,
                 peptide_modifications[peptide_index],
                 len(peptide_sequence),
