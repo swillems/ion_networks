@@ -627,6 +627,13 @@ def annotate_mgf(
     candidate_counts = np.concatenate([r[4] for r in results])
     spectrum_sizes = np.concatenate([r[5] for r in results])
     del results
+    modified_scores, fdr_values = calculate_modified_score(
+        scores,
+        count_results,
+        spectrum_sizes,
+        database,
+        peptide_pointers[fragments]
+    )
     export_annotated_csv(
         scores=scores,
         fragments=fragments,
@@ -640,7 +647,42 @@ def annotate_mgf(
         database=database,
         peptide_pointers=peptide_pointers,
         out_file_name=out_file_name,
+        export_decoys=parameters['export_decoys'],
+        fdr_filter=parameters['fdr_filter'],
+        fdr_values=fdr_values,
+        modified_scores=modified_scores
     )
+
+
+def calculate_modified_score(
+    likelihoods,
+    hit_counts,
+    neighbors,
+    database,
+    peptide_indices
+):
+    modified_scores = hit_counts.copy()
+    modified_scores = modified_scores ** likelihoods
+    modified_scores /= np.log2(1 + neighbors)
+    sequence_lengths = np.array(
+        [
+            len(s) for s in database.read_dataset(
+                "sequence",
+                "peptides"
+            )
+        ]
+    )[peptide_indices]
+    modified_scores /= np.log2(sequence_lengths * 2 - 2)
+    decoys = database.read_dataset(
+        "decoy",
+        "peptides"
+    )[peptide_indices]
+    order = np.argsort(modified_scores)[::-1]
+    decoy_count = np.cumsum(decoys[order])
+    fdr_values = decoy_count / np.arange(1, decoy_count.shape[0] + 1)
+    inv_order = np.argsort(order)
+    fdr_values = fdr_values[inv_order]
+    return modified_scores, fdr_values
 
 
 def export_annotated_csv(
@@ -657,6 +699,10 @@ def export_annotated_csv(
     peptide_pointers,
     # score_cutoff,
     out_file_name,
+    export_decoys,
+    fdr_filter,
+    fdr_values,
+    modified_scores,
 ):
     LOGGER.info(f"Exporting {out_file_name}")
     peptides = peptide_pointers[fragments]
@@ -690,12 +736,19 @@ def export_annotated_csv(
             "Count",
             "Candidates",
             "Spectrum_size",
+            "Modified_score",
             "Decoy"
         ]
         outfile.writerow(header)
         for i, ion_index in enumerate(ion_indices):
+            fdr = fdr_values[i]
+            if fdr > fdr_filter:
+                continue
             fragment_index = fragments[i]
             peptide_index = peptides[i]
+            if (not export_decoys):
+                if decoys[peptide_index]:
+                    continue
             spectrum_index = spectrum_indices1[i]
             peptide_sequence = peptide_sequences[peptide_index]
             row = [
@@ -714,6 +767,7 @@ def export_annotated_csv(
                 count_results[i],
                 candidate_counts[i],
                 spectrum_sizes[i],
+                modified_scores[i],
                 decoys[peptide_index],
             ]
             outfile.writerow(row)

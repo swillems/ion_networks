@@ -347,7 +347,9 @@ def annotate(
     parameter_file_name,
     log_file_name,
     threads=None,
-    fragment_ppm=None
+    fragment_ppm=None,
+    export_decoys=None,
+    fdr_filter=None
 ):
     # TODO: Docstring
     if parameter_file_name is None:
@@ -360,6 +362,10 @@ def annotate(
     )
     if fragment_ppm is not None:
         parameters["annotation_ppm"] = fragment_ppm
+    if export_decoys is not None:
+        parameters["export_decoys"] = export_decoys
+    if fdr_filter is not None:
+        parameters["fdr_filter"] = fdr_filter
     if threads is not None:
         ms_utils.set_threads(threads)
     # TODO: Proper parsing of empty log...?
@@ -387,6 +393,9 @@ def annotate(
         logger.info(f"parameter_file_name: {parameter_file_name}")
         logger.info(f"max_threads: {ms_utils.MAX_THREADS}")
         logger.info(f"fragment_ppm: {parameters['annotation_ppm']}")
+        logger.info(f"fdr_filter: {parameters['fdr_filter']}")
+        # TODO implement fdr filtering!!!
+        logger.info(f"export_decoys: {parameters['export_decoys']}")
         logger.info("")
         database = ms_database.HDF_Database_File(database_file_name)
         for file_name in input_file_names:
@@ -1175,10 +1184,26 @@ class CLI(object):
         type=int
     )
     @click.option(
-        "--fragment_ppm",
-        "-f",
-        "fragment_ppm",
+        "--fragment_ppm_error",
+        "-e",
+        "fragment_ppm_error",
         help="The maximum allowed fragment ppm error.",
+        type=float
+    )
+    @click.option(
+        "--export_decoys",
+        "-x",
+        "export_decoys",
+        help="Include decoy hits in the export.",
+        is_flag=True,
+        default=False,
+        show_default=True,
+    )
+    @click.option(
+        "--fdr_filter",
+        "-f",
+        "fdr_filter",
+        help="Remove annotations above this fdr.",
         type=float
     )
     def annotate(
@@ -1188,7 +1213,9 @@ class CLI(object):
         parameter_file_name,
         log_file_name,
         threads,
-        fragment_ppm
+        fragment_ppm_error,
+        export_decoys,
+        fdr_filter
     ):
         annotate(
             input_path,
@@ -1197,7 +1224,9 @@ class CLI(object):
             parameter_file_name,
             log_file_name,
             threads,
-            fragment_ppm
+            fragment_ppm_error,
+            export_decoys,
+            fdr_filter
         )
 
     @staticmethod

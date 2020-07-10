@@ -1292,6 +1292,13 @@ class HDF_Evidence_File(HDF_MS_Run_File):
         candidate_counts = np.concatenate([r[4] for r in results])
         neighbor_counts = np.concatenate([r[5] for r in results])
         del results
+        modified_scores, fdr_values = ms_utils.calculate_modified_score(
+            scores,
+            count_results,
+            neighbor_counts,
+            database,
+            peptide_pointers[fragments]
+        )
         self.export_annotated_csv(
             scores,
             fragments,
@@ -1302,6 +1309,10 @@ class HDF_Evidence_File(HDF_MS_Run_File):
             database,
             peptide_pointers,
             out_file_name,
+            export_decoys=parameters['export_decoys'],
+            fdr_filter=parameters['fdr_filter'],
+            fdr_values=fdr_values
+            modified_scores=modified_scores,
         )
 
     def export_annotated_csv(
@@ -1315,6 +1326,10 @@ class HDF_Evidence_File(HDF_MS_Run_File):
         database,
         peptide_pointers,
         out_file_name,
+        export_decoys,
+        fdr_filter,
+        fdr_values,
+        modified_scores
     ):
         ms_utils.LOGGER.info(f"Exporting {out_file_name}")
         peptides = peptide_pointers[fragments]
@@ -1343,12 +1358,19 @@ class HDF_Evidence_File(HDF_MS_Run_File):
                 "Count",
                 "Candidates",
                 "Neighbors",
+                "Modified_score",
                 "Decoy"
             ]
             outfile.writerow(header)
             for i, ion_index in enumerate(ion_indices):
+                fdr = fdr_values[i]
+                if fdr > fdr_filter:
+                    continue
                 fragment_index = fragments[i]
                 peptide_index = peptides[i]
+                if (not export_decoys):
+                    if decoys[peptide_index]:
+                        continue
                 row = [ion_index]
                 row += [
                     self_coordinate[
@@ -1366,6 +1388,7 @@ class HDF_Evidence_File(HDF_MS_Run_File):
                     count_results[i],
                     candidate_counts[i],
                     neighbor_counts[i],
+                    modified_scores[i],
                     decoys[peptide_index],
                 ]
                 outfile.writerow(row)
