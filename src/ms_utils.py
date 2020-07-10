@@ -601,6 +601,9 @@ def annotate_mgf(
         "right"
     )
     inv_order = np.argsort(mz_order)
+    low_limits = low_limits[inv_order]
+    high_limits = high_limits[inv_order]
+    del inv_order
     LOGGER.info(
         f"Annotating fragments of {mgf_file_name} with {database.file_name}"
     )
@@ -611,8 +614,8 @@ def annotate_mgf(
                 (
                     np.arange(i, spectra_indptr.shape[0] - 1, threads),
                     spectra_indptr,
-                    low_limits[inv_order],
-                    high_limits[inv_order],
+                    low_limits,
+                    high_limits,
                     peptide_pointers,
                 ) for i in range(threads)
             ]
@@ -636,7 +639,6 @@ def annotate_mgf(
         spectra_mzs=spectra_mzs,
         database=database,
         peptide_pointers=peptide_pointers,
-        # score_cutoff=parameters["score_cutoff"],
         out_file_name=out_file_name,
     )
 
