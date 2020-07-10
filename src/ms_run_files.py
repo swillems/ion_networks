@@ -1246,6 +1246,7 @@ class HDF_Evidence_File(HDF_MS_Run_File):
         ms_utils.LOGGER.info(
             f"Matching fragments of {self.file_name} with {database.file_name}"
         )
+        # TODO mass calibrate
         low_limits = np.searchsorted(
             database_log_mzs,
             spectra_log_mzs - parameters["annotation_ppm"],

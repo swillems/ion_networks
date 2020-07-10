@@ -590,6 +590,7 @@ def annotate_mgf(
     LOGGER.info(
         f"Matching fragments of {mgf_file_name} with {database.file_name}"
     )
+    # TODO mass calibrate
     low_limits = np.searchsorted(
         database_log_mzs,
         spectra_log_mzs - parameters["annotation_ppm"],
