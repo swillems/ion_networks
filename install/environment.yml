@@ -18,8 +18,9 @@ dependencies:
   - pyteomics
   - numba
   - ipykernel
+  - libgcc
   - pip:
-    - ms2pip
     - pyqt5-sip
     - pyqtwebengine
     - tables
+    - ms2pip
