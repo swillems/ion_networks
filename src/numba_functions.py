@@ -70,7 +70,6 @@ def quick_align(
     self_indices_mask = np.empty(len(selection) + 2, np.int64)
     self_indices_mask[0] = 0
     self_indices_mask[1: -1] = self_indices[selection]
-    del self_indices
     self_indices_mask[-1] = len(self_mzs) - 1
     other_indices_mask = np.empty(len(selection) + 2, np.int64)
     other_indices_mask[0] = 0

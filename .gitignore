@@ -133,6 +133,7 @@ dmypy.json
 projects
 # src/sandbox*
 *log.txt
+*.DS_Store
 
 # TODO: remove from .gitignore
 # docs

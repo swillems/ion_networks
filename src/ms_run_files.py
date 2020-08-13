@@ -1312,8 +1312,8 @@ class HDF_Evidence_File(HDF_MS_Run_File):
             out_file_name,
             export_decoys=parameters['export_decoys'],
             fdr_filter=parameters['fdr_filter'],
-            fdr_values=fdr_values
-            modified_scores=modified_scores,
+            fdr_values=fdr_values,
+            modified_scores=modified_scores
         )
 
     def export_annotated_csv(
@@ -1330,7 +1330,7 @@ class HDF_Evidence_File(HDF_MS_Run_File):
         export_decoys,
         fdr_filter,
         fdr_values,
-        modified_scores
+        modified_scores,
     ):
         ms_utils.LOGGER.info(f"Exporting {out_file_name}")
         peptides = peptide_pointers[fragments]

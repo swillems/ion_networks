@@ -3,8 +3,13 @@
 # external
 import pandas as pd
 import numpy as np
-import ms2pip.ms2pipC
-import ms2pip.retention_time
+try:
+    import ms2pip.ms2pipC
+    import ms2pip.retention_time
+except ModuleNotFoundError:
+    print(
+        "MS2PIP not found, refere to their manual page for manual installation"
+    )
 import pyteomics.parser
 import pyteomics.fasta
 # local

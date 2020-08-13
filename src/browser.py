@@ -3,6 +3,7 @@
 # builtin
 import contextlib
 import os
+import warnings
 # external
 import numpy as np
 import numexpr as ne
@@ -37,30 +38,32 @@ class Browser(object):
         widget_size=20,
     ):
         # TODO: Docstring
-        self.widget_size = widget_size
-        self.window = {}
-        self.evaluate_window = {}
-        self.init_main_window()
-        self.window["Main"] = sg.Window("Main", self.window["Main"])
-        self.active_window_name = "Main"
-        self.figs = {
-            "network": self.init_figure("network"),
-            "evidence": self.init_figure("evidence"),
-        }
-        self.figs["network"].canvas.manager.toolmanager.add_tool(
-            'node_select',
-            PointerTool,
-            callback_function=self.evidence_figure_update_axis_selection
-        )
-        self.figs["network"].canvas.manager.toolbar.add_tool(
-            'node_select',
-            'navigation',
-            1
-        )
-        plt.show(block=False)
-        if start:
-            self.run()
-            self.__exit__()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.widget_size = widget_size
+            self.window = {}
+            self.evaluate_window = {}
+            self.init_main_window()
+            self.window["Main"] = sg.Window("Main", self.window["Main"])
+            self.active_window_name = "Main"
+            self.figs = {
+                "network": self.init_figure("network"),
+                "evidence": self.init_figure("evidence"),
+            }
+            self.figs["network"].canvas.manager.toolmanager.add_tool(
+                'node_select',
+                PointerTool,
+                callback_function=self.evidence_figure_update_axis_selection
+            )
+            self.figs["network"].canvas.manager.toolbar.add_tool(
+                'node_select',
+                'navigation',
+                1
+            )
+            plt.show(block=False)
+            if start:
+                self.run()
+                self.__exit__()
 
     def __enter__(self):
         return self
@@ -938,9 +941,18 @@ class Browser(object):
         fig.canvas.manager.toolmanager.remove_tool('back')
         fig.canvas.manager.toolmanager.remove_tool('forward')
         fig.canvas.manager.toolmanager.remove_tool('home')
-        fig.canvas.manager.toolmanager.remove_tool('copy')
-        fig.canvas.manager.toolmanager.remove_tool('allnav')
-        fig.canvas.manager.toolmanager.remove_tool('nav')
+        try:
+            fig.canvas.manager.toolmanager.remove_tool('copy')
+        except KeyError:
+            pass
+        try:
+            fig.canvas.manager.toolmanager.remove_tool('allnav')
+        except KeyError:
+            pass
+        try:
+            fig.canvas.manager.toolmanager.remove_tool('nav')
+        except KeyError:
+            pass
         fig.canvas.manager.window.protocol(
             "WM_DELETE_WINDOW",
             lambda: self.swap_active_window(None)
