@@ -32,7 +32,13 @@ if ! hash ion_networks.py 2>/dev/null; then
   echo "Adding ion-networks.py alias to ~/.bashrc."
   eval "$(conda shell.bash hook)"
   ion_networks_command="$(conda activate ion_networks; which python)"
-  echo "alias ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'" >> ~/.bashrc
+  if [ -n "$ZSH_VERSION" ]; then
+     echo "alias ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'" >> ~/.zshrc
+  elif [ -n "$BASH_VERSION" ]; then
+     echo "alias ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'" >> ~/.bashrc
+  else
+     echo "Unknown shell."
+  fi
   # export ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'
 else
   echo "Ion-networks are already installed."
