@@ -44,7 +44,9 @@ class Browser(object):
             self.window = {}
             self.evaluate_window = {}
             self.init_main_window()
-            self.window["Main"] = sg.Window("Main", self.window["Main"])
+            self.window["Main"] = sg.Window(
+                "Main", self.window["Main"], finalize=True
+            )
             self.active_window_name = "Main"
             self.figs = {
                 "network": self.init_figure("network"),
@@ -244,7 +246,10 @@ class Browser(object):
             ]
         )
         layout.append(self.add_main_menu_and_continue_buttons_to_layout())
-        self.window["Node settings"] = sg.Window('Node settings', layout)
+        self.window["Node settings"] = sg.Window(
+            'Node settings', layout, finalize=True
+        )
+        self.window["Node settings"].hide()
         self.evaluate_window["Node settings"] = self.evaluate_node_settings_window
 
     def init_edge_settings_window(self):
@@ -326,7 +331,10 @@ class Browser(object):
             ]
         )
         layout.append(self.add_main_menu_and_continue_buttons_to_layout())
-        self.window["Edge settings"] = sg.Window('Edge settings', layout)
+        self.window["Edge settings"] = sg.Window(
+            'Edge settings', layout, finalize=True
+        )
+        self.window["Edge settings"].hide()
         self.evaluate_window["Edge settings"] = self.evaluate_edge_settings_window
 
     def init_compare_settings_window(self):
@@ -360,7 +368,10 @@ class Browser(object):
             ]
         )
         flush_figure(self.figs["evidence"], True)
-        self.window["Compare settings"] = sg.Window('Compare settings', layout)
+        self.window["Compare settings"] = sg.Window(
+            'Compare settings', layout, finalize=True
+        )
+        self.window["Compare settings"].hide()
         self.evaluate_window["Compare settings"] = self.evaluate_compare_settings_window
 
     def init_misc_settings_window(self):
@@ -416,7 +427,10 @@ class Browser(object):
         self.figs["network"].axes[0].set_facecolor(self.network_bg_color)
         self.figs["evidence"].axes[0].set_facecolor(self.evidence_bg_color)
         layout.append(self.add_main_menu_and_continue_buttons_to_layout())
-        self.window["Misc settings"] = sg.Window('Misc settings', layout)
+        self.window["Misc settings"] = sg.Window(
+            'Misc settings', layout, finalize=True
+        )
+        self.window["Misc settings"].hide()
         self.evaluate_window["Misc settings"] = self.evaluate_misc_settings_window
 
     def evaluate_main_window(self, event, values):
