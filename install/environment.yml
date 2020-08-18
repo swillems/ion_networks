@@ -7,7 +7,6 @@ dependencies:
   - pip
   - numpy
   - numexpr
-  - matplotlib
   - PySimpleGUI
   - matplotlib
   - pandas
