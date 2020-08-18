@@ -32,7 +32,7 @@ if ! hash ion_networks.py 2>/dev/null; then
   eval "$(conda shell.bash hook)"
   ion_networks_command="$(conda activate ion_networks; which python)"
   cd ion_networks
-  ion_networks_command "/ion_networks/setup.py" install
+  ion_networks_command "setup.py" install
   cd ..
   if [ -n "$ZSH_VERSION" ]; then
      echo "Adding ion-networks.py alias to ~/.zshrc."

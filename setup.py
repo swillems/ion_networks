@@ -1,5 +1,5 @@
 from setuptools import setup
-import ion_networks._version
+import src._version
 
 
 with open("README.md", "r") as fh:

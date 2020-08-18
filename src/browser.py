@@ -14,7 +14,7 @@ import pandas as pd
 # local
 try:
     from . import ms_run_files
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     import ms_run_files
 
 

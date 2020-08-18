@@ -16,7 +16,7 @@ try:
     from . import ms_database
     from . import ms_utils
     from . import numba_functions
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     import ms_database
     import ms_utils
     import numba_functions

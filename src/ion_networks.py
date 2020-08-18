@@ -3,7 +3,7 @@
 # local
 try:
     from . import interface
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     import interface
 
 

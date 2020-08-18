@@ -12,7 +12,7 @@ try:
     from . import ms_database
     from . import ms_utils
     from . import browser
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     import ms_run_files
     import ms_database
     import ms_utils

@@ -15,7 +15,7 @@ import pyteomics.fasta
 # local
 try:
     from . import ms_utils
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     import ms_utils
 
 

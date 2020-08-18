@@ -19,7 +19,7 @@ import pyteomics.mgf
 try:
     from ._version import __version__ as VERSION
     from . import numba_functions
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     from _version import __version__ as VERSION
     import numba_functions
 
