@@ -16,8 +16,12 @@ import pandas as pd
 import h5py
 import pyteomics.mgf
 # local
-from _version import __version__ as VERSION
-import numba_functions
+try:
+    from ._version import __version__ as VERSION
+    from . import numba_functions
+except ImportError:
+    from _version import __version__ as VERSION
+    import numba_functions
 
 
 GITHUB_VERSION_FILE = "https://raw.githubusercontent.com/swillems/ion_networks/master/src/_version.py"
@@ -818,7 +822,8 @@ class HDF_File(object):
         self.__file_name = os.path.abspath(file_name)
         if not isinstance(new_file, bool):
             raise ValueError(
-                f"HDF File {self.file_name} file is not defined as (un)existing"
+                f"Could not determine if HDF_file {self.file_name} is read, "
+                f"write or truncate."
             )
         if new_file:
             is_read_only = False
@@ -831,12 +836,15 @@ class HDF_File(object):
                 self.__update_timestamp(hdf_file)
         else:
             with h5py.File(self.file_name, "r") as hdf_file:
-                if self.version != VERSION:
-                    LOGGER.warning(
-                        f"WARNING: {self.file_name} was created with version"
-                        f" {self.version} instead of {VERSION}"
-                    )
+                self.check_version()
         self.__is_read_only = is_read_only
+
+    def check_version(self):
+        if self.version != VERSION:
+            LOGGER.warning(
+                f"WARNING: {self.file_name} was created with version "
+                f"{self.version} instead of {VERSION}."
+            )
 
     def __eq__(self, other):
         return self.file_name == other.file_name
@@ -850,15 +858,15 @@ class HDF_File(object):
     def __repr__(self):
         return str(self)
 
+    def __update_timestamp(self, hdf_file):
+        hdf_file.attrs["last_updated"] = time.asctime()
+
     def __get_parent_group(self, hdf_file, parent_group_name):
         if parent_group_name == "":
             parent_group = hdf_file
         else:
             parent_group = hdf_file[parent_group_name]
         return parent_group
-
-    def __update_timestamp(self, hdf_file):
-        hdf_file.attrs["last_updated"] = time.asctime()
 
     def read_group(self, parent_group_name=""):
         # TODO: Docstring

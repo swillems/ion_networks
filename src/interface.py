@@ -7,10 +7,16 @@ import threading
 import PySimpleGUI as sg
 import click
 # local
-import ms_run_files
-import ms_database
-import ms_utils
-import browser
+try:
+    from . import ms_run_files
+    from . import ms_database
+    from . import ms_utils
+    from . import browser
+except ImportError:
+    import ms_run_files
+    import ms_database
+    import ms_utils
+    import browser
 
 
 def convert_data_formats_to_csvs(

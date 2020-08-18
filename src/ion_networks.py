@@ -1,8 +1,15 @@
 #!python
 
 # local
-import interface
+try:
+    from . import interface
+except ImportError:
+    import interface
+
+
+def main():
+    interface.CLI()
 
 
 if __name__ == "__main__":
-    interface.CLI()
+    main()

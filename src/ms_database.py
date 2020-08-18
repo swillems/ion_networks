@@ -8,12 +8,15 @@ try:
     import ms2pip.retention_time
 except ModuleNotFoundError:
     print(
-        "MS2PIP not found, refere to their manual page for manual installation"
+        "MS2PIP not found, refer to their manual page for manual installation"
     )
 import pyteomics.parser
 import pyteomics.fasta
 # local
-import ms_utils
+try:
+    from . import ms_utils
+except ImportError:
+    import ms_utils
 
 
 class HDF_Database_File(ms_utils.HDF_File):

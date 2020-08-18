@@ -12,7 +12,11 @@ import PySimpleGUI as sg
 import matplotlib
 import pandas as pd
 # local
-import ms_run_files
+try:
+    from . import ms_run_files
+except ImportError:
+    import ms_run_files
+
 
 matplotlib.use('TkAgg')
 plt.rcParams['toolbar'] = 'toolmanager'
