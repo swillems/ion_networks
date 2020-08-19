@@ -37,7 +37,7 @@ if ! hash ion_networks.py 2>/dev/null; then
     ion_networks_command="$(conda activate ion_networks; which python)"
     git clone https://github.com/compomics/ms2pip_c.git
     cd ms2pip_c
-    conda install -n ion_networks cython
+    conda install -n ion_networks cython -y
     sed -i .bak '/-fno-var-tracking-assignments/d' setup.py
     "${ion_networks_command}" setup.py install
     cd ..
