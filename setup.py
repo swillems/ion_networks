@@ -1,4 +1,4 @@
-from setuptools import setup
+import setuptools
 import src._version
 
 
@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
     LONG_DESCRIPTION = fh.read()
 
 
-setup(
+setuptools.setup(
     name=src._version.__project__,
     version=src._version.__version__,
     license=src._version.__license__,
@@ -32,9 +32,9 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
     ],
-    packages=["src", "lib"],
+    # packages=["src"],
+    packages=setuptools.find_packages(),
     include_package_data=True,
-    package_data={'lib': ['*']},
     entry_points={
         "console_scripts": [
             "ion_networks=src.ion_networks:main",
