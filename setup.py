@@ -7,13 +7,13 @@ with open("README.md", "r") as fh:
 
 
 setup(
-    name=ion_networks._version.__project__,
-    version=ion_networks._version.__version__,
-    license=ion_networks._version.__license__,
+    name=src._version.__project__,
+    version=src._version.__version__,
+    license=src._version.__license__,
     description="Analysis of LC-[...]-MSMS data with ion-networks.",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
-    author=ion_networks._version.__author__,
+    author=src._version.__author__,
     author_email="sander.willems@ugent.be",
     url="https://github.com/swillems/ion_networks",
     project_urls={
