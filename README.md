@@ -21,7 +21,7 @@ The ion-networks repository was developed on a [Ubuntu 18.04](http://releases.ub
 ### Windows 10
 For Windows users, the recommended approach is to install a [Windows subsystem for Linux (WSL)](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux) with Ubuntu 18.04 by following [these steps](https://docs.microsoft.com/en-us/windows/wsl/install-win10). After the WSL has been installed and a user account has been created, close the WSL and download and install [MobaXterm v11.1](https://mobaxterm.mobatek.net/download-home-edition.html) or higher. Open MobaXterm and from within open the WSL by clicking the WSL icon on the left of the window. Now, follow the installation steps for Ubuntu 18.04 within the MobaXterm WSL.
 
-## OS X Catalina
+### OS X Catalina
 Installation and usage has been verified on (OS X Catalina 10.15.6)[https://en.wikipedia.org/wiki/MacOS_Catalina]. Download and install `wget` and `git` with [brew](https://brew.sh/). Follow the linux installation steps afterwards.
 
 ### Ubuntu 18.04
