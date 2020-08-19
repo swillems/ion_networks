@@ -1,5 +1,5 @@
 import setuptools
-import src._version
+import ion_networks._version
 
 
 with open("README.md", "r") as fh:
@@ -7,13 +7,13 @@ with open("README.md", "r") as fh:
 
 
 setuptools.setup(
-    name=src._version.__project__,
-    version=src._version.__version__,
-    license=src._version.__license__,
+    name=ion_networks._version.__project__,
+    version=ion_networks._version.__version__,
+    license=ion_networks._version.__license__,
     description="Analysis of LC-[...]-MSMS data with ion-networks.",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
-    author=src._version.__author__,
+    author=ion_networks._version.__author__,
     author_email="sander.willems@ugent.be",
     url="https://github.com/swillems/ion_networks",
     project_urls={
@@ -32,12 +32,12 @@ setuptools.setup(
         "Programming Language :: Python :: 3 :: Only",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
     ],
-    # packages=["src"],
+    # packages=["ion_networks"],
     packages=setuptools.find_packages(),
     include_package_data=True,
     entry_points={
         "console_scripts": [
-            "ion_networks=src.ion_networks:main",
+            "ion_networks=ion_networks.ion_networks:main",
         ],
     },
     install_requires=[

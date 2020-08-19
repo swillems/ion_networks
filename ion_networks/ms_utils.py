@@ -25,8 +25,8 @@ except (ImportError, ModuleNotFoundError):
 
 
 GITHUB_VERSION_FILE = "https://raw.githubusercontent.com/swillems/ion_networks/master/src/_version.py"
-BASE_PATH = os.path.dirname(os.path.dirname(__file__))
-UPDATE_COMMAND = os.path.join(BASE_PATH, "install", "update.sh")
+BASE_PATH = os.path.dirname(__file__)
+UPDATE_COMMAND = os.path.join(os.path.dirname(BASE_PATH), "install", "update.sh")
 LIB_PATH = os.path.join(BASE_PATH, "lib")
 DEFAULT_PARAMETER_PATH = os.path.join(LIB_PATH, "default_parameters")
 DEFAULT_PARAMETER_FILES = {
@@ -561,7 +561,7 @@ def verify_version():
             f'{("*" * 50)}\n'
             f"Github is at version {github_version}, "
             f"while local version is {VERSION}\n"
-            f'{("Update by running the following command:")}\n'
+            f'{("Update by reinstalling or running the following command:")}\n'
             f"bash '{UPDATE_COMMAND}'\n"
             f'{("*" * 50)}\n'
         )
