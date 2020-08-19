@@ -1,8 +1,6 @@
 # Ion-networks
 Analysis of LC-[...]-MSMS data with ion-networks.
 
-![](https://github.com/swillems/ion_networks/blob/master/docs/3d_example.gif)
-
 ## Table of contents
 
    * [Ion-networks](#ion-networks)
@@ -14,6 +12,8 @@ Analysis of LC-[...]-MSMS data with ion-networks.
       * [Usage](#usage)
          * [Windows 10](#windows-10-1)
          * [Ubuntu 18.04 and OS X Catalina](#ubuntu-1804-and-os-x-catalina)
+
+![](https://github.com/swillems/ion_networks/blob/master/docs/3d_example.gif)
 
 ## Installation
 The ion-networks repository was developed on a [Ubuntu 18.04](http://releases.ubuntu.com/18.04.4/) with the [python 3.8](https://docs.python.org/3.8/) language. It is likely to function on other (UNIX-based) systems as well, but this has not been fully verified. OS X seems to be compatible and Windows can use a subsystem for linux.
