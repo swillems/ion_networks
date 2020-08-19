@@ -28,9 +28,27 @@ if ! hash ion_networks.py 2>/dev/null; then
     echo "Source already downloaded"
   fi
   echo "Installing ion-networks."
-  conda env create --file ion_networks/install/environment.yml
-  eval "$(conda shell.bash hook)"
-  ion_networks_command="$(conda activate ion_networks; which python)"
+  if [ "$(uname)" == "Darwin" ]; then
+    echo "Detected Mac OS X"
+    sed -i .bak '/ms2pip/d' ion_networks/install/environment.yml
+    sed -i .bak '/ms2pip/d' ion_networks/setup.py
+    conda env create --file ion_networks/install/environment.yml
+    eval "$(conda shell.bash hook)"
+    ion_networks_command="$(conda activate ion_networks; which python)"
+    git clone https://github.com/compomics/ms2pip_c.git
+    cd ms2pip_c
+    conda install -n ion_networks cython
+    sed -i .bak '/-fno-var-tracking-assignments/d' setup.py
+    "${ion_networks_command}" setup.py install
+    cd ..
+  elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+    echo "Detected Linux OS"
+    conda env create --file ion_networks/install/environment.yml
+    eval "$(conda shell.bash hook)"
+    ion_networks_command="$(conda activate ion_networks; which python)"
+  else
+    echo "Detected unknown OS"
+  fi
   cd ion_networks
   "${ion_networks_command}" setup.py install
   cd ..
@@ -43,7 +61,6 @@ if ! hash ion_networks.py 2>/dev/null; then
   else
      echo "Unknown shell."
   fi
-  # export ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'
 else
   echo "Ion-networks are already installed."
   echo "Update with command 'bash ion_networks/install/update.sh'."
