@@ -34,30 +34,31 @@ if ! hash ion_networks.py 2>/dev/null; then
     sed -i .bak '/ms2pip/d' ion_networks/setup.py
     conda env create --file ion_networks/install/environment.yml
     eval "$(conda shell.bash hook)"
-    ion_networks_command="$(conda activate ion_networks; which python)"
+    pip_command="$(conda activate ion_networks; which pip)"
     git clone https://github.com/compomics/ms2pip_c.git
     cd ms2pip_c
     conda install -n ion_networks cython -y
     sed -i .bak '/-fno-var-tracking-assignments/d' setup.py
-    "${ion_networks_command}" setup.py install
+    "${pip_command}" install .
     cd ..
   elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
     echo "Detected Linux OS"
     conda env create --file ion_networks/install/environment.yml
     eval "$(conda shell.bash hook)"
-    ion_networks_command="$(conda activate ion_networks; which python)"
+    pip_command="$(conda activate ion_networks; which pip)"
   else
     echo "Detected unknown OS"
   fi
   cd ion_networks
-  "${ion_networks_command}" setup.py install
+  "${pip_command}" install .
   cd ..
+  ion_networks_bin="$(conda activate ion_networks; which ion_networks)"
   if [ -n "$ZSH_VERSION" ]; then
      echo "Adding ion-networks.py alias to ~/.zshrc."
-     echo "alias ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'" >> ~/.zshrc
+     echo "alias ion_networks.py='"${ion_networks_bin}"" >> ~/.zshrc
   elif [ -n "$BASH_VERSION" ]; then
      echo "Adding ion-networks.py alias to ~/.bashrc."
-     echo "alias ion_networks.py='"${ion_networks_command}" "$(pwd)"/ion_networks/src/ion_networks.py'" >> ~/.bashrc
+     echo "alias ion_networks.py='"${ion_networks_bin}"" >> ~/.bashrc
   else
      echo "Unknown shell."
   fi

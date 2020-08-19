@@ -1,10 +1,9 @@
 #!bash
 
 conda remove --name ion_networks --all -y
-if [ -n "$ZSH_VERSION" ]; then
+if test -f "~/.zshrc"; then
    sed '/^alias ion_networks/d' -i ~/.zshrc
-elif [ -n "$BASH_VERSION" ]; then
+fi
+if test -f "~/.bashrc"; then
    sed '/^alias ion_networks/d' -i ~/.bashrc
-else
-   echo "Unknown shell."
 fi
