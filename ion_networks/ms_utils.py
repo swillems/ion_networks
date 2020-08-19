@@ -24,7 +24,7 @@ except (ImportError, ModuleNotFoundError):
     import numba_functions
 
 
-GITHUB_VERSION_FILE = "https://raw.githubusercontent.com/swillems/ion_networks/master/src/_version.py"
+GITHUB_VERSION_FILE = "https://raw.githubusercontent.com/swillems/ion_networks/master/ion_networks/_version.py"
 BASE_PATH = os.path.dirname(__file__)
 UPDATE_COMMAND = os.path.join(os.path.dirname(BASE_PATH), "install", "update.sh")
 LIB_PATH = os.path.join(BASE_PATH, "lib")
