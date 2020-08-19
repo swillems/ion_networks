@@ -75,7 +75,7 @@ def open_logger(log_file_name, log_level=logging.INFO):
         file_handler.setFormatter(formatter)
         LOGGER.addHandler(file_handler)
     LOGGER.info("=" * 50)
-    LOGGER.info(f"COMMAND: ion_networks.py {' '.join(sys.argv[1:])}")
+    LOGGER.info(f"COMMAND: ion_networks {' '.join(sys.argv[1:])}")
     LOGGER.info(f"VERSION: {VERSION}")
     LOGGER.info(f"LOGFILE: {log_file_name}")
     LOGGER.info("")
