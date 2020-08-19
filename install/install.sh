@@ -54,11 +54,11 @@ if ! hash ion_networks.py 2>/dev/null; then
   cd ..
   ion_networks_bin="$(conda activate ion_networks; which ion_networks)"
   if [ -n "$ZSH_VERSION" ]; then
-     echo "Adding ion-networks.py alias to ~/.zshrc."
-     echo "alias ion_networks.py='"${ion_networks_bin}"'" >> ~/.zshrc
+     echo "Adding ion-networks alias to ~/.zshrc."
+     echo "alias ion_networks='"${ion_networks_bin}"'" >> ~/.zshrc
   elif [ -n "$BASH_VERSION" ]; then
-     echo "Adding ion-networks.py alias to ~/.bashrc."
-     echo "alias ion_networks.py='"${ion_networks_bin}"'" >> ~/.bashrc
+     echo "Adding ion-networks alias to ~/.bashrc."
+     echo "alias ion_networks='"${ion_networks_bin}"'" >> ~/.bashrc
   else
      echo "Unknown shell."
   fi
