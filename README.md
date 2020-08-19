@@ -46,13 +46,13 @@ Four basic modules have been implemented for the analysis of ion-networks:
 These modules can be run either with a [GUI](https://en.wikipedia.org/wiki/Graphical_user_interface) or through a [CLI](https://en.wikipedia.org/wiki/Command-line_interface).
 
 ### Windows 10
-For Windows users, a (desktop) shortcut can be created in Windows that automatically runs the ion-networks GUI within the MobaXterm WSL. This can be done by opening MobaXterm and pressing the *session* button on the top left. Select the rightmost tab *WSL* and set the Linux distribution to Ubuntu in the *Basic WSL settings* tab. Click the *Advanced WSL settings* tab and copy ```ion_networks.py gui``` to the *Execute the following commands at startup* window. Finally, click the *Bookmark settings* tab and change the *Session name* to e.g. *ion_network_gui*. Click the *Create a desktop shortcut to this session* button and select both options *Hide terminal on startup* and *Close MobaXterm on exit* before pressing *OK* in this popup. Confirm the session settings with *OK*. A pop-up with the GUI running should have appeared in your taskbar, allowing you to test the installation. For subsequent use, double-clicking the Windows desktop icon suffices to run the ion-networks GUI as a stand-alone program.
+For Windows users, a (desktop) shortcut can be created in Windows that automatically runs the ion-networks GUI within the MobaXterm WSL. This can be done by opening MobaXterm and pressing the *session* button on the top left. Select the rightmost tab *WSL* and set the Linux distribution to Ubuntu in the *Basic WSL settings* tab. Click the *Advanced WSL settings* tab and copy ```ion_networks gui``` to the *Execute the following commands at startup* window. Finally, click the *Bookmark settings* tab and change the *Session name* to e.g. *ion_network_gui*. Click the *Create a desktop shortcut to this session* button and select both options *Hide terminal on startup* and *Close MobaXterm on exit* before pressing *OK* in this popup. Confirm the session settings with *OK*. A pop-up with the GUI running should have appeared in your taskbar, allowing you to test the installation. For subsequent use, double-clicking the Windows desktop icon suffices to run the ion-networks GUI as a stand-alone program.
 
 ### Ubuntu 18.04 and OS X Catalina
-The ion-networks software can be run within a terminal with the command ```ion_networks.py``` (this alias is set by default during installation). Possible commands are:
+The ion-networks software can be run within a terminal with the command ```ion_networks``` (this alias is set by default during installation). Possible commands are:
 
 ```
-Usage: ion_networks.py [OPTIONS] COMMAND [ARGS]...
+Usage: ion_networks [OPTIONS] COMMAND [ARGS]...
 
   Analysis of LC-[...]-MSMS data with ion-networks.
 
@@ -67,15 +67,15 @@ Commands:
   show      Show and browse ion-networks.
 ```
 
-Each command then comes with its own help function through ```ion_networks.py COMMAND -h```.
+Each command then comes with its own help function through ```ion_networks COMMAND -h```.
 
 Typically, a workflow looks as follows:
 
 ```bash
-ion_networks.py convert -i data_folder/centroided_data/experiment_x -o project_folder/experiment_x/ion_networks/ -d HDMSE -l project_folder/experiment_x/ion_networks/log.txt
-ion_networks.py create -i project_folder/experiment_x/ion_networks/ -l project_folder/experiment_x/ion_networks/log.txt
-ion_networks.py evidence -i project_folder/experiment_x/ion_networks/ -l project_folder/experiment_x/ion_networks/log.txt
-ion_networks.py show -i project_folder/experiment_x/ion_networks/ -l project_folder/experiment_x/ion_networks/log.txt
+ion_networks convert -i data_folder/centroided_data/experiment_x -o project_folder/experiment_x/ion_networks/ -d HDMSE -l project_folder/experiment_x/ion_networks/log.txt
+ion_networks create -i project_folder/experiment_x/ion_networks/ -l project_folder/experiment_x/ion_networks/log.txt
+ion_networks evidence -i project_folder/experiment_x/ion_networks/ -l project_folder/experiment_x/ion_networks/log.txt
+ion_networks show -i project_folder/experiment_x/ion_networks/ -l project_folder/experiment_x/ion_networks/log.txt
 ```
 
-Alternatively, a GUI can be used by running the command ```ion_networks.py gui```.
+Alternatively, a GUI can be used by running the command ```ion_networks gui```.
