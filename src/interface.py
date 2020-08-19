@@ -503,7 +503,11 @@ class GUI(object):
         self.init_create_window()
         self.init_evidence_window()
         self.init_terminal_window()
-        self.window["Main"] = sg.Window("Main", self.window["Main"])
+        self.window["Main"] = sg.Window(
+            "Main",
+            self.window["Main"],
+            finalize=True
+        )
         self.active_window_name = "Main"
         if start:
             self.run()
@@ -773,7 +777,8 @@ class GUI(object):
             if isinstance(self.window[new_window_name], list):
                 self.window[new_window_name] = sg.Window(
                     new_window_name,
-                    self.window[new_window_name]
+                    self.window[new_window_name],
+                    finalize=True
                 )
             self.window[new_window_name].UnHide()
         self.active_window_name = new_window_name
