@@ -15,10 +15,13 @@ Analysis of LC-[...]-MSMS data with ion-networks.
          * [Ubuntu 18.04](#ubuntu-1804-1)
 
 ## Installation
-The ion-networks repository was developed on a [Ubuntu 18.04](http://releases.ubuntu.com/18.04.4/) machine with the [python 3.8](https://docs.python.org/3.8/) language. It is likely to function on other (UNIX-based) systems as well, but this has not been fully verified.
+The ion-networks repository was developed on a [Ubuntu 18.04](http://releases.ubuntu.com/18.04.4/) with the [python 3.8](https://docs.python.org/3.8/) language. It is likely to function on other (UNIX-based) systems as well, but this has not been fully verified. OS X seems to be compatible and Windows can use a subsystem for linux.
 
 ### Windows 10
 For Windows users, the recommended approach is to install a [Windows subsystem for Linux (WSL)](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux) with Ubuntu 18.04 by following [these steps](https://docs.microsoft.com/en-us/windows/wsl/install-win10). After the WSL has been installed and a user account has been created, close the WSL and download and install [MobaXterm v11.1](https://mobaxterm.mobatek.net/download-home-edition.html) or higher. Open MobaXterm and from within open the WSL by clicking the WSL icon on the left of the window. Now, follow the installation steps for Ubuntu 18.04 within the MobaXterm WSL.
+
+## OS X
+Download and install `wget` and `git` with [brew](https://brew.sh/). Follow the linux installation steps afterwards.
 
 ### Ubuntu 18.04
 This repository requires python to be run within a [conda](https://conda.io/projects/conda/en/latest/index.html) environment. The following one-line command will install Miniconda3 (only if this is not installed yet), followed by the installation of the ion-networks repository by [downloading the ion-networks installation script](https://github.com/swillems/ion_networks/tree/master/install/install.sh) and running the install script at the desired location (this path should be chosen by the user). Note that this includes a test of the installation with a small data excerpt from [PXD001240](http://proteomecentral.proteomexchange.org/cgi/GetDataset?ID=PXD001240). This data is relatively small (<50MB), but a full analysis will require roughly 2GB of space and 30 minutes depending on your system...

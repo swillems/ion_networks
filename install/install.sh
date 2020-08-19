@@ -3,18 +3,35 @@
 if ! hash conda 2>/dev/null; then
   echo "Conda not found."
   echo "Downloading conda."
-  wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-  echo "Installing conda."
-  bash Miniconda3-latest-Linux-x86_64.sh -b -p ~/miniconda3
-  echo "Updating conda."
-  eval "$(~/miniconda3/bin/conda shell.bash hook)"
-  conda update -n root conda -y
-  echo "Initializing conda."
-  conda init
-  conda config --set auto_activate_base false
-  echo "Cleaning up conda installation."
-  source ~/.bashrc
-  rm Miniconda3-latest-Linux-x86_64.sh
+  if [ "$(uname)" == "Darwin" ]; then
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+    echo "Installing conda."
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p ~/miniconda3
+    echo "Updating conda."
+    eval "$(~/miniconda3/bin/conda shell.bash hook)"
+    conda update -n root conda -y
+    echo "Initializing conda."
+    conda init
+    conda config --set auto_activate_base false
+    echo "Cleaning up conda installation."
+    source ~/.bashrc
+    rm Miniconda3-latest-Linux-x86_64.sh
+  elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+    echo "Installing conda."
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p ~/miniconda3
+    echo "Updating conda."
+    eval "$(~/miniconda3/bin/conda shell.bash hook)"
+    conda update -n root conda -y
+    echo "Initializing conda."
+    conda init
+    conda config --set auto_activate_base false
+    echo "Cleaning up conda installation."
+    source ~/.bashrc
+    rm Miniconda3-latest-MacOSX-x86_64.sh
+  else
+    echo "Detected unknown OS"
+  fi
 else
   echo "Conda is already installed."
 fi
