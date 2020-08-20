@@ -9,6 +9,7 @@ Analysis of LC-[...]-MSMS data with ion-networks.
          * [Windows 10](#windows-10)
          * [OS X Catalina](#os-x-catalina)
          * [Ubuntu 18.04](#ubuntu-1804)
+         * [From source](#from-source)
       * [Usage](#usage)
          * [Windows 10](#windows-10-1)
          * [Ubuntu 18.04 and OS X Catalina](#ubuntu-1804-and-os-x-catalina)
@@ -25,15 +26,23 @@ For Windows users, the recommended approach is to install a [Windows subsystem f
 Installation and usage has been verified on (OS X Catalina 10.15.6)[https://en.wikipedia.org/wiki/MacOS_Catalina]. Download and install `wget` and `git` with [brew](https://brew.sh/). Follow the linux installation steps afterwards.
 
 ### Ubuntu 18.04
-This repository requires python to be run within a [conda](https://conda.io/projects/conda/en/latest/index.html) environment. The following one-line command will install Miniconda3 (only if this is not installed yet), followed by the installation of the ion-networks repository by [downloading the ion-networks installation script](https://github.com/swillems/ion_networks/tree/master/install/install.sh) and running the install script at the desired location (this path should be chosen by the user). Note that this includes a test of the installation with a small data excerpt from [PXD001240](http://proteomecentral.proteomexchange.org/cgi/GetDataset?ID=PXD001240). This data is relatively small (<50MB), but a full analysis will require roughly 2GB of space and 30 minutes depending on your system...
+This repository requires python to be run within a [conda](https://conda.io/projects/conda/en/latest/index.html) environment. The following one-line command will install Miniconda3 (only if this is not installed yet), followed by the installation of the ion-networks repository by [downloading the ion-networks installation script](https://github.com/swillems/ion_networks/tree/master/install/install.sh) and running the install script at the desired location (this path should be chosen by the user). Note that this includes a test of the installation with a small data excerpt from [PXD001240](http://proteomecentral.proteomexchange.org/cgi/GetDataset?ID=PXD001240). This data is relatively small (<50MB), but a full test analysis will require roughly 2GB of space and 5-60 minutes depending on your system...
 
 ```bash
 # mkdir /desired/path/where/to/install/ion_networks/
 # cd /desired/path/where/to/install/ion_networks/
-wget https://raw.githubusercontent.com/swillems/ion_networks/master/install/install.sh && bash install.sh && rm install.sh && source ~/.bashrc && bash ion_networks/install/test.sh
+wget https://raw.githubusercontent.com/swillems/ion_networks/master/install/install.sh && sh install.sh && rm install.sh
+sh ion_networks/install/test.sh
 ```
 
 If the ion-networks repository needs to be updated, [download](https://github.com/swillems/ion_networks/tree/master/install/update.sh) and/or run the ```update.sh``` bash script contained in the [install](https://github.com/swillems/ion_networks/tree/master/install) folder of the ion-networks repository.
+
+### From source
+Users that want more control of the installation can do this from source as well by following these steps:
+* [Optional] Create a virtual environment or conda environment and activate it
+* [Optional] Install [MS2PIP](https://github.com/compomics/ms2pip_c), taking your OS into account
+* Download the ion-networks github repo: `git clone https://github.com/swillems/ion_networks.git`
+* Install ion-networks: `pip install './ion_networks'` or [Optional] `pip install './ion_networks[ms2pip]'`
 
 ## Usage
 Four basic modules have been implemented for the analysis of ion-networks:

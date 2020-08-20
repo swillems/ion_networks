@@ -14,15 +14,17 @@ import pandas as pd
 # local
 try:
     from . import ms_run_files
+    from . import ms_utils
 except (ImportError, ModuleNotFoundError):
     import ms_run_files
+    me_utils
 
 
 matplotlib.use('TkAgg')
 plt.rcParams['toolbar'] = 'toolmanager'
 
-BASE_PATH = os.path.dirname(os.path.dirname(__file__))
-LIB_PATH = os.path.join(BASE_PATH, "lib")
+BASE_PATH = ms_utils.BASE_PATH
+LIB_PATH = ms_utils.LIB_PATH
 DEFAULT_BROWSER_PATH = os.path.join(LIB_PATH, "browser_images")
 DEFAULT_BROWSER_IMAGES = {
     "pointer": "pointer_25x25.png",

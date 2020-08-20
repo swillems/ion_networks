@@ -8,7 +8,10 @@ try:
     import ms2pip.retention_time
 except ModuleNotFoundError:
     print(
-        "MS2PIP not found, refer to their manual page for manual installation"
+        "MS2PIP not found, see "
+        "https://github.com/compomics/ms2pip_c or "
+        "https://github.com/compomics/ms2pip_c/issues/19 "
+        "for manual installation."
     )
 import pyteomics.parser
 import pyteomics.fasta

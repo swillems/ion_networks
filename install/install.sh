@@ -1,4 +1,4 @@
-#!bash
+#!sh
 
 if ! hash conda 2>/dev/null; then
   echo "Conda not found."
@@ -6,7 +6,7 @@ if ! hash conda 2>/dev/null; then
   if [ "$(uname)" == "Darwin" ]; then
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
     echo "Installing conda."
-    bash Miniconda3-latest-Linux-x86_64.sh -b -p ~/miniconda3
+    sh Miniconda3-latest-Linux-x86_64.sh -b -p ~/miniconda3
     echo "Updating conda."
     eval "$(~/miniconda3/bin/conda shell.bash hook)"
     conda update -n root conda -y
@@ -19,7 +19,7 @@ if ! hash conda 2>/dev/null; then
   elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
     echo "Installing conda."
-    bash Miniconda3-latest-Linux-x86_64.sh -b -p ~/miniconda3
+    sh Miniconda3-latest-Linux-x86_64.sh -b -p ~/miniconda3
     echo "Updating conda."
     eval "$(~/miniconda3/bin/conda shell.bash hook)"
     conda update -n root conda -y
@@ -45,30 +45,21 @@ if ! hash ion_networks.py 2>/dev/null; then
     echo "Source already downloaded"
   fi
   echo "Installing ion-networks."
+  conda env create --file ion_networks/install/environment.yml
+  eval "$(conda shell.bash hook)"
+  pip_command="$(conda activate ion_networks; which pip)"
   if [ "$(uname)" == "Darwin" ]; then
     echo "Detected Mac OS X"
-    sed -i .bak '/ms2pip/d' ion_networks/install/environment.yml
-    sed -i .bak '/ms2pip/d' ion_networks/setup.py
-    conda env create --file ion_networks/install/environment.yml
-    eval "$(conda shell.bash hook)"
-    pip_command="$(conda activate ion_networks; which pip)"
     git clone https://github.com/compomics/ms2pip_c.git
-    cd ms2pip_c
-    conda install -n ion_networks cython -y
-    sed -i .bak '/-fno-var-tracking-assignments/d' setup.py
-    "${pip_command}" install .
-    cd ..
+    sed -i .bak '/-fno-var-tracking-assignments/d' ms2pip_c/setup.py
+    "${pip_command}" install cython
+    "${pip_command}" install './ms2pip_c'
   elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
-    echo "Detected Linux OS"
-    conda env create --file ion_networks/install/environment.yml
-    eval "$(conda shell.bash hook)"
-    pip_command="$(conda activate ion_networks; which pip)"
+    "${pip_command}" install ms2pip
   else
     echo "Detected unknown OS"
   fi
-  cd ion_networks
-  "${pip_command}" install .
-  cd ..
+  "${pip_command}" install './ion_networks[ms2pip]'
   ion_networks_bin="$(conda activate ion_networks; which ion_networks)"
   if [ -n "$ZSH_VERSION" ]; then
      echo "Adding ion-networks alias to ~/.zshrc."

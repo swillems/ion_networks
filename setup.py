@@ -10,7 +10,7 @@ setuptools.setup(
     name=ion_networks._version.__project__,
     version=ion_networks._version.__version__,
     license=ion_networks._version.__license__,
-    description="Analysis of LC-[...]-MSMS data with ion-networks.",
+    description="Analysis of LC-[...]-MSMS data with ion-networks",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
     author=ion_networks._version.__author__,
@@ -27,8 +27,12 @@ setuptools.setup(
         "Data-independent acquisition",
     ],
     classifiers=[
+        "Development Status :: 3 - Alpha",
+        "License :: OSI Approved :: MIT License",
         "Intended Audience :: Science/Research",
         "Operating System :: POSIX :: Linux",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3 :: Only",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
     ],
@@ -51,11 +55,14 @@ setuptools.setup(
         "h5py",
         "pyteomics",
         "numba",
-        "ipykernel",
         "pyqt5-sip",
         "pyqtwebengine",
-        "tables",
-        "ms2pip",
     ],
+    extras_require={
+        # MS2PIP only installable on Linux,  manual installation needed for OSX
+        'ms2pip': [
+            'ms2pip'
+        ]
+    },
     python_requires=">=3.6,<4",
 )
