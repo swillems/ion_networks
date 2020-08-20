@@ -9,7 +9,7 @@ Analysis of LC-[...]-MSMS data with ion-networks.
          * [Windows 10](#windows-10)
          * [OS X Catalina](#os-x-catalina)
          * [Ubuntu 18.04](#ubuntu-1804)
-         * [From source](#from-source)
+         * [From source or with PyPi](#from-source-or-with-pypi)
       * [Usage](#usage)
          * [Windows 10](#windows-10-1)
          * [Ubuntu 18.04 and OS X Catalina](#ubuntu-1804-and-os-x-catalina)
@@ -37,12 +37,18 @@ sh ion_networks/install/test.sh
 
 If the ion-networks repository needs to be updated, [download](https://github.com/swillems/ion_networks/tree/master/install/update.sh) and/or run the ```update.sh``` bash script contained in the [install](https://github.com/swillems/ion_networks/tree/master/install) folder of the ion-networks repository.
 
-### From source
+### From source or with PyPi
 Users that want more control of the installation can do this from source as well by following these steps:
 * [Optional] Create a virtual environment or conda environment and activate it
 * [Optional] Install [MS2PIP](https://github.com/compomics/ms2pip_c), taking your OS into account
-* Download the ion-networks github repo: `git clone https://github.com/swillems/ion_networks.git`
-* Install ion-networks: `pip install './ion_networks'` or [Optional] `pip install './ion_networks[ms2pip]'`
+* From PyPi:
+  * Install ion-networks: `pip install ion_networks` or [Optional] `pip install ion_networks[ms2pip]`
+* From source:
+  * Download the ion-networks github repo: `git clone https://github.com/swillems/ion_networks.git`
+  * Install ion-networks: `pip install './ion_networks'` or [Optional] `pip install './ion_networks[ms2pip]'`
+
+
+
 
 ## Usage
 Four basic modules have been implemented for the analysis of ion-networks:
