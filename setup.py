@@ -42,6 +42,9 @@ setuptools.setup(
         "console_scripts": [
             "ion_networks=ion_networks.ion_networks:main",
         ],
+        "gui_scripts": [
+            "ion_networks_gui=ion_networks.interface:run_ion_network_gui"
+        ],
     },
     install_requires=[
         "numpy",
