@@ -9,7 +9,7 @@ dependencies:
   - numpy
   - numexpr
   - PySimpleGUI
-  - matplotlib
+  - matplotlib=3.2.2
   - pandas
   - click
   - scipy

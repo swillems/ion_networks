@@ -950,7 +950,8 @@ class HDF_File(object):
         dataset,
         parent_group_name="",
         overwrite=True,
-        compression="lzf"
+        # compression="lzf" # Fails for windows with pyinstaller for some reason
+        compression=None,
     ):
         # TODO: Docstring
         if self.is_read_only:
