@@ -17,7 +17,7 @@ try:
     from . import ms_utils
 except (ImportError, ModuleNotFoundError):
     import ms_run_files
-    me_utils
+    import ms_utils
 
 
 matplotlib.use('TkAgg')
