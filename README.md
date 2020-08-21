@@ -11,6 +11,7 @@ Analysis of LC-[...]-MSMS data with ion-networks.
          * [OS X Catalina](#os-x-catalina)
          * [Ubuntu 18.04](#ubuntu-1804)
          * [From source or with PyPi](#from-source-or-with-pypi)
+      * [Test data](#test-data)
       * [Usage](#usage)
          * [Windows 10](#windows-10-1)
          * [Ubuntu 18.04 and OS X Catalina](#ubuntu-1804-and-os-x-catalina)
@@ -18,7 +19,7 @@ Analysis of LC-[...]-MSMS data with ion-networks.
 ![](https://github.com/swillems/ion_networks/blob/master/docs/3d_example.gif)
 
 ## One-click Download
-One-click downloads for Windows 10, OSX Catalina and Ubuntu 18.04 are available as assets on https://github.com/swillems/ion_networks/releases. These only include the GUI (graphical user interface) with limited functionality.
+One-click downloads for Windows 10, OSX Catalina and Ubuntu 18.04 are available as assets on [github](https://github.com/swillems/ion_networks/releases/tag/2.0.200821). These only include the GUI (graphical user interface) with limited functionality.
 
 ## Installation
 The ion-networks repository was developed on a [Ubuntu 18.04](http://releases.ubuntu.com/18.04.4/) with the [python 3.8](https://docs.python.org/3.8/) language. It is likely to function on other (UNIX-based) systems as well, but this has not been fully verified. OS X seems to be compatible and Windows can use a subsystem for linux.
@@ -51,8 +52,8 @@ Users that want more control of the installation can do this from source as well
   * Download the ion-networks github repo: `git clone https://github.com/swillems/ion_networks.git`
   * Install ion-networks: `pip install './ion_networks'` or [Optional] `pip install './ion_networks[ms2pip]'`
 
-
-
+## Test data
+Test data is available on [github](https://github.com/swillems/ion_networks/releases/tag/2.0.200821).
 
 ## Usage
 Four basic modules have been implemented for the analysis of ion-networks:
