@@ -43,7 +43,7 @@ If the ion-networks repository needs to be updated, [download](https://github.co
 
 ### From source or with PyPi
 Users that want more control of the installation can do this from source as well by following these steps:
-* [Optional] Create a virtual environment or conda environment and activate it
+* [Optional] Create a virtual environment or conda environmentwith python3 and activate it
 * [Optional] Install [MS2PIP](https://github.com/compomics/ms2pip_c), taking your OS into account
 * From PyPi:
   * Install ion-networks: `pip install ion_networks` or [Optional] `pip install 'ion_networks[ms2pip]'`
