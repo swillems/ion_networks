@@ -12,12 +12,8 @@ import PySimpleGUI as sg
 import matplotlib
 import pandas as pd
 # local
-try:
-    from . import ms_run_files
-    from . import ms_utils
-except (ImportError, ModuleNotFoundError):
-    import ms_run_files
-    import ms_utils
+from ion_networks import ms_run_files
+from ion_networks import ms_utils
 
 
 matplotlib.use('TkAgg')

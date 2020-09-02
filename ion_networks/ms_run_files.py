@@ -12,14 +12,9 @@ import scipy.sparse
 import sklearn.linear_model
 import numexpr as ne
 # local
-try:
-    from . import ms_database
-    from . import ms_utils
-    from . import numba_functions
-except (ImportError, ModuleNotFoundError):
-    import ms_database
-    import ms_utils
-    import numba_functions
+from ion_networks import ms_database
+from ion_networks import ms_utils
+from ion_networks import numba_functions
 
 
 class HDF_MS_Run_File(ms_utils.HDF_File):

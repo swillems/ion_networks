@@ -1,14 +1,11 @@
 #!python
 
 # local
-try:
-    from . import interface
-except (ImportError, ModuleNotFoundError):
-    import interface
+import ion_networks.interface
 
 
 def main():
-    interface.CLI()
+    ion_networks.interface.CLI()
 
 
 if __name__ == "__main__":

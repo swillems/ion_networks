@@ -16,12 +16,8 @@ import pandas as pd
 import h5py
 import pyteomics.mgf
 # local
-try:
-    from ._version import __version__ as VERSION
-    from . import numba_functions
-except (ImportError, ModuleNotFoundError):
-    from _version import __version__ as VERSION
-    import numba_functions
+from ion_networks._version import __version__ as VERSION
+from ion_networks import numba_functions
 
 
 GITHUB_VERSION_FILE = "https://raw.githubusercontent.com/swillems/ion_networks/master/ion_networks/_version.py"

@@ -1,9 +1,5 @@
 import setuptools
 import ion_networks._version
-try:
-    import py2exe
-except:
-    print("py2exe not installed")
 
 with open("README.md", "r") as fh:
     LONG_DESCRIPTION = fh.read()

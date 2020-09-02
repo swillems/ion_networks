@@ -7,16 +7,10 @@ import threading
 import PySimpleGUI as sg
 import click
 # local
-try:
-    from . import ms_run_files
-    from . import ms_database
-    from . import ms_utils
-    from . import browser
-except (ImportError, ModuleNotFoundError):
-    import ms_run_files
-    import ms_database
-    import ms_utils
-    import browser
+from ion_networks import ms_run_files
+from ion_networks import ms_database
+from ion_networks import ms_utils
+from ion_networks import browser
 
 
 def convert_data_formats_to_csvs(

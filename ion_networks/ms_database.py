@@ -16,10 +16,7 @@ except ModuleNotFoundError:
 import pyteomics.parser
 import pyteomics.fasta
 # local
-try:
-    from . import ms_utils
-except (ImportError, ModuleNotFoundError):
-    import ms_utils
+from ion_networks import ms_utils
 
 
 class HDF_Database_File(ms_utils.HDF_File):
@@ -258,10 +255,93 @@ class HDF_Database_File(ms_utils.HDF_File):
         variable_ptms,
         fixed_ptms,
         batch_size,
+        predict_intensities,
         **kwargs,
     ):
         # TODO: Docstring
-        ms_utils.LOGGER.info(f"Predicting fragments")
+        # if predict_intensities:
+        if not predict_intensities:
+            fragrec = self.predict_with_ms2pip(
+                peprec,
+                model,
+                charges,
+                ptm_dict,
+                variable_ptms,
+                fixed_ptms,
+                batch_size,
+                **kwargs,
+            )
+        else:
+            fragrec = self.fragment_peptides(
+                peprec,
+                ptm_dict,
+                variable_ptms,
+                fixed_ptms,
+                **kwargs,
+            )
+        ms_utils.LOGGER.info(f"Writing fragments to {self.file_name}")
+        self.write_dataset("fragments", fragrec)
+
+    @staticmethod
+    def fragment_peptides(
+        peprec,
+        ptm_dict,
+        variable_ptms,
+        fixed_ptms,
+        **kwargs,
+    ):
+        ms_utils.LOGGER.info("Generating fragments")
+        mzs = []
+        peptide_indices = []
+        ion_numbers = []
+        for peptide_index, (peptide, mods) in enumerate(
+            zip(
+                peprec["sequence"],
+                peprec["modifications"]
+            )
+        ):
+            peptide_indices += [peptide_index] * (len(peptide) - 1) * 2
+            # TODO: add mod masses to fragments
+            for ion_number in range(1, len(peptide)):
+                mz = pyteomics.mass.fast_mass(
+                    peptide[:ion_number],
+                    ion_type="b",
+                    charge=1
+                )
+                mzs.append(mz)
+                mz = pyteomics.mass.fast_mass(
+                    peptide[ion_number:],
+                    ion_type="y",
+                    charge=1
+                )
+                mzs.append(mz)
+                ion_numbers += [ion_number] * 2
+        b_ions = np.array([True, False] * (len(mzs) // 2))
+        prediction_charge_2 = np.ones(len(mzs))
+        fragrec = pd.DataFrame(
+            {
+                "b_ion": b_ions,
+                "ionnumber": ion_numbers,
+                "mz": mzs,
+                "peptide_index": peptide_indices,
+                "prediction_charge_2": prediction_charge_2,
+                "y_ion": ~b_ions,
+            }
+        )
+        return fragrec.sort_values(by=['mz'])
+
+    @staticmethod
+    def predict_with_ms2pip(
+        peprec,
+        model,
+        charges,
+        ptm_dict,
+        variable_ptms,
+        fixed_ptms,
+        batch_size,
+        **kwargs,
+    ):
+        ms_utils.LOGGER.info("Predicting fragments with MS2PIP")
         ms2pip_params = {
             "ms2pip": {
                 "model": model,
@@ -316,7 +396,7 @@ class HDF_Database_File(ms_utils.HDF_File):
         fragrec.reset_index(inplace=True)
         fragrec.sort_values(by="mz", inplace=True)
         fragrec.rename(
-            columns={'spec_id': f'peptide_index'},
+            columns={'spec_id': 'peptide_index'},
             inplace=True
         )
         fragrec["b_ion"] = fragrec["ion"] == "B"
@@ -324,8 +404,7 @@ class HDF_Database_File(ms_utils.HDF_File):
         del fragrec["ion"]
         fragrec["index"] = np.arange(fragrec.shape[0])
         fragrec.set_index("index", inplace=True)
-        ms_utils.LOGGER.info(f"Writing fragments to {self.file_name}")
-        self.write_dataset("fragments", fragrec)
+        return fragrec
 
     @staticmethod
     def generate_ptm_combinations_recursively(ptms, selected=[]):
