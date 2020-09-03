@@ -27,5 +27,5 @@
     "charges": [2],
     "threads": 0,
     "batch_size": 10000000,
-    "predict_intensities": true
+    "predict_intensities": false
 }

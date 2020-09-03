@@ -34,8 +34,8 @@ class HDF_Database_File(ms_utils.HDF_File):
             **parameters
         )
         self.write_proteins(proteins, **parameters)
-        peprec = self.write_peptides(peptides, **parameters)
-        self.write_fragments(peprec, **parameters)
+        peprec, mod_mass_list = self.write_peptides(peptides, **parameters)
+        self.write_fragments(peprec, mod_mass_list, **parameters)
         self.write_parameters(fasta_file_names, parameters)
 
     def write_parameters(self, fasta_file_names, parameters):
@@ -205,6 +205,7 @@ class HDF_Database_File(ms_utils.HDF_File):
         if (len(variable_ptms) + len(fixed_ptms)) > 0:
             columns += ["modifications"]
             modified_peptide_list = []
+            mod_mass_list = []
             for peptide, mass, proteins, decoy in peptide_list:
                 for ptm_combination in self.generate_ptm_combinations(
                     f".{peptide}.",
@@ -220,11 +221,10 @@ class HDF_Database_File(ms_utils.HDF_File):
                             ) if ptm != ""
                         ]
                     )
-                    ptm_combo_mass = np.sum(
-                        [
-                            ptm_dict[ptm][1] for ptm in ptm_combination if ptm != ""
-                        ]
-                    )
+                    mod_masses = [
+                        ptm_dict[ptm][1] if ptm != "" else 0 for ptm in ptm_combination
+                    ]
+                    ptm_combo_mass = np.sum(mod_masses)
                     if parsed_ptm_combination == "":
                         parsed_ptm_combination = "-"
                     modified_peptide_list.append(
@@ -236,6 +236,7 @@ class HDF_Database_File(ms_utils.HDF_File):
                             parsed_ptm_combination
                         )
                     )
+                    mod_mass_list.append(mod_masses)
             peptide_list = modified_peptide_list
         peprec = pd.DataFrame(
             peptide_list,
@@ -244,11 +245,12 @@ class HDF_Database_File(ms_utils.HDF_File):
         peprec["index"] = np.arange(peprec.shape[0])
         peprec.set_index("index", inplace=True)
         self.write_dataset("peptides", peprec)
-        return peprec
+        return peprec, mod_mass_list
 
     def write_fragments(
         self,
         peprec,
+        mod_mass_list,
         model,
         charges,
         ptm_dict,
@@ -259,8 +261,7 @@ class HDF_Database_File(ms_utils.HDF_File):
         **kwargs,
     ):
         # TODO: Docstring
-        # if predict_intensities:
-        if not predict_intensities:
+        if predict_intensities:
             fragrec = self.predict_with_ms2pip(
                 peprec,
                 model,
@@ -277,6 +278,7 @@ class HDF_Database_File(ms_utils.HDF_File):
                 ptm_dict,
                 variable_ptms,
                 fixed_ptms,
+                mod_mass_list,
                 **kwargs,
             )
         ms_utils.LOGGER.info(f"Writing fragments to {self.file_name}")
@@ -288,6 +290,7 @@ class HDF_Database_File(ms_utils.HDF_File):
         ptm_dict,
         variable_ptms,
         fixed_ptms,
+        mod_mass_list,
         **kwargs,
     ):
         ms_utils.LOGGER.info("Generating fragments")
@@ -297,25 +300,27 @@ class HDF_Database_File(ms_utils.HDF_File):
         for peptide_index, (peptide, mods) in enumerate(
             zip(
                 peprec["sequence"],
-                peprec["modifications"]
+                mod_mass_list,
             )
         ):
             peptide_indices += [peptide_index] * (len(peptide) - 1) * 2
-            # TODO: add mod masses to fragments
+            mod_masses = np.array(mods)
+            nt_mod_masses = np.cumsum(mod_masses)
+            ct_mod_masses = np.cumsum(mod_masses[::-1])[::-1]
             for ion_number in range(1, len(peptide)):
                 mz = pyteomics.mass.fast_mass(
                     peptide[:ion_number],
                     ion_type="b",
                     charge=1
-                )
+                ) + nt_mod_masses[ion_number]
                 mzs.append(mz)
                 mz = pyteomics.mass.fast_mass(
                     peptide[ion_number:],
                     ion_type="y",
                     charge=1
-                )
+                ) + ct_mod_masses[ion_number + 1]
                 mzs.append(mz)
-                ion_numbers += [ion_number] * 2
+                ion_numbers += [ion_number, len(peptide) - ion_number]
         b_ions = np.array([True, False] * (len(mzs) // 2))
         prediction_charge_2 = np.ones(len(mzs))
         fragrec = pd.DataFrame(
