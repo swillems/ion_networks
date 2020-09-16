@@ -1228,7 +1228,6 @@ class HDF_Evidence_File(HDF_MS_Run_File):
         out_file_name,
         parameters
     ):
-        parameters = ms_utils.read_parameters_from_json_file(default="annotation")
         threads = ms_utils.MAX_THREADS
         ms_utils.LOGGER.info(f"Reading {self.ion_network.file_name}")
         inet_mzs = self.ion_network.get_ion_coordinates("FRAGMENT_MZ")
@@ -1360,7 +1359,8 @@ class HDF_Evidence_File(HDF_MS_Run_File):
                 "Candidates",
                 "Neighbors",
                 "Modified_score",
-                "Decoy"
+                "Decoy",
+                "FDR",
             ]
             outfile.writerow(header)
             for i, ion_index in enumerate(ion_indices):
@@ -1391,6 +1391,7 @@ class HDF_Evidence_File(HDF_MS_Run_File):
                     neighbor_counts[i],
                     modified_scores[i],
                     decoys[peptide_index],
+                    fdr,
                 ]
                 outfile.writerow(row)
 
