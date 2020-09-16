@@ -712,6 +712,7 @@ def export_annotated_csv(
     peptide_sequences = database.read_dataset("sequence", "peptides")
     # selection = np.flatnonzero((scores < score_cutoff) & (~decoys[peptides]))
     fragment_ion_numbers = database.get_fragment_coordinates("ionnumber")
+    fragment_ion_mz_database = database.get_fragment_coordinates("mz")
     fragment_is_y_ion = database.get_fragment_coordinates("y_ion")
     self_ints = np.concatenate([spectrum["intensity array"] for spectrum in spectra])
     spectrum_indices1 = np.searchsorted(
@@ -727,6 +728,7 @@ def export_annotated_csv(
             "Fragment_int",
             "Fragment_ion_type",
             "Fragment_ion_number",
+            "Database_mz",
             "Spectrum_title",
             "Spectrum_pepmass",
             "Spectrum_rtinseconds",
@@ -738,7 +740,8 @@ def export_annotated_csv(
             "Candidates",
             "Spectrum_size",
             "Modified_score",
-            "Decoy"
+            "Decoy",
+            "FDR",
         ]
         outfile.writerow(header)
         for i, ion_index in enumerate(ion_indices):
@@ -758,6 +761,7 @@ def export_annotated_csv(
                 self_ints[ion_index],
                 "Y" if fragment_is_y_ion[fragment_index] else "B",
                 fragment_ion_numbers[fragment_index],
+                fragment_ion_mz_database[fragment_index],
                 spectra[spectrum_index]['params']['title'],
                 spectra[spectrum_index]['params']['pepmass'][0],
                 spectra[spectrum_index]['params']['rtinseconds'],
@@ -770,6 +774,7 @@ def export_annotated_csv(
                 spectrum_sizes[i],
                 modified_scores[i],
                 decoys[peptide_index],
+                fdr,
             ]
             outfile.writerow(row)
 
