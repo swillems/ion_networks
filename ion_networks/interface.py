@@ -400,7 +400,8 @@ def annotate(
         database = ms_database.HDF_Database_File(database_file_name)
         for file_name in input_file_names:
             if mgf_format:
-                out_file_name = f"{file_name[:-4]}.annotation.csv"
+                file_name_base = '.'.join(file_name.split('.')[:-1])
+                out_file_name = f"{file_name_base}.annotation.csv"
                 ms_utils.annotate_mgf(
                     file_name,
                     database,
@@ -408,7 +409,8 @@ def annotate(
                     parameters,
                 )
             else:
-                out_file_name = f"{'.'.join(file_name.split('.')[:-2])}.csv"
+                file_name_base = '.'.join(file_name.split('.')[:-2])
+                out_file_name = f"{file_name_base}.annotation.csv"
                 evidence = ms_run_files.HDF_Evidence_File(file_name)
                 evidence.annotate(database, out_file_name, parameters)
 
