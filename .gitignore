@@ -128,12 +128,17 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# VSCode
+
+.vscode
+
 # Temp folder and sandbox
 .tmp
 projects
 # src/sandbox*
 *log.txt
 *.DS_Store
+
 
 # TODO: remove from .gitignore
 # docs

@@ -39,7 +39,7 @@ setuptools.setup(
     include_package_data=True,
     entry_points={
         "console_scripts": [
-            "ion_networks=ion_networks.ion_networks:main",
+            "ion_networks=ion_networks.main:main",
             "unicityF=ion_networks.interface:CLI.annotate"
         ],
         "gui_scripts": [
