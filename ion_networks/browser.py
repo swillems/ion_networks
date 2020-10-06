@@ -7,14 +7,15 @@ import warnings
 # external
 import numpy as np
 import numexpr as ne
-import matplotlib.pyplot as plt
-import PySimpleGUI as sg
 import matplotlib
+from matplotlib import pyplot as plt
+import PySimpleGUI as sg
 import pandas as pd
 # local
 from ion_networks import ms_run_files
 from ion_networks import ms_utils
-
+import appnope
+appnope.nope()
 
 matplotlib.use('TkAgg')
 plt.rcParams['toolbar'] = 'toolmanager'
@@ -678,11 +679,25 @@ class Browser(object):
                     np.c_[x_coordinates, y_coordinates]
                 )
             if not self.node_color_normalize:
-                vmin = np.min(inds)
-                vmax = np.max(inds)
+                vmin = np.min(inds[np.isfinite(inds)])
+                vmax = np.max(inds[np.isfinite(inds)])
             else:
-                vmin = np.min(color_inds)
-                vmax = np.max(color_inds)
+                vmin = np.min(color_inds[np.isfinite(color_inds)])
+                vmax = np.max(color_inds[np.isfinite(color_inds)])
+            # if vmin == -np.inf:
+            #     print(vmin)
+            #     try:
+            #         vmin = np.iinfo(inds.dtype).min
+            #     except ValueError:
+            #         vmin = np.finfo(inds.dtype).min
+            #     print(vmin)
+            # if vmax == np.inf:
+            #     print(vmax)
+            #     try:
+            #         vmax = np.iinfo(inds.dtype).max
+            #     except ValueError:
+            #         vmax = np.finfo(inds.dtype).max
+            #     print(vmax)
             color_mapper = matplotlib.cm.ScalarMappable(
                 norm=matplotlib.colors.Normalize(
                     vmin=vmin,
@@ -898,6 +913,12 @@ class Browser(object):
         node_mask = np.zeros(self.ion_network.node_count, np.int64)
         nodes = self.get_selected_nodes()
         if len(nodes) == 0:
+            # if hasattr(self, "evidence_plot"):
+            #     for evidence_plot in self.evidence_plot:
+            #         for i in evidence_plot:
+            #             i.remove()
+            #         del evidence_plot[:]
+            #     del self.evidence_plot[:]
             flush_figure(self.figs["evidence"], flush)
             return
         node_mask[nodes] = np.arange(len(nodes))
