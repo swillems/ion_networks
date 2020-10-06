@@ -20,6 +20,7 @@ from ion_networks._version import __version__ as VERSION
 from ion_networks import numba_functions
 
 
+TEST = None
 GITHUB_VERSION_FILE = "https://raw.githubusercontent.com/swillems/ion_networks/master/ion_networks/_version.py"
 BASE_PATH = os.path.dirname(__file__)
 UPDATE_COMMAND = os.path.join(os.path.dirname(BASE_PATH), "install", "update.sh")
