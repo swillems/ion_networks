@@ -6,5 +6,6 @@
     "edge_threshold": "positive_edges > negative_edges",
     "annotation_ppm": 20,
     "fdr_filter": 0.05,
-    "export_decoys": false
+    "export_decoys": false,
+    "align_to_database": false
 }

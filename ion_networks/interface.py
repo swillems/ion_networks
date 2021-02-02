@@ -349,13 +349,15 @@ def annotate(
     threads=None,
     fragment_ppm=None,
     export_decoys=None,
-    fdr_filter=None
+    fdr_filter=None,
+    align_to_database=None
 ):
     # TODO: Docstring
     if parameter_file_name is None:
         parameter_file_name = ""
     if parameter_file_name != "":
         parameter_file_name = os.path.abspath(parameter_file_name)
+    database_file_name = os.path.abspath(database_file_name)
     parameters = ms_utils.read_parameters_from_json_file(
         file_name=parameter_file_name,
         default="annotation"
@@ -366,6 +368,8 @@ def annotate(
         parameters["export_decoys"] = export_decoys
     if fdr_filter is not None:
         parameters["fdr_filter"] = fdr_filter
+    if align_to_database is not None:
+        parameters["align_to_database"] = align_to_database
     if threads is not None:
         ms_utils.set_threads(threads)
     # TODO: Proper parsing of empty log...?
@@ -394,6 +398,7 @@ def annotate(
         logger.info(f"max_threads: {ms_utils.MAX_THREADS}")
         logger.info(f"fragment_ppm: {parameters['annotation_ppm']}")
         logger.info(f"fdr_filter: {parameters['fdr_filter']}")
+        logger.info(f"align_to_database: {align_to_database}")
         # TODO implement fdr filtering!!!
         logger.info(f"export_decoys: {parameters['export_decoys']}")
         logger.info("")
@@ -1213,6 +1218,15 @@ class CLI(object):
         help="Remove annotations above this fdr.",
         type=float
     )
+    @click.option(
+        "--align_to_database",
+        "-c",
+        "align_to_database",
+        help="Align to database",
+        is_flag=True,
+        default=True,
+        show_default=True,
+    )
     def annotate(
         input_path,
         database_file_name,
@@ -1222,7 +1236,8 @@ class CLI(object):
         threads,
         fragment_ppm_error,
         export_decoys,
-        fdr_filter
+        fdr_filter,
+        align_to_database,
     ):
         annotate(
             input_path,
@@ -1233,7 +1248,8 @@ class CLI(object):
             threads,
             fragment_ppm_error,
             export_decoys,
-            fdr_filter
+            fdr_filter,
+            align_to_database
         )
 
     @staticmethod

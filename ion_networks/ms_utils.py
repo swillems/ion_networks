@@ -582,15 +582,27 @@ def annotate_mgf(
     spectra_mzs = np.concatenate(
         [spectrum["m/z array"] for spectrum in spectra]
     )
-    mz_order = np.argsort(spectra_mzs)
-    spectra_log_mzs = np.log(spectra_mzs[mz_order]) * 10**6
+    if parameters["align_to_database"]:
+        LOGGER.info(f"Aligning {mgf_file_name} to {database.file_name}")
+        spectra_mzs_ = database.align_mz_values(
+            spectra_mzs,
+            np.repeat(
+                [
+                    spectrum['params']['rtinseconds'] for spectrum in spectra
+                ],
+                np.diff(spectra_indptr)
+            ) / 60
+        )
+    else:
+        spectra_mzs_ = spectra_mzs
+    mz_order = np.argsort(spectra_mzs_)
+    spectra_log_mzs = np.log(spectra_mzs_[mz_order]) * 10**6
     LOGGER.info(f"Reading database {database.file_name}")
     peptide_pointers = database.get_fragment_coordinates("peptide_index")
     database_log_mzs = np.log(database.get_fragment_coordinates("mz")) * 10**6
     LOGGER.info(
         f"Matching fragments of {mgf_file_name} with {database.file_name}"
     )
-    # TODO mass calibrate
     low_limits = np.searchsorted(
         database_log_mzs,
         spectra_log_mzs - parameters["annotation_ppm"],
@@ -604,7 +616,6 @@ def annotate_mgf(
     inv_order = np.argsort(mz_order)
     low_limits = low_limits[inv_order]
     high_limits = high_limits[inv_order]
-    del inv_order
     LOGGER.info(
         f"Annotating fragments of {mgf_file_name} with {database.file_name}"
     )
@@ -628,6 +639,7 @@ def annotate_mgf(
     candidate_counts = np.concatenate([r[4] for r in results])
     spectrum_sizes = np.concatenate([r[5] for r in results])
     del results
+    LOGGER.info("Calculating scores")
     modified_scores, fdr_values = calculate_modified_score(
         scores,
         count_results,
@@ -651,7 +663,8 @@ def annotate_mgf(
         export_decoys=parameters['export_decoys'],
         fdr_filter=parameters['fdr_filter'],
         fdr_values=fdr_values,
-        modified_scores=modified_scores
+        modified_scores=modified_scores,
+        calibrated_mzs=spectra_mzs_
     )
 
 
@@ -663,7 +676,7 @@ def calculate_modified_score(
     peptide_indices
 ):
     modified_scores = hit_counts.copy()
-    modified_scores = modified_scores ** likelihoods
+    modified_scores = hit_counts ** likelihoods
     modified_scores /= np.log2(1 + neighbors)
     sequence_lengths = np.array(
         [
@@ -704,37 +717,44 @@ def export_annotated_csv(
     fdr_filter,
     fdr_values,
     modified_scores,
+    calibrated_mzs,
 ):
     LOGGER.info(f"Exporting {out_file_name}")
     peptides = peptide_pointers[fragments]
     decoys = database.read_dataset("decoy", "peptides")
     peptide_modifications = database.read_dataset("modifications", "peptides")
     peptide_sequences = database.read_dataset("sequence", "peptides")
+    peptide_masses = database.read_dataset("mass", "peptides")
     # selection = np.flatnonzero((scores < score_cutoff) & (~decoys[peptides]))
     fragment_ion_numbers = database.get_fragment_coordinates("ionnumber")
     fragment_ion_mz_database = database.get_fragment_coordinates("mz")
     fragment_is_y_ion = database.get_fragment_coordinates("y_ion")
-    self_ints = np.concatenate([spectrum["intensity array"] for spectrum in spectra])
+    self_ints = np.concatenate(
+        [spectrum["intensity array"] for spectrum in spectra]
+    )
     spectrum_indices1 = np.searchsorted(
         spectra_indptr,
         ion_indices,
         "right"
     ) - 1
-    with open(out_file_name, "w") as raw_outfile:
+    with open(out_file_name, "w", newline='') as raw_outfile:
         outfile = csv.writer(raw_outfile)
         header = [
             "Fragment_index",
             "Fragment_mz",
+            "Fragment_mz_calibrated",
             "Fragment_int",
-            "Fragment_ion_type",
-            "Fragment_ion_number",
-            "Database_mz",
             "Spectrum_title",
             "Spectrum_pepmass",
             "Spectrum_rtinseconds",
+            "Database_index",
+            "Database_mz",
+            "Ion_type",
+            "Ion_number",
             "Peptide_sequence",
             "Peptide_mods",
             "Peptide_length",
+            "Peptide_mass",
             "Likelihood",
             "Count",
             "Candidates",
@@ -755,19 +775,23 @@ def export_annotated_csv(
                     continue
             spectrum_index = spectrum_indices1[i]
             peptide_sequence = peptide_sequences[peptide_index]
+            peptide_mass = peptide_masses[peptide_index]
             row = [
                 ion_index,
                 spectra_mzs[ion_index],
+                calibrated_mzs[ion_index],
                 self_ints[ion_index],
-                "Y" if fragment_is_y_ion[fragment_index] else "B",
-                fragment_ion_numbers[fragment_index],
-                fragment_ion_mz_database[fragment_index],
                 spectra[spectrum_index]['params']['title'],
                 spectra[spectrum_index]['params']['pepmass'][0],
                 spectra[spectrum_index]['params']['rtinseconds'],
+                fragment_index,
+                fragment_ion_mz_database[fragment_index],
+                "Y" if fragment_is_y_ion[fragment_index] else "B",
+                fragment_ion_numbers[fragment_index],
                 peptide_sequence,
                 peptide_modifications[peptide_index],
                 len(peptide_sequence),
+                peptide_mass,
                 scores[i],
                 count_results[i],
                 candidate_counts[i],

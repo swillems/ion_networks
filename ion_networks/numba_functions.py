@@ -381,6 +381,7 @@ def annotate_mgf(
     low_limits,
     high_limits,
     peptide_pointers,
+    min_score=0
 ):
     peptide_count = np.max(peptide_pointers) + 1
     count = 0
@@ -393,10 +394,14 @@ def annotate_mgf(
     candidate_counts = np.empty(count, np.int64)
     spectrum_sizes = np.empty(count, np.int64)
     current_i = 0
+    candidates = np.empty(peptide_count, np.int64)
     for spectrum_index in queries:
         spectrum_start = spectra_indptr[spectrum_index]
         spectrum_end = spectra_indptr[spectrum_index + 1]
-        candidates = np.zeros(peptide_count, np.int64)
+        spectrum_size = spectrum_end - spectrum_start
+        if spectrum_size == 0:
+            continue
+        candidates[:] = 0
         for ion_index in range(spectrum_start, spectrum_end):
             peptide_low = low_limits[ion_index]
             peptide_high = high_limits[ion_index]
@@ -419,13 +424,13 @@ def annotate_mgf(
                 peptide_low,
                 peptide_count
             )
-            if score > 0:
+            if score > min_score:
                 score_results[current_i] = score
                 fragment_results[current_i] = max_fragment
                 index_results[current_i] = ion_index
                 count_results[current_i] = max_count
                 candidate_counts[current_i] = candidate_count
-                spectrum_sizes[current_i] = spectrum_end - spectrum_start
+                spectrum_sizes[current_i] = spectrum_size
                 current_i += 1
     return (
         score_results[:current_i],

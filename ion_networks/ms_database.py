@@ -3,6 +3,7 @@
 # external
 import pandas as pd
 import numpy as np
+import scipy.signal
 try:
     import ms2pip.ms2pipC
     import ms2pip.retention_time
@@ -491,3 +492,105 @@ class HDF_Database_File(ms_utils.HDF_File):
                 indices=indices
             ) for dimension in dimensions
         ]
+
+    def get_db_targets(
+        self,
+        max_ppm=100,
+        min_distance=0.5,
+        ms_level=2,
+    ):
+        if ms_level == 1:
+            db_mzs_ = self.read_dataset(
+                "mass",
+                parent_group_name="peptides",
+            )
+        elif ms_level == 2:
+            db_mzs_ = self.read_dataset(
+                "mz",
+                parent_group_name="fragments",
+            )
+        else:
+            raise ValueError(f"{ms_level} is not a valid ms level")
+        tmp_result = np.bincount(
+            (
+                np.log10(
+                    db_mzs_[
+                        np.isfinite(db_mzs_) & (db_mzs_ > 0)
+                    ].flatten()
+                ) * 10**6
+            ).astype(np.int64)
+        )
+        db_mz_distribution = np.zeros_like(tmp_result)
+        for i in range(1, max_ppm):
+            db_mz_distribution[i:] += tmp_result[:-i]
+            db_mz_distribution[:-i] += tmp_result[i:]
+        peaks = scipy.signal.find_peaks(db_mz_distribution, distance=max_ppm)[0]
+        db_targets = 10 ** (peaks / 10**6)
+    #     db_vals = db_mz_distribution[peaks]
+    #     plt.vlines(db_targets, 0, db_vals)
+        db_array = np.zeros(int(db_targets[-1]) + 1, dtype=np.float64)
+        last_int_mz = -1
+        last_mz = -1
+        for mz in db_targets:
+            mz_int = int(mz)
+            if (mz_int != last_int_mz) & (mz > (last_mz + min_distance)):
+                db_array[mz_int] = mz
+            else:
+                db_array[mz_int] = 0
+            last_int_mz = mz_int
+            last_mz = mz
+        return db_array
+
+    def align_mz_values(
+        self,
+        mzs,
+        rts,
+        max_ppm_distance=np.inf,
+        rt_step_size=0.1,
+    ):
+        selected = mzs.astype(np.int64)
+        ds = np.zeros((3, len(selected)))
+        db_array = self.get_db_targets()
+        if len(db_array) < len(selected) + 1:
+            tmp = np.zeros(len(selected) + 1)
+            tmp[:len(db_array)] = db_array
+            db_array = tmp
+        ds[0] = mzs - db_array[selected - 1]
+        ds[1] = mzs - db_array[selected]
+        ds[2] = mzs - db_array[selected + 1]
+        min_ds = np.take_along_axis(
+            ds,
+            np.expand_dims(np.argmin(np.abs(ds), axis=0), axis=0),
+            axis=0
+        ).squeeze(axis=0)
+        ppm_ds = min_ds / mzs * 10**6
+        selected = np.abs(ppm_ds) < max_ppm_distance
+        selected &= np.isfinite(rts)
+        rt_order = np.argsort(rts)
+        rt_order = rt_order[selected[rt_order]]
+        ordered_rt = rts[rt_order]
+        ordered_ppm = ppm_ds[rt_order]
+        rt_idx_break = np.searchsorted(
+            ordered_rt,
+            np.arange(ordered_rt[0], ordered_rt[-1], rt_step_size),
+            "left"
+        )
+        median_ppms = np.empty(len(rt_idx_break) - 1)
+        for i in range(len(median_ppms)):
+            median_ppms[i] = np.median(
+                ordered_ppm[rt_idx_break[i]: rt_idx_break[i + 1]]
+            )
+        estimated_errors = scipy.interpolate.griddata(
+            rt_step_size / 2 + np.arange(
+                ordered_rt[0],
+                ordered_rt[-1] - 2 * rt_step_size,
+                rt_step_size
+            ),
+            median_ppms,
+            rts,
+            fill_value=0,
+            method="linear",
+            rescale=True
+        )
+        estimated_errors[~np.isfinite(estimated_errors)] = 0
+        return mzs * (1 + estimated_errors / 10**6)

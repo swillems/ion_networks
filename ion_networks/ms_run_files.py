@@ -1231,6 +1231,14 @@ class HDF_Evidence_File(HDF_MS_Run_File):
         threads = ms_utils.MAX_THREADS
         ms_utils.LOGGER.info(f"Reading {self.ion_network.file_name}")
         inet_mzs = self.ion_network.get_ion_coordinates("FRAGMENT_MZ")
+        if parameters["align_to_database"]:
+            ms_utils.LOGGER.info(
+                f"Aligning {self.file_name} to {database.file_name}"
+            )
+            inet_mzs = database.align_mz_values(
+                inet_mzs,
+                self.ion_network.get_ion_coordinates("FRAGMENT_RT")
+            )
         mz_order = np.argsort(inet_mzs)
         spectra_log_mzs = np.log(inet_mzs[mz_order]) * 10**6
         indptr, indices, edge_pointers = self.ion_network.get_edges(
@@ -1245,7 +1253,6 @@ class HDF_Evidence_File(HDF_MS_Run_File):
         ms_utils.LOGGER.info(
             f"Matching fragments of {self.file_name} with {database.file_name}"
         )
-        # TODO mass calibrate
         low_limits = np.searchsorted(
             database_log_mzs,
             spectra_log_mzs - parameters["annotation_ppm"],
@@ -1344,7 +1351,7 @@ class HDF_Evidence_File(HDF_MS_Run_File):
         self_coordinates = self.ion_network.get_ion_coordinates(
             self.ion_network.dimensions
         )
-        with open(out_file_name, "w") as raw_outfile:
+        with open(out_file_name, "w", newline="") as raw_outfile:
             outfile = csv.writer(raw_outfile)
             header = ["Fragment_index"]
             header += self.ion_network.dimensions

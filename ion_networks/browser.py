@@ -14,8 +14,12 @@ import pandas as pd
 # local
 from ion_networks import ms_run_files
 from ion_networks import ms_utils
-import appnope
-appnope.nope()
+try:
+    import appnope
+    appnope.nope()
+except ModuleNotFoundError:
+    pass
+
 
 matplotlib.use('TkAgg')
 plt.rcParams['toolbar'] = 'toolmanager'
